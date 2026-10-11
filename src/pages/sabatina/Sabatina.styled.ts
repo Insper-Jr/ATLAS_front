@@ -249,11 +249,17 @@ export const LinkAcao = styled.button`
 // ---------------------------------------------------------------- gráficos
 
 /** Dois gráficos por linha no desktop, um embaixo do outro no celular. */
+/** No máximo 2 por linha: são 4 gráficos (ou 2), então 2×2 ocupa a largura
+ *  toda; `auto-fit` deixava 3 + 1 em tela larga. */
 export const GradeGraficos = styled.div`
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(18rem, 1fr));
+  grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: ${theme.spacing.md};
   margin-top: ${theme.spacing.sm};
+
+  @media (max-width: 40rem) {
+    grid-template-columns: minmax(0, 1fr);
+  }
 `;
 
 export const CaixaGrafico = styled.div<{ $altura?: string }>`

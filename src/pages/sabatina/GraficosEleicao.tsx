@@ -217,12 +217,15 @@ function Participacao({
   return (
     <BlocoGrafico>
       <TituloGrafico>Participação por posição</TituloGrafico>
-      <CaixaGrafico $altura={`${Math.max(8, dados.length * 2.2)}rem`}>
+      {/* Rótulos de posição quebram em até 3 linhas ("Candidato(a) a Diretoria
+          de Projetos"), então cada linha precisa de ~3rem; os 4rem extras são
+          o eixo X e a legenda, que antes comiam a altura das barras. */}
+      <CaixaGrafico $altura={`${Math.max(10, dados.length * 3 + 4)}rem`}>
         <ResponsiveContainer>
           <BarChart data={dados} layout="vertical" margin={{ top: 4, right: 24, bottom: 0, left: 4 }}>
             <CartesianGrid stroke={theme.colors.border} horizontal={false} />
             <XAxis type="number" allowDecimals={false} {...eixo} axisLine={false} />
-            <YAxis type="category" dataKey="posicao" width={110} {...eixo} axisLine={false} />
+            <YAxis type="category" dataKey="posicao" width={150} interval={0} {...eixo} axisLine={false} />
             <Tooltip cursor={{ fill: theme.colors.muted }} />
             <Legend iconType="circle" wrapperStyle={{ fontSize: 12 }} />
             <Bar dataKey="votaram" name="Votaram" stackId="p" fill={theme.colors.success} isAnimationActive={false} />
