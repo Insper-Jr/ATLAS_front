@@ -179,7 +179,7 @@ function CardExMembros() {
       setAviso(
         partes.length
           ? `${partes.join("; ")}.`
-          : "Ninguém novo na lista inicial e ninguém pra completar: todos já estavam cadastrados.",
+          : "Lista inicial já estava toda importada e completa.",
       );
     } catch (err) {
       setErro(err instanceof Error ? err.message : "Não foi possível importar.");
