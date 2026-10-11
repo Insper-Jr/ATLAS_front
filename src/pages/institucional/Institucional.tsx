@@ -96,6 +96,7 @@ function CardExMembros() {
   const { token } = useAuth();
   const [lista, setLista] = useState<ExMembro[] | null>(null);
   const [erro, setErro] = useState("");
+  const [aviso, setAviso] = useState("");
   const [modal, setModal] = useState<ExMembro | "novo" | null>(null);
   const [apagando, setApagando] = useState<ExMembro | null>(null);
   const [ocupado, setOcupado] = useState(false);
@@ -168,9 +169,15 @@ function CardExMembros() {
     if (!token) return;
     setOcupado(true);
     setErro("");
+    setAviso("");
     try {
-      await importarExMembrosIniciais(token);
+      const r = await importarExMembrosIniciais(token);
       setLista(await getExMembros(token));
+      setAviso(
+        r.importados === 0
+          ? "Ninguém novo na lista inicial: todos já estavam cadastrados."
+          : `${r.importados} ex-membro(s) importado(s)${r.pulados ? ` (${r.pulados} já existiam)` : ""}. Quem veio do formulário entra oculto — revise e publique.`,
+      );
     } catch (err) {
       setErro(err instanceof Error ? err.message : "Não foi possível importar.");
     } finally {
@@ -197,6 +204,15 @@ function CardExMembros() {
             <PageButtonSm as="a" href={SITE_EX_MEMBROS} target="_blank" rel="noreferrer" $variant="ghost">
               Ver no site <ExternalLink size={14} />
             </PageButtonSm>
+            <PageButtonSm
+              type="button"
+              onClick={importar}
+              disabled={ocupado}
+              $variant="outline"
+              title="Traz quem está na lista inicial (os do site antigo + os do formulário de mapeamento) e ainda não foi cadastrado. Não duplica ninguém."
+            >
+              {ocupado ? "Importando…" : "Importar lista inicial"}
+            </PageButtonSm>
             <PageButton type="button" onClick={() => setModal("novo")} disabled={ocupado}>
               Novo ex-membro
             </PageButton>
@@ -220,17 +236,18 @@ function CardExMembros() {
             )}
 
             {erro && <ErrorText>{erro}</ErrorText>}
+            {aviso && <Intro role="status">{aviso}</Intro>}
 
             {lista && lista.length === 0 && (
               <>
                 <EstadoVazio
                   causa="vazio"
                   titulo="Nenhum ex-membro cadastrado"
-                  motivo="Enquanto esta lista estiver vazia, o site continua mostrando a lista fixa antiga. Importe os 13 que já estão lá (com fotos e textos PT/EN) e edite a partir deles, ou comece do zero."
+                  motivo="Enquanto esta lista estiver vazia, o site continua mostrando a lista fixa antiga. Importe a lista inicial — os 13 que já estão no site (publicados, com fotos e textos PT/EN) e os 19 que anexaram foto no formulário de mapeamento da 51ª (ocultos, para revisar e publicar) — ou comece do zero."
                 />
                 <PageStats>
                   <PageButton type="button" onClick={importar} disabled={ocupado}>
-                    {ocupado ? "Importando…" : "Importar os ex-membros atuais do site"}
+                    {ocupado ? "Importando…" : "Importar lista inicial"}
                   </PageButton>
                 </PageStats>
               </>
