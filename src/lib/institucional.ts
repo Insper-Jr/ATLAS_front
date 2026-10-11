@@ -60,7 +60,7 @@ export function removerFotoExMembro(id: number, token: string) {
 
 /** Importa os ex-membros que o site tinha fixos no código. Não duplica. */
 export function importarExMembrosIniciais(token: string) {
-  return apiFetch<{ importados: number; pulados: number }>("/institucional/ex-membros/importar-iniciais", {
+  return apiFetch<{ importados: number; atualizados: number; pulados: number }>("/institucional/ex-membros/importar-iniciais", {
     method: "POST",
     token,
   });

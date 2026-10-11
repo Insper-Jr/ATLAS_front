@@ -173,10 +173,13 @@ function CardExMembros() {
     try {
       const r = await importarExMembrosIniciais(token);
       setLista(await getExMembros(token));
+      const partes: string[] = [];
+      if (r.importados) partes.push(`${r.importados} novo(s) cadastrado(s) — quem veio do formulário entra oculto, revise e publique`);
+      if (r.atualizados) partes.push(`${r.atualizados} já cadastrado(s) ganharam LinkedIn/foto que estavam em branco`);
       setAviso(
-        r.importados === 0
-          ? "Ninguém novo na lista inicial: todos já estavam cadastrados."
-          : `${r.importados} ex-membro(s) importado(s)${r.pulados ? ` (${r.pulados} já existiam)` : ""}. Quem veio do formulário entra oculto — revise e publique.`,
+        partes.length
+          ? `${partes.join("; ")}.`
+          : "Ninguém novo na lista inicial e ninguém pra completar: todos já estavam cadastrados.",
       );
     } catch (err) {
       setErro(err instanceof Error ? err.message : "Não foi possível importar.");
