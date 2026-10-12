@@ -2,6 +2,7 @@ import { createContext, useCallback, useContext, useEffect, useState, ReactNode 
 import { apiFetch } from "@/lib/api";
 import { getPosicoesPermissoes, mesclarPermissoes } from "@/lib/posicoes-permissoes";
 import { desativarPush, sincronizarPush } from "@/lib/push";
+import { ehCelular } from "@/utils/dispositivo";
 import type { Usuario, Permissoes, Posicao, StatusUsuario } from "@/types/auth";
 
 // A API devolve `posicao` solto em /auth/me, sem as 13 caixas de permissão
@@ -92,7 +93,12 @@ const PERMISSOES_PLACEHOLDER: Permissoes = {
  * rede cair aqui, a sessão segue valendo pelo prazo que já tinha.
  */
 function renovarSessao(token: string) {
-  apiFetch<{ access_token: string }>("/auth/renovar", { method: "POST", token })
+  // No celular o token novo também é longo (sessão que não cai).
+  apiFetch<{ access_token: string }>("/auth/renovar", {
+    method: "POST",
+    token,
+    body: JSON.stringify({ celular: ehCelular() }),
+  })
     .then((resposta) => localStorage.setItem("token", resposta.access_token))
     .catch(() => {});
 }
@@ -184,7 +190,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   async function login(email: string, senha: string) {
     const resposta = await apiFetch<{ access_token: string }>("/auth/login", {
       method: "POST",
-      body: JSON.stringify({ email_insper: email, senha }),
+      body: JSON.stringify({ email_insper: email, senha, celular: ehCelular() }),
     });
     localStorage.setItem("token", resposta.access_token);
     setToken(resposta.access_token);
