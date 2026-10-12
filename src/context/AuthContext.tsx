@@ -75,6 +75,7 @@ const PERMISSOES_PLACEHOLDER: Permissoes = {
   pode_acessar_configuracoes_sabatina: false,
   pode_acessar_arquivo_contratos: false,
   pode_acessar_institucional: false,
+  pode_enviar_comunicados: false,
 };
 
 /**

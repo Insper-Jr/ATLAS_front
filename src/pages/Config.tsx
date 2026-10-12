@@ -245,6 +245,12 @@ const PERMISSOES = [
       "Abre a aba Institucional: o que aparece no site da Insper Jr — hoje, os ex-membros em destaque (cadastrar, editar, ordenar, ocultar, remover e trocar foto). Quem visita o site vê sem login; esta caixa é só para editar.",
   },
   {
+    campo: "pode_enviar_comunicados" as const,
+    titulo: "Enviar comunicados",
+    descricao:
+      "Mandar um aviso (sino + e-mail) pra um recorte de pessoas: quem está com 0 bancas ou com muitas, quem ainda não respondeu um formulário de desempenho, os inscritos de uma banca, uma posição inteira, todo mundo ou pessoas escolhidas à mão. Abre a aba Comunicados (em Sistema), com o histórico do que já foi enviado.",
+  },
+  {
     campo: "pode_editar_identidade_institucional" as const,
     titulo: "Editar identidade institucional",
     descricao:

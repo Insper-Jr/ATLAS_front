@@ -15,6 +15,7 @@ import { Sabatina } from "@/pages/sabatina/Sabatina";
 import { SabatinaConfig } from "@/pages/sabatina/SabatinaConfig";
 import { ArquivoContratos } from "@/pages/arquivo-contratos/ArquivoContratos";
 import { Institucional } from "@/pages/institucional/Institucional";
+import { Comunicados } from "@/pages/comunicados/Comunicados";
 import { DefinirSenha } from "@/pages/DefinirSenha";
 import { Desempenho } from "@/pages/Desempenho";
 import { Bancas } from "@/pages/Bancas";
@@ -257,6 +258,12 @@ export default function App() {
                   institucional` no backend. */}
               <Route element={<AdminRoute permissao="pode_acessar_institucional" />}>
                 <Route path="/institucional" element={<Institucional />} />
+              </Route>
+              {/* Comunicados (2026-10-12): sino + e-mail pra um recorte de
+                  pessoas. Caixa `pode_enviar_comunicados`, que nasce marcada
+                  só pra diretoria. */}
+              <Route element={<AdminRoute permissao="pode_enviar_comunicados" />}>
+                <Route path="/comunicados" element={<Comunicados />} />
               </Route>
             </Route>
           </Route>

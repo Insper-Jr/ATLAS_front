@@ -121,6 +121,10 @@ export interface Permissoes {
    *  da Insper Jr — hoje os ex-membros em destaque. Nasce marcada só pra
    *  diretoria. A leitura pelo site é pública e não passa por aqui. */
   pode_acessar_institucional: boolean;
+  /** Comunicados (2026-10-11): sino + e-mail pra um recorte de pessoas
+   *  (0 bancas, pendentes de um lote, inscritos de uma banca, por posição,
+   *  todo mundo, escolhidos à mão). Nasce marcada só pra diretoria. */
+  pode_enviar_comunicados: boolean;
 }
 
 /**

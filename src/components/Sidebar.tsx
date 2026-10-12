@@ -8,7 +8,7 @@ import { getMinhasEleicoes } from "@/lib/sabatina";
 import { getMinhaFila } from "@/lib/desempenho-avaliacoes";
 import type { Notificacao } from "@/types/notificacao";
 import insperJrLogo from "@/assets/insperjr.png";
-import { BarChart3, Bell, FolderKanban, ClipboardList, Calendar, CalendarCog, Users, ClipboardCheck, Settings, LogOut, Star, GraduationCap, UserPlus, Landmark, FileSignature, Vote, ListChecks, HeartPulse, Globe } from "lucide-react";
+import { BarChart3, Bell, FolderKanban, ClipboardList, Calendar, CalendarCog, Users, ClipboardCheck, Settings, LogOut, Star, GraduationCap, UserPlus, Landmark, FileSignature, Vote, ListChecks, HeartPulse, Globe, Megaphone } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 import { FotoCircular } from "@/components/Avatar";
 import { ID_MENU_LATERAL } from "./Layout.styled";
@@ -247,6 +247,15 @@ const navItems: NavItemConfig[] = [
     // depois. Caixa que nasce marcada só pra diretoria. Espelha
     // `require_pode_acessar_institucional` no backend.
     visible: (c) => c.pode_acessar_institucional,
+  },
+  {
+    icon: Megaphone,
+    label: "Comunicados",
+    path: "/comunicados",
+    grupo: "sistema",
+    // Sino + e-mail pra um recorte de pessoas (2026-10-12, a pedido: aba
+    // própria). Espelha `require_pode_enviar_comunicados` no backend.
+    visible: (c) => c.pode_enviar_comunicados,
   },
 ];
 
