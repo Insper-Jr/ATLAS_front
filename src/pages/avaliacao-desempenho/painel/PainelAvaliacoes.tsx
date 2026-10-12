@@ -51,7 +51,7 @@ import {
   PessoaHeader,
   PessoaResumo,
   SubItem,
-  SubItemMeta,
+  SubItemAcoes,
   SubLista,
 } from "./Painel.styled";
 
@@ -208,9 +208,22 @@ export function PainelAvaliacoes() {
   const grupos = useMemo<Grupo[]>(() => {
     let base: Grupo[];
     if (visao === "escopo") {
-      const mapa = new Map<number, Grupo>();
+      const mapa = new Map<string, Grupo>();
       for (const a of avaliacoesFiltradas) {
-        if (!a.escopo) continue; // só a Avaliação do Escopo já atribuída a um escopo
+        if (!a.eh_escopo && !a.escopo) continue;
+        // Avaliação do Escopo sem escopo identificado (o backend não conseguiu
+        // desambiguar): fica num grupo próprio aqui, em vez de sumir ou de
+        // cair na visão por pessoa (2026-10-12).
+        if (!a.escopo) {
+          const semEscopo = mapa.get("sem") ?? {
+            chave: "escopo-sem-identificacao",
+            titulo: "Escopo não identificado",
+            lista: [],
+          };
+          semEscopo.lista.push(a);
+          mapa.set("sem", semEscopo);
+          continue;
+        }
         // ⭐ 2026-09-24, corrigido: `escopo_id` é o CATÁLOGO ("Análise
         // Mercadológica"), o mesmo em todo projeto que tem esse tipo de
         // escopo — o grupo já mistura BLEND I, ATLAS I etc. por baixo.
@@ -218,19 +231,24 @@ export function PainelAvaliacoes() {
         // deste projeto", quando não é. O projeto de cada avaliação
         // continua aparecendo por item, em `projetosDaAvaliacao` na lista
         // expandida — aqui é só o nome do escopo.
-        const atual = mapa.get(a.escopo.escopo_id) ?? {
-          chave: `escopo-${a.escopo.escopo_id}`,
+        // "Outro" sem par no catálogo não tem `escopo_id`: agrupa pelo nome.
+        const chaveEscopo =
+          a.escopo.escopo_id != null ? `id-${a.escopo.escopo_id}` : `nome-${a.escopo.nome.toLowerCase()}`;
+        const atual = mapa.get(chaveEscopo) ?? {
+          chave: `escopo-${chaveEscopo}`,
           titulo: a.escopo.nome,
           lista: [],
         };
         atual.lista.push(a);
-        mapa.set(a.escopo.escopo_id, atual);
+        mapa.set(chaveEscopo, atual);
       }
       base = Array.from(mapa.values());
     } else {
       const mapa = new Map<number, DesempenhoAvaliacao[]>();
       for (const a of avaliacoesFiltradas) {
-        if (a.escopo) continue; // a auto-avaliação de escopo tem visão própria
+        // A Avaliação do Escopo é outra visão, nunca "Fulano avaliou Fulano".
+        // `eh_escopo` cobre também a que veio sem escopo identificado.
+        if (a.eh_escopo || a.escopo) continue;
         const chave = modo === "avaliador" ? a.avaliador_id : a.avaliado_id;
         const lista = mapa.get(chave) ?? [];
         lista.push(a);
@@ -425,7 +443,7 @@ export function PainelAvaliacoes() {
                                 {" · "}
                                 {formatarData(a.criado_em)}
                               </span>
-                              <SubItemMeta>
+                              <SubItemAcoes>
                                 <PageBadge $tone={tomDaNota(a.nota_geral)}>{a.nota_geral.toFixed(1)}</PageBadge>
                                 <PageButtonSm $variant="outline" type="button" onClick={() => toggleDetalhe(a.id)}>
                                   {expandidaAqui ? "Ocultar" : "Detalhes"}
@@ -433,7 +451,7 @@ export function PainelAvaliacoes() {
                                 <PageButtonSm $variant="ghost" type="button" onClick={() => setParaRemover(a)}>
                                   Remover
                                 </PageButtonSm>
-                              </SubItemMeta>
+                              </SubItemAcoes>
                             </SubItem>
                             {expandidaAqui && (
                               <AvaliacaoDetalheBlock>

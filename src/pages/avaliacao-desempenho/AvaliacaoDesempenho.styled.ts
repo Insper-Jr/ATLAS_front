@@ -256,6 +256,8 @@ export const VoltarLink = styled.button`
   border: none;
   background: none;
   padding: 0;
+  /* Não encostar no card "Como avaliar" logo abaixo (2026-10-12). */
+  margin-bottom: ${theme.spacing.md};
   font-size: ${theme.fontSize.sm};
   font-weight: ${theme.fontWeight.medium};
   color: ${theme.colors.mutedForeground};

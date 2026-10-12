@@ -127,6 +127,16 @@ export const SubItemMeta = styled.span`
   color: ${theme.colors.mutedForeground};
 `;
 
+/** Nota + botões no fim de uma linha de avaliação. Separado de
+ *  `SubItemMeta` (texto solto, usado em outras telas) porque aqui são
+ *  elementos lado a lado, que sem o gap ficavam colados (2026-10-12). */
+export const SubItemAcoes = styled.span`
+  display: inline-flex;
+  align-items: center;
+  gap: ${theme.spacing.sm};
+  flex-shrink: 0;
+`;
+
 // "Quem não preencheu": um card por avaliador (não uma linha por par), com
 // todo mundo que falta avaliar reunido numa frase só, escaneia muito mais
 // rápido que uma lista plana de "Fulano → Beltrano" repetindo o mesmo nome.

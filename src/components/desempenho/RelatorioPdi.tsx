@@ -77,12 +77,6 @@ const PastaBloco = styled.div`
 
 /** Explica a ausência do botão Enviar em vez de deixar o espaço em branco
  *  — sem isso, "PDI inicial" parece quebrado (Pendente, sem jeito de agir). */
-const AvisoSemAcao = styled.span`
-  font-size: ${theme.fontSize.xs};
-  color: ${theme.colors.mutedForeground};
-  font-style: italic;
-`;
-
 const LotesStack = styled.div`
   display: flex;
   flex-direction: column;
@@ -190,7 +184,9 @@ export function RelatorioPdi({ usuarioId, podeEnviarInicial, podeEnviarEncontro 
             Baixar
           </PageButtonSm>
         )}
-        {podeAgir ? (
+        {/* Sem aviso extra pra quem não pode enviar: o selo do item já diz
+            "Aguardando a diretoria". */}
+        {podeAgir && (
           <PageButtonSm
             type="button"
             $variant="outline"
@@ -200,8 +196,6 @@ export function RelatorioPdi({ usuarioId, podeEnviarInicial, podeEnviarEncontro 
             <Upload size={14} />
             {ocupadoAqui ? "Enviando…" : item.envio ? "Reenviar" : "Enviar"}
           </PageButtonSm>
-        ) : (
-          !item.envio && <AvisoSemAcao>Só a diretoria envia</AvisoSemAcao>
         )}
         {podeAgir && item.envio && (
           <PageButtonSm type="button" $variant="ghost" disabled={ocupadoAqui} onClick={() => remover(item.item_id)}>

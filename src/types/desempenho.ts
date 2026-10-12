@@ -91,7 +91,9 @@ export interface DesempenhoFilaItem {
 }
 
 export interface DesempenhoAvaliacaoEscopo {
-  escopo_id: number;
+  /** Do catálogo. Nulo no escopo vendido como "Outro" sem par no catálogo
+   *  (2026-10-12); aí o painel agrupa pelo `nome`. */
+  escopo_id: number | null;
   nome: string;
   projeto_nome: string | null;
 }
@@ -111,6 +113,10 @@ export interface DesempenhoAvaliacao {
    *  avaliou, resolvido pelo backend cruzando a frente dela com os escopos
    *  da banca. `null`/ausente quando não deu pra desambiguar. */
   escopo?: DesempenhoAvaliacaoEscopo | null;
+  /** 2026-10-12: `true` sempre que é Avaliação do Escopo, mesmo quando
+   *  `escopo` não veio (não deu pra saber QUAL escopo). É isto que tira a
+   *  linha da visão por pessoa, nunca a presença de `escopo`. */
+  eh_escopo?: boolean;
 }
 
 export interface DesempenhoAvaliacaoNotaDetalhe {
