@@ -436,45 +436,52 @@ export function ComunicadoFormulario({ onEnviado }: { onEnviado: (enviados: numb
         </FieldGroup>
       )}
 
-      <FieldGroup>
-        <FieldLabelRow>
-          <FieldLabel>Lista de destinatários</FieldLabel>
-          <FieldContador>
-            {previaCarregando
-              ? "Montando..."
-              : previaVisivel
-                ? `${destinatariosFinais.length} de ${previaVisivel.destinatarios.length}`
-                : ""}
-          </FieldContador>
-        </FieldLabelRow>
-        {previaErro && !incompleto ? (
-          <FormErrorText>{previaErro}</FormErrorText>
-        ) : !previaVisivel ? (
-          <EmptyText>Complete o recorte acima pra ver quem recebe.</EmptyText>
-        ) : previaVisivel.destinatarios.length === 0 ? (
-          <EmptyText>Ninguém neste recorte.</EmptyText>
-        ) : (
-          <>
-            <FieldHint>{previaVisivel.rotulo}. Desmarque quem não deve receber.</FieldHint>
-            <Lista>
-              {previaVisivel.destinatarios.map((d) => (
-                <Linha key={d.usuario_id} $apagada={excluidos.has(d.usuario_id)}>
-                  <input
-                    type="checkbox"
-                    checked={!excluidos.has(d.usuario_id)}
-                    onChange={() => alternarExcluido(d.usuario_id)}
-                  />
-                  {d.nome}
-                  <LinhaMeta>
-                    {d.detalhe ? `${d.detalhe} · ` : ""}
-                    {d.email}
-                  </LinhaMeta>
-                </Linha>
-              ))}
-            </Lista>
-          </>
-        )}
-      </FieldGroup>
+      {/* Escolhendo à mão, a seleção acima já é a lista: repetir embaixo só
+          duplicava as mesmas pessoas (2026-10-12). Nos outros recortes a lista
+          mostra quem o filtro achou e deixa desmarcar. */}
+      {segmento === "manual" ? (
+        previaErro && !incompleto ? <FormErrorText>{previaErro}</FormErrorText> : null
+      ) : (
+        <FieldGroup>
+          <FieldLabelRow>
+            <FieldLabel>Lista de destinatários</FieldLabel>
+            <FieldContador>
+              {previaCarregando
+                ? "Montando..."
+                : previaVisivel
+                  ? `${destinatariosFinais.length} de ${previaVisivel.destinatarios.length}`
+                  : ""}
+            </FieldContador>
+          </FieldLabelRow>
+          {previaErro && !incompleto ? (
+            <FormErrorText>{previaErro}</FormErrorText>
+          ) : !previaVisivel ? (
+            <EmptyText>Complete o recorte acima pra ver quem recebe.</EmptyText>
+          ) : previaVisivel.destinatarios.length === 0 ? (
+            <EmptyText>Ninguém neste recorte.</EmptyText>
+          ) : (
+            <>
+              <FieldHint>{previaVisivel.rotulo}. Desmarque quem não deve receber.</FieldHint>
+              <Lista>
+                {previaVisivel.destinatarios.map((d) => (
+                  <Linha key={d.usuario_id} $apagada={excluidos.has(d.usuario_id)}>
+                    <input
+                      type="checkbox"
+                      checked={!excluidos.has(d.usuario_id)}
+                      onChange={() => alternarExcluido(d.usuario_id)}
+                    />
+                    {d.nome}
+                    <LinhaMeta>
+                      {d.detalhe ? `${d.detalhe} · ` : ""}
+                      {d.email}
+                    </LinhaMeta>
+                  </Linha>
+                ))}
+              </Lista>
+            </>
+          )}
+        </FieldGroup>
+      )}
 
       <FieldGroup>
         <FieldLabelRow>
