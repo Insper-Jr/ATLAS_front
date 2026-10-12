@@ -20,6 +20,22 @@
       content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover"
     />
     <meta name="theme-color" content="#ffffff" />
+    <!--
+      App instalável (PWA): o manifest diz nome, ícones e "standalone" (abre
+      sem a barra do navegador). O iOS não lê os ícones do manifest pra tela
+      de início, daí o apple-touch-icon; e só trata como app (inclusive pra
+      receber push, iOS 16.4+) o que foi adicionado à Tela de Início.
+      Barra de status "default": o layout não reserva a área do relógio
+      (nenhum env(safe-area-inset-*) no CSS), então o conteúdo não pode ir
+      por baixo dela.
+    -->
+    <link rel="manifest" href="/manifest.webmanifest" />
+    <link rel="apple-touch-icon" href="/icons/apple-touch-icon.png" />
+    <meta name="application-name" content="ATLAS" />
+    <meta name="mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-title" content="ATLAS" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="default" />
     <title>ATLAS</title>
   </head>
   <body>

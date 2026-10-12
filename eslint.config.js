@@ -31,4 +31,12 @@ export default tseslint.config(
       globals: globals.browser,
     },
   },
+  // O service worker roda fora da página: `self`, `caches`, `clients` são do
+  // escopo dele, não de `window`.
+  {
+    files: ["public/sw.js"],
+    languageOptions: {
+      globals: globals.serviceworker,
+    },
+  },
 );

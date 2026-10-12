@@ -1,6 +1,7 @@
 import { createContext, useCallback, useContext, useEffect, useState, ReactNode } from "react";
 import { apiFetch } from "@/lib/api";
 import { getPosicoesPermissoes, mesclarPermissoes } from "@/lib/posicoes-permissoes";
+import { desativarPush, sincronizarPush } from "@/lib/push";
 import type { Usuario, Permissoes, Posicao, StatusUsuario } from "@/types/auth";
 
 // A API devolve `posicao` solto em /auth/me, sem as 13 caixas de permissão
@@ -158,6 +159,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setUsuario(completo);
       localStorage.setItem(USUARIO_CACHE_KEY, JSON.stringify(completo));
       renovarSessao(token);
+      // Aparelho com push ativado passa a ser de quem está logado agora.
+      void sincronizarPush(token);
     } catch {
       setToken(null);
       setUsuario(null);
@@ -188,6 +191,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }
 
   function logout() {
+    // Só no "Sair" de propósito (sessão vencida não passa por aqui): o
+    // aparelho deixa de receber os avisos de quem saiu. Roda de carona,
+    // sem esperar.
+    void desativarPush(token);
     localStorage.removeItem("token");
     localStorage.removeItem(USUARIO_CACHE_KEY);
     setToken(null);

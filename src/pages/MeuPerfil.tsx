@@ -11,6 +11,7 @@ import { FotoCircular } from "@/components/Avatar";
 import type { Frente } from "@/types/banca";
 import type { FaixaDisponivel, FaixaGrade } from "@/types/grade";
 import { GradeEditor } from "@/components/grade/GradeEditor";
+import { NotificacoesNoAparelho } from "@/components/NotificacoesNoAparelho";
 import {
   PageStack,
   PageHeader,
@@ -351,6 +352,8 @@ export function MeuPerfil() {
           />
         </PageCardContent>
       </PageCard>
+
+      <NotificacoesNoAparelho />
 
       <PageCard>
         <PageCardHeader>
