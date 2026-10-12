@@ -74,6 +74,15 @@ export function Layout() {
     setMenuAberto(false);
   }
 
+  // Tela nova começa no topo (2026-10-12). Sem isto a rolagem da tela
+  // anterior continua valendo: no celular, depois do login, o título de
+  // "Meus projetos" ficava escondido atrás da Topbar, ainda na altura em que
+  // o teclado tinha empurrado a página. Só o pathname: trocar filtro na URL
+  // (search) não deve jogar a pessoa pro topo.
+  useEffect(() => {
+    window.scrollTo(0, 0);
+  }, [location.pathname]);
+
   useEffect(() => {
     if (!menuAberto) return;
 

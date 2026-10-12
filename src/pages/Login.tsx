@@ -72,6 +72,11 @@ export function Login() {
       // junto, sem isso, um e-mail/senha corretos "sobrando um espaço"
       // caem como "Email ou senha incorretos" sem nenhuma pista do porquê.
       await login(email.trim(), senha.trim());
+      // No celular o teclado ainda está aberto e a página rolada pra cima
+      // dele: fecha o teclado e volta ao topo antes de trocar de tela, senão
+      // "Meus projetos" abre deslocado.
+      if (document.activeElement instanceof HTMLElement) document.activeElement.blur();
+      window.scrollTo(0, 0);
       navigate("/projetos");
     } catch (err) {
       setErro(err instanceof Error ? err.message : "Erro ao fazer login");
