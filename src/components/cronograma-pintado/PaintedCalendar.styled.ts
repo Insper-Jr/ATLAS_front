@@ -114,6 +114,19 @@ export const PaintedDayCell = styled(DayCell)<{
     border-bottom: none;
   }
 
+  /* O dia desenha só a borda direita e a de baixo. A de cima e a da esquerda
+     vêm do vizinho, e o vizinho vazio (dia de outro mês) tem borda
+     transparente: o dia logo abaixo ou à direita dele ficava sem contorno
+     (2026-10-12, os dias 5, 6 e 7 abaixo da primeira semana). A sombra de 1px
+     fecha o contorno; onde o vizinho já tem borda, cai em cima da mesma linha
+     cinza e não muda nada. Funciona porque a célula é "position: relative"
+     e pinta por cima das anteriores. */
+  ${({ $vazia }) =>
+    !$vazia &&
+    css`
+      box-shadow: -1px -1px 0 0 ${theme.colors.border};
+    `}
+
   ${({ $vazia }) =>
     $vazia &&
     css`
