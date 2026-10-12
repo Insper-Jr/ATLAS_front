@@ -88,11 +88,30 @@ export interface ComunicadoHistorico {
   total: number;
   emails_enviados: number;
   lidas: number;
-  destinatarios: string[];
+  /** Pra quem foi, com o e-mail usado e se chegou. */
+  destinatarios: DestinatarioEnviado[];
+}
+
+export interface DestinatarioEnviado {
+  usuario_id: number;
+  nome: string;
+  email: string | null;
+  /** O e-mail saiu pro provedor. `false` = ainda na fila, ou falhou. */
+  email_enviado: boolean;
+  /** Abriu no sino do ATLAS. */
+  lida: boolean;
 }
 
 export function getComunicados(token: string) {
   return apiFetch<ComunicadoHistorico[]>("/comunicados", { token });
+}
+
+/** Tira do histórico e do sino de quem recebeu. O e-mail que saiu não volta. */
+export function apagarComunicado(comunicadoId: string, token: string) {
+  return apiFetch<{ apagadas: number }>(`/comunicados/${encodeURIComponent(comunicadoId)}`, {
+    method: "DELETE",
+    token,
+  });
 }
 
 export function textoSucesso(enviados: number): string {
