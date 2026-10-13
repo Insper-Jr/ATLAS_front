@@ -38,8 +38,10 @@ export const DIRETORIA: Posicao[] = ["diretor_projetos", "diretor_pessoas", "dir
 const DIR_PROJETOS: Posicao = "diretor_projetos";
 
 /** Quem pode ser mentor de alguém. Espelha `POSICOES_ELEGIVEIS_MENTOR` do
- *  backend — a tela do PDI filtra a lista de candidatos por ela. */
-export const MENTORES_ELEGIVEIS: Posicao[] = ["coordenador", "gerente", ...DIRETORIA];
+ *  backend — a tela do PDI filtra a lista de candidatos por ela.
+ *  Vendas e diretor de vendas entraram em 2026-10-13: a coordenadora de
+ *  vendas tinha mentorados e não via a aba. */
+export const MENTORES_ELEGIVEIS: Posicao[] = ["coordenador", "gerente", "vendas", "diretor_de_vendas", ...DIRETORIA];
 
 const MATRIZ: Record<Acao, Posicao[]> = {
   // Gestão, restrito às lideranças
