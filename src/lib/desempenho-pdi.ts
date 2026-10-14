@@ -104,12 +104,18 @@ export function deleteEnvioPdi(usuarioId: number, itemId: number, token: string)
 /** A rota exige Bearer token, então um `<a href>` direto não funciona —
  *  baixa como blob e dispara o download via um link temporário (mesmo
  *  padrão de `baixarAnexoProposta`). */
-export async function baixarEnvioPdi(usuarioId: number, itemId: number, nomeArquivo: string, token: string) {
+/** O arquivo em si, pra prévia ou download. A API exige o token, então o
+ *  navegador não consegue abrir a URL direto num <img> ou numa aba. */
+export async function getEnvioPdiBlob(usuarioId: number, itemId: number, token: string): Promise<Blob> {
   const response = await fetch(`${API_URL}/usuarios/${usuarioId}/desempenho/pdi/itens/${itemId}/envio`, {
     headers: { Authorization: `Bearer ${token}` },
   });
   if (!response.ok) throw new Error("Erro ao baixar o arquivo");
-  const blob = await response.blob();
+  return response.blob();
+}
+
+export async function baixarEnvioPdi(usuarioId: number, itemId: number, nomeArquivo: string, token: string) {
+  const blob = await getEnvioPdiBlob(usuarioId, itemId, token);
   const url = URL.createObjectURL(blob);
   const link = document.createElement("a");
   link.href = url;

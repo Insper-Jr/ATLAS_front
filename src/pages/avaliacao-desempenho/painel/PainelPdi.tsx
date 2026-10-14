@@ -1,5 +1,6 @@
-import { useEffect, useMemo, useState } from "react";
-import { AlertTriangle, ChevronDown, ChevronUp, Maximize2, Minimize2, Plus, X } from "lucide-react";
+import { useCallback, useEffect, useMemo, useState } from "react";
+import { AlertTriangle, ChevronDown, ChevronUp, Download, Maximize2, Minimize2, Plus, X } from "lucide-react";
+import { PreviewArquivoModal } from "@/components/PreviewArquivoModal";
 import { useAuth } from "@/context/AuthContext";
 import { createMentoria, deleteMentoria, getMentorias } from "@/lib/desempenho-mentorias";
 import { getUsuarios } from "@/lib/usuarios";
@@ -14,6 +15,7 @@ import {
   getPendenciasPdi,
   getResultadosPastaPdi,
   baixarEnvioPdi,
+  getEnvioPdiBlob,
   updateItemPdi,
   updatePastaPdi,
 } from "@/lib/desempenho-pdi";
@@ -426,6 +428,13 @@ function PastasPdiCard() {
     }
   }
 
+  // Prévia sem baixar (2026-10-13): clicar no nome abre; o ícone baixa.
+  const [preview, setPreview] = useState<{ mentoradoId: number; envio: DesempenhoPdiResultadoEnvio } | null>(null);
+  const carregarPreview = useCallback(
+    () => getEnvioPdiBlob(preview?.mentoradoId ?? 0, preview?.envio.item_id ?? 0, token ?? ""),
+    [preview, token],
+  );
+
   async function baixarResultado(mentoradoId: number, envio: DesempenhoPdiResultadoEnvio) {
     if (!token) return;
     try {
@@ -743,9 +752,17 @@ function PastasPdiCard() {
                             <PageButtonSm
                               type="button"
                               $variant="outline"
-                              onClick={() => baixarResultado(pessoa.mentorado_id, envio)}
+                              onClick={() => setPreview({ mentoradoId: pessoa.mentorado_id, envio })}
                             >
                               {envio.arquivo_nome}
+                            </PageButtonSm>
+                            <PageButtonSm
+                              type="button"
+                              $variant="ghost"
+                              aria-label={`Baixar ${envio.arquivo_nome}`}
+                              onClick={() => baixarResultado(pessoa.mentorado_id, envio)}
+                            >
+                              <Download size={14} />
                             </PageButtonSm>
                             <span className="meta">
                               enviado por {envio.enviado_por_nome ?? "?"} em {formatarData(envio.enviado_em)}
@@ -1072,6 +1089,15 @@ function PastasPdiCard() {
             </ModalBody>
           </ModalContent>
         </ModalOverlay>
+      )}
+
+      {preview && (
+        <PreviewArquivoModal
+          nomeArquivo={preview.envio.arquivo_nome}
+          carregar={carregarPreview}
+          onBaixar={() => baixarResultado(preview.mentoradoId, preview.envio)}
+          onFechar={() => setPreview(null)}
+        />
       )}
 
       {paraExcluir && (

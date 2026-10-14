@@ -1,9 +1,10 @@
-import { useEffect, useRef, useState } from "react";
-import { Download, Trash2, Upload } from "lucide-react";
+import { useCallback, useEffect, useRef, useState } from "react";
+import { Download, Eye, Trash2, Upload } from "lucide-react";
 import styled from "styled-components";
 import { theme } from "@/styles/theme";
 import { useAuth } from "@/context/AuthContext";
-import { baixarEnvioPdi, deleteEnvioPdi, getEnviosPdi, uploadEnvioPdi } from "@/lib/desempenho-pdi";
+import { baixarEnvioPdi, deleteEnvioPdi, getEnvioPdiBlob, getEnviosPdi, uploadEnvioPdi } from "@/lib/desempenho-pdi";
+import { PreviewArquivoModal } from "@/components/PreviewArquivoModal";
 import { formatarData } from "@/lib/projetos";
 import type { DesempenhoPdiItemComEnvio, DesempenhoPdiPastaComItens } from "@/types/desempenho";
 import { EmptyText, PageBadge, PageButtonSm, PageLoadingBlock } from "@/styles/page.styled";
@@ -106,6 +107,12 @@ export function RelatorioPdi({ usuarioId, podeEnviarInicial, podeEnviarEncontro 
   const [ocupado, setOcupado] = useState<number | null>(null);
   const [itemAlvo, setItemAlvo] = useState<number | null>(null);
   const inputArquivo = useRef<HTMLInputElement>(null);
+  // Prévia sem baixar (2026-10-13): o item cujo arquivo está aberto no modal.
+  const [preview, setPreview] = useState<DesempenhoPdiItemComEnvio | null>(null);
+  const carregarPreview = useCallback(
+    () => getEnvioPdiBlob(usuarioId, preview?.item_id ?? 0, token ?? ""),
+    [usuarioId, preview, token],
+  );
 
   async function carregar() {
     if (!token) return;
@@ -179,10 +186,16 @@ export function RelatorioPdi({ usuarioId, podeEnviarInicial, podeEnviarEncontro 
     return (
       <>
         {item.envio && (
-          <PageButtonSm type="button" $variant="outline" onClick={() => baixar(item.item_id, item)}>
-            <Download size={14} />
-            Baixar
-          </PageButtonSm>
+          <>
+            <PageButtonSm type="button" $variant="outline" onClick={() => setPreview(item)}>
+              <Eye size={14} />
+              Ver
+            </PageButtonSm>
+            <PageButtonSm type="button" $variant="outline" onClick={() => baixar(item.item_id, item)}>
+              <Download size={14} />
+              Baixar
+            </PageButtonSm>
+          </>
         )}
         {/* Sem aviso extra pra quem não pode enviar: o selo do item já diz
             "Aguardando a diretoria". */}
@@ -297,6 +310,15 @@ export function RelatorioPdi({ usuarioId, podeEnviarInicial, podeEnviarEncontro 
       )}
 
       {erro && <FormErrorText>{erro}</FormErrorText>}
+
+      {preview?.envio && (
+        <PreviewArquivoModal
+          nomeArquivo={preview.envio.arquivo_nome}
+          carregar={carregarPreview}
+          onBaixar={() => baixar(preview.item_id, preview)}
+          onFechar={() => setPreview(null)}
+        />
+      )}
     </div>
   );
 }
