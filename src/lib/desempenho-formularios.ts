@@ -50,7 +50,7 @@ export function updateFormulario(
   token: string,
 ) {
   return apiFetch<DesempenhoFormulario>(`/desempenho/formularios/${tipo}/${papel}`, {
-    method: "PUT",
+    aviso: "Formulário salvo", method: "PUT",
     token,
     body: JSON.stringify(payload),
   });

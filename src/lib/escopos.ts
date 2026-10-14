@@ -10,7 +10,7 @@ export function getEscopos(token: string, frenteId?: number | null) {
 
 export function createEscopo(nome: string, frenteId: number | null, token: string) {
   return apiFetch<Escopo>("/escopos", {
-    method: "POST",
+    aviso: "Escopo criado", method: "POST",
     token,
     body: JSON.stringify({ nome, frente_id: frenteId }),
   });
@@ -18,12 +18,12 @@ export function createEscopo(nome: string, frenteId: number | null, token: strin
 
 export function updateEscopo(escopoId: number, nome: string, frenteId: number | null, token: string) {
   return apiFetch<Escopo>(`/escopos/${escopoId}`, {
-    method: "PATCH",
+    aviso: "Escopo salvo", method: "PATCH",
     token,
     body: JSON.stringify({ nome, frente_id: frenteId }),
   });
 }
 
 export function deleteEscopo(escopoId: number, token: string) {
-  return apiFetch(`/escopos/${escopoId}`, { method: "DELETE", token });
+  return apiFetch(`/escopos/${escopoId}`, { aviso: "Escopo excluído", method: "DELETE", token });
 }

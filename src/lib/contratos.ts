@@ -23,7 +23,7 @@ export function getDocumentosDoProjeto(projetoId: number, token: string) {
 
 export function abrirDocumento(projetoId: number, tipo: TipoDocumentoContratual, token: string) {
   return apiFetch<DocumentoContratual>(`/projetos/${projetoId}/documentos-contratuais`, {
-    method: "POST",
+    aviso: "Documento aberto", method: "POST",
     body: JSON.stringify({ tipo }),
     token,
   });
@@ -56,7 +56,7 @@ export function criarDocumentoInstitucional(
   token: string,
 ) {
   return apiFetch<DocumentoContratual>(`/documentos-contratuais/institucional`, {
-    method: "POST",
+    aviso: "Documento criado", method: "POST",
     body: JSON.stringify(dados),
     token,
   });
@@ -86,34 +86,34 @@ export function atualizarDadosDocumento(
 
 export function confirmarPreenchimento(documentoId: number, token: string) {
   return apiFetch<DocumentoContratual>(`/documentos-contratuais/${documentoId}/confirmar`, {
-    method: "POST",
+    aviso: "Preenchimento confirmado", method: "POST",
     token,
   });
 }
 
 export function gerarDocumento(documentoId: number, token: string) {
   return apiFetch<VersaoDocumentoContratual>(`/documentos-contratuais/${documentoId}/gerar`, {
-    method: "POST",
+    aviso: "Documento gerado", method: "POST",
     token,
   });
 }
 
 export function aprovarInternamente(documentoId: number, token: string) {
   return apiFetch<DocumentoContratual>(`/documentos-contratuais/${documentoId}/aprovar-internamente`, {
-    method: "POST",
+    aviso: "Aprovado internamente", method: "POST",
     token,
   });
 }
 
 export function deletarDocumento(documentoId: number, token: string) {
-  return apiFetch<void>(`/documentos-contratuais/${documentoId}`, { method: "DELETE", token });
+  return apiFetch<void>(`/documentos-contratuais/${documentoId}`, { aviso: "Documento excluído", method: "DELETE", token });
 }
 
 /** Apagar de vez — mesmo já assinado e arquivado. Restrito à diretoria (o
  *  backend recusa com 403 pra qualquer outra pessoa); nunca apaga o projeto
  *  que o documento originou, só o documento e o histórico dele. */
 export function deletarDocumentoPermanente(documentoId: number, token: string) {
-  return apiFetch<void>(`/documentos-contratuais/${documentoId}/permanente`, { method: "DELETE", token });
+  return apiFetch<void>(`/documentos-contratuais/${documentoId}/permanente`, { aviso: "Documento apagado", method: "DELETE", token });
 }
 
 /**
@@ -193,21 +193,21 @@ export function urlArquivoAprovacao(token: string) {
 
 export function exportarAprovacao(documentoId: number, token: string) {
   return apiFetch<LinkAprovacao>(`/documentos-contratuais/${documentoId}/exportar-aprovacao`, {
-    method: "POST",
+    aviso: "Enviado para aprovação", method: "POST",
     token,
   });
 }
 
 export function recusarAssinaturaTep(documentoId: number, token: string) {
   return apiFetch<LinkAprovacao>(`/documentos-contratuais/${documentoId}/recusar-assinatura-tep`, {
-    method: "POST",
+    aviso: "Recusa registrada", method: "POST",
     token,
   });
 }
 
 export function marcarAssinado(documentoId: number, token: string) {
   return apiFetch<DocumentoContratual>(`/documentos-contratuais/${documentoId}/marcar-assinado`, {
-    method: "POST",
+    aviso: "Marcado como assinado", method: "POST",
     token,
   });
 }
@@ -215,7 +215,7 @@ export function marcarAssinado(documentoId: number, token: string) {
 export function considerarAceitoPorPrazo(documentoId: number, token: string) {
   return apiFetch<DocumentoContratual>(
     `/documentos-contratuais/${documentoId}/considerar-aceito-por-prazo`,
-    { method: "POST", token },
+    { aviso: "Considerado aceito por prazo", method: "POST", token },
   );
 }
 
@@ -236,7 +236,7 @@ export function responderAprovacao(
   request: { acao: "aprovar" | "alteracao"; texto?: string; trechos?: string[] },
 ) {
   return apiFetch<{ ok: true }>(`/aprovacao/${token}/responder`, {
-    method: "POST",
+    aviso: "Resposta registrada", method: "POST",
     body: JSON.stringify(request),
   });
 }
@@ -253,7 +253,7 @@ export function getSolicitacoesAlteracao(documentoId: number, token: string) {
 export function analisarSolicitacao(solicitacaoId: number, token: string) {
   return apiFetch<SolicitacaoAlteracao>(
     `/solicitacoes-alteracao-contratual/${solicitacaoId}/analisar`,
-    { method: "PATCH", token },
+    { aviso: "Solicitação analisada", method: "PATCH", token },
   );
 }
 
@@ -268,7 +268,7 @@ export function getParagrafosEditaveis(documentoId: number, token: string) {
 
 export function editarTexto(documentoId: number, edicoes: Record<number, string>, token: string) {
   return apiFetch<{ alterados: number }>(`/documentos-contratuais/${documentoId}/texto`, {
-    method: "PATCH",
+    aviso: "Texto salvo", method: "PATCH",
     body: JSON.stringify({ edicoes }),
     token,
   });
@@ -278,7 +278,7 @@ export function reanexarDocumento(documentoId: number, arquivo: File, token: str
   const body = new FormData();
   body.append("arquivo", arquivo);
   return apiFetch<VersaoDocumentoContratual>(`/documentos-contratuais/${documentoId}/reanexar`, {
-    method: "POST",
+    aviso: "Documento reanexado", method: "POST",
     body,
     token,
   });
@@ -326,7 +326,7 @@ export function atualizarIdentidadeInstitucional(
   token: string,
 ) {
   return apiFetch<IdentidadeInstitucional>("/identidade-institucional", {
-    method: "PATCH",
+    aviso: "Identidade institucional salva", method: "PATCH",
     body: JSON.stringify({ dados }),
     token,
   });
@@ -375,9 +375,9 @@ export async function baixarModeloContratual(tipo: string, nomeArquivo: string, 
 export function enviarModeloContratual(tipo: string, arquivo: File, token: string) {
   const body = new FormData();
   body.append("arquivo", arquivo);
-  return apiFetch<ModeloContratual>(`/documentos-contratuais/modelos/${tipo}`, { method: "PUT", token, body });
+  return apiFetch<ModeloContratual>(`/documentos-contratuais/modelos/${tipo}`, { aviso: "Modelo enviado", method: "PUT", token, body });
 }
 
 export function removerModeloContratual(tipo: string, token: string) {
-  return apiFetch<void>(`/documentos-contratuais/modelos/${tipo}`, { method: "DELETE", token });
+  return apiFetch<void>(`/documentos-contratuais/modelos/${tipo}`, { aviso: "Modelo removido", method: "DELETE", token });
 }

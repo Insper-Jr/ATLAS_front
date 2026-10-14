@@ -7,14 +7,14 @@ export function getUsuariosFrentes(token: string) {
 
 export function createUsuarioFrente(dados: { usuario_id: number; frente_id: number }, token: string) {
   return apiFetch<UsuarioFrente>("/usuarios-frentes", {
-    method: "POST",
+    aviso: "Frente vinculada", method: "POST",
     token,
     body: JSON.stringify(dados),
   });
 }
 
 export function deleteUsuarioFrente(usuarioFrenteId: number, token: string) {
-  return apiFetch(`/usuarios-frentes/${usuarioFrenteId}`, { method: "DELETE", token });
+  return apiFetch(`/usuarios-frentes/${usuarioFrenteId}`, { aviso: "Frente desvinculada", method: "DELETE", token });
 }
 
 export async function syncFrentesUsuario(

@@ -331,8 +331,24 @@ export function Bancas() {
    *  aguardando resultado, e o "avaliou" ao lado do nome na ficha da banca. */
   const podeVerDashboardBancas = !!usuario?.permissoes.pode_ver_dashboard_bancas;
 
-  async function recarregar() {
+  /**
+   * `bancasAfetadas` (2026-10-14, a pedido): os detalhes de cada banca
+   * (avaliadores por frente, o que o "Ver mais" mostra) moram num cache por
+   * id, e recarregar as listas não o tocava. Entrar, sair ou tirar alguém da
+   * banca atualizava o banco e a lista, mas a ficha seguia velha até
+   * recarregar a página, o que no app instalado nem tem como fazer. Toda ação
+   * invalida a(s) banca(s) que mexeu; sem lista, limpa tudo (ação cujo
+   * alcance não se sabe aqui, como confirmar uma troca). O prefetch abaixo
+   * rebusca o que sumiu.
+   */
+  async function recarregar(bancasAfetadas?: number[]) {
     if (!token || !usuario) return;
+    setDetalhesCache((atual) => {
+      if (!Array.isArray(bancasAfetadas)) return {};
+      const copia = { ...atual };
+      for (const id of bancasAfetadas) delete copia[id];
+      return copia;
+    });
     setCarregando(true);
     setErro("");
     try {
@@ -484,7 +500,7 @@ export function Bancas() {
     return (
       <ErrorBlock>
         <ErrorText>Não foi possível carregar as bancas: {erro}</ErrorText>
-        <PageButton $variant="outline" onClick={recarregar}>
+        <PageButton $variant="outline" onClick={() => recarregar()}>
           Tentar novamente
         </PageButton>
       </ErrorBlock>
@@ -605,7 +621,7 @@ export function Bancas() {
     setAvisoErro("");
     try {
       await alocar(bancaId, token);
-      recarregar();
+      recarregar([bancaId]);
     } catch (err) {
       // ⚠ 2026-09-18, a pedido: a recusa por falta de vaga (teto cheio, ou a
       // última reservada pro piso por frente) não é mais um beco sem saída —
@@ -632,7 +648,7 @@ export function Bancas() {
     if (!token) return;
     const resultado = await solicitarEntradaBanca(bancaId, justificativa, token);
     setBancaSolicitarEntrada(null);
-    recarregar();
+    recarregar([bancaId]);
     setAvisoErro(
       resultado.alocado_direto
         ? "A vaga estava livre — você já foi alocado, sem precisar de aprovação."
@@ -673,7 +689,7 @@ export function Bancas() {
     setAvisoErro("");
     try {
       await desalocar(candidatura.id, token);
-      recarregar();
+      recarregar([bancaId]);
     } catch (err) {
       setAvisoErro(err instanceof Error ? err.message : "Não foi possível se desalocar");
     }
@@ -684,7 +700,7 @@ export function Bancas() {
     if (!token || !candidatura) return;
     try {
       await createSolicitacaoTroca(candidatura.id, token);
-      recarregar();
+      recarregar([bancaId]);
     } catch (err) {
       setAvisoErro(err instanceof Error ? err.message : "Erro ao pedir troca");
     }
@@ -696,7 +712,7 @@ export function Bancas() {
     try {
       await createSolicitacaoTroca(candidatura.id, token, usuarioConvidadoId);
       setBancaConvidar(null);
-      recarregar();
+      recarregar([bancaId]);
     } catch (err) {
       setAvisoErro(err instanceof Error ? err.message : "Erro ao convidar para a troca");
     }
@@ -741,7 +757,7 @@ export function Bancas() {
     // O erro sobe para o modal mostrar; ele só fecha se deu certo.
     await cancelarBanca(bancaCancelar.id, token);
     setBancaCancelar(null);
-    await recarregar();
+    await recarregar([bancaCancelar.id]);
   }
 
   return (
@@ -1000,6 +1016,7 @@ export function Bancas() {
         podeGerirMembros={!!usuario.permissoes.pode_gerir_membros}
         podeVerAvaliou={podeVerDashboardBancas}
         onDescricaoEnviada={recarregar}
+        onAlterou={() => recarregar(bancaDetalhe ? [bancaDetalhe.id] : undefined)}
       />
 
       {bancaConvidar && contexto && (
@@ -1092,7 +1109,7 @@ export function Bancas() {
           equipes={contexto.equipesProjeto}
           token={token}
           onFechar={() => setBancaAlocar(null)}
-          onAlocou={recarregar}
+          onAlocou={() => recarregar([bancaAlocar.id])}
         />
       )}
 
@@ -1119,7 +1136,7 @@ export function Bancas() {
           onSalvo={() => {
             setBancaEditar(null);
             setBancaDetalhe(null);
-            recarregar();
+            recarregar([bancaEditar.id]);
           }}
         />
       )}
@@ -1982,6 +1999,7 @@ function VerMaisModal({
   podeGerirMembros,
   podeVerAvaliou,
   onDescricaoEnviada,
+  onAlterou,
 }: {
   banca: Banca | null;
   contexto: Contexto;
@@ -1995,6 +2013,9 @@ function VerMaisModal({
    *  universo pré-buscado) resolve, pra reabrir a mesma banca depois vir do
    *  cache também. */
   onDetalheCarregado?: (detalhe: BancaDetalhes) => void;
+  /** Mexeu em quem está na banca (tirou alguém): o pai recarrega as listas,
+   *  senão o card continua mostrando a pessoa até recarregar a página. */
+  onAlterou?: () => void;
   onClose: () => void;
   onEditar?: (banca: Banca) => void;
   onExcluir?: (banca: Banca) => void;
@@ -2251,9 +2272,10 @@ function VerMaisModal({
         rotuloProcessando="Removendo…"
         onCancelar={() => setRemovendo(null)}
         onConfirmar={async () => {
-          await desalocar(removendo.candidaturaId, token);
+          await desalocar(removendo.candidaturaId, token, `${removendo.nome} saiu da banca`);
           setRemovendo(null);
           await refetchDetalhe();
+          onAlterou?.();
         }}
       />
     )}

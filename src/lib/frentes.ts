@@ -7,7 +7,7 @@ export function getFrentes(token: string) {
 
 export function createFrente(dados: { nome: string; piso_banca?: number }, token: string) {
   return apiFetch<Frente>("/frentes", {
-    method: "POST",
+    aviso: "Frente criada", method: "POST",
     token,
     body: JSON.stringify(dados),
   });
@@ -19,12 +19,12 @@ export function updateFrente(
   token: string,
 ) {
   return apiFetch<Frente>(`/frentes/${frenteId}`, {
-    method: "PATCH",
+    aviso: "Frente salva", method: "PATCH",
     token,
     body: JSON.stringify(dados),
   });
 }
 
 export function deleteFrente(frenteId: number, token: string) {
-  return apiFetch(`/frentes/${frenteId}`, { method: "DELETE", token });
+  return apiFetch(`/frentes/${frenteId}`, { aviso: "Frente excluída", method: "DELETE", token });
 }

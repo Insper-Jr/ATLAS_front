@@ -12,7 +12,7 @@ export function getExMembros(token: string) {
 
 export function criarExMembro(dados: ExMembroPayload, token: string) {
   return apiFetch<ExMembro>("/institucional/ex-membros", {
-    method: "POST",
+    aviso: "Ex-membro cadastrado", method: "POST",
     token,
     body: JSON.stringify(dados),
   });
@@ -20,7 +20,7 @@ export function criarExMembro(dados: ExMembroPayload, token: string) {
 
 export function editarExMembro(id: number, dados: ExMembroPayload, token: string) {
   return apiFetch<ExMembro>(`/institucional/ex-membros/${id}`, {
-    method: "PUT",
+    aviso: "Ex-membro salvo", method: "PUT",
     token,
     body: JSON.stringify(dados),
   });
@@ -28,20 +28,20 @@ export function editarExMembro(id: number, dados: ExMembroPayload, token: string
 
 export function publicarExMembro(id: number, publicado: boolean, token: string) {
   return apiFetch<ExMembro>(`/institucional/ex-membros/${id}/publicado`, {
-    method: "PATCH",
+    aviso: "Publicação atualizada", method: "PATCH",
     token,
     body: JSON.stringify({ publicado }),
   });
 }
 
 export function apagarExMembro(id: number, token: string) {
-  return apiFetch<void>(`/institucional/ex-membros/${id}`, { method: "DELETE", token });
+  return apiFetch<void>(`/institucional/ex-membros/${id}`, { aviso: "Ex-membro removido", method: "DELETE", token });
 }
 
 /** A lista INTEIRA de ids, na ordem final — o backend recusa lista parcial. */
 export function reordenarExMembros(ids: number[], token: string) {
   return apiFetch<ExMembro[]>("/institucional/ex-membros/ordem", {
-    method: "PUT",
+    aviso: "Ordem salva", method: "PUT",
     token,
     body: JSON.stringify({ ids }),
   });
@@ -51,17 +51,17 @@ export function reordenarExMembros(ids: number[], token: string) {
 export function enviarFotoExMembro(id: number, arquivo: File, token: string) {
   const form = new FormData();
   form.append("arquivo", arquivo);
-  return apiFetch<ExMembro>(`/institucional/ex-membros/${id}/foto`, { method: "PUT", token, body: form });
+  return apiFetch<ExMembro>(`/institucional/ex-membros/${id}/foto`, { aviso: "Foto enviada", method: "PUT", token, body: form });
 }
 
 export function removerFotoExMembro(id: number, token: string) {
-  return apiFetch<ExMembro>(`/institucional/ex-membros/${id}/foto`, { method: "DELETE", token });
+  return apiFetch<ExMembro>(`/institucional/ex-membros/${id}/foto`, { aviso: "Foto removida", method: "DELETE", token });
 }
 
 /** Importa os ex-membros que o site tinha fixos no código. Não duplica. */
 export function importarExMembrosIniciais(token: string) {
   return apiFetch<{ importados: number; atualizados: number; pulados: number }>("/institucional/ex-membros/importar-iniciais", {
-    method: "POST",
+    aviso: "Ex-membros importados", method: "POST",
     token,
   });
 }

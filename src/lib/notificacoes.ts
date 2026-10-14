@@ -32,7 +32,7 @@ export function marcarNotificacaoLida(token: string | null, notificacao: Notific
 export function marcarTodasLidas(token: string | null) {
   return apiFetch<{ marcadas: number }>("/notificacoes/marcar-todas-lidas", {
     token,
-    method: "POST",
+    aviso: "Todas marcadas como lidas", method: "POST",
   });
 }
 
@@ -41,13 +41,13 @@ export function marcarTodasLidas(token: string | null) {
 export function excluirNotificacao(token: string | null, id: number) {
   return apiFetch<{ ok: boolean }>(`/notificacoes/${id}`, {
     token,
-    method: "DELETE",
+    aviso: "Notificação excluída", method: "DELETE",
   });
 }
 
 export function limparNotificacoesLidas(token: string | null) {
   return apiFetch<{ excluidas: number }>("/notificacoes/limpar-lidas", {
     token,
-    method: "DELETE",
+    aviso: "Notificações lidas limpas", method: "DELETE",
   });
 }

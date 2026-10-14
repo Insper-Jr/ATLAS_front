@@ -38,14 +38,14 @@ export function getProjeto(projetoId: number, token: string) {
 /** Arquivar não é excluir, só some das listagens normais. */
 export function arquivarProjeto(projetoId: number, token: string) {
   return apiFetch<{ id: number; arquivado_em: string }>(`/projetos/${projetoId}/arquivar`, {
-    method: "PATCH",
+    aviso: "Projeto arquivado", method: "PATCH",
     token,
   });
 }
 
 export function desarquivarProjeto(projetoId: number, token: string) {
   return apiFetch<{ id: number; arquivado_em: null }>(`/projetos/${projetoId}/desarquivar`, {
-    method: "PATCH",
+    aviso: "Projeto desarquivado", method: "PATCH",
     token,
   });
 }
@@ -53,7 +53,7 @@ export function desarquivarProjeto(projetoId: number, token: string) {
 /** Sem volta, o backend só aceita se o projeto já estiver arquivado. */
 export function deletarProjetoPermanente(projetoId: number, token: string) {
   return apiFetch<{ nome: string }>(`/projetos/${projetoId}`, {
-    method: "DELETE",
+    aviso: "Projeto apagado", method: "DELETE",
     token,
   });
 }
@@ -86,7 +86,7 @@ export interface CreateProjetoPayload {
 
 export function createProjeto(dados: CreateProjetoPayload, token: string) {
   return apiFetch<ProjetoResumo>("/projetos", {
-    method: "POST",
+    aviso: "Projeto criado", method: "POST",
     token,
     body: JSON.stringify(dados),
   });
@@ -97,7 +97,7 @@ export function uploadAnexoProposta(projetoId: number, arquivo: File, token: str
   const formData = new FormData();
   formData.append("arquivo", arquivo);
   return apiFetch<{ anexo_proposta_nome: string }>(`/projetos/${projetoId}/anexo-proposta`, {
-    method: "POST",
+    aviso: "PDF da proposta enviado", method: "POST",
     token,
     body: formData,
   });
@@ -138,7 +138,7 @@ export function updateEquipe(
   vendedorIds?: number[],
 ) {
   return apiFetch<{ equipe: MembroEquipePayload[] }>(`/projetos/${projetoId}/equipe`, {
-    method: "PUT",
+    aviso: "Equipe salva", method: "PUT",
     token,
     body: JSON.stringify(
       vendedorIds === undefined ? { equipe } : { equipe, vendedor_ids: vendedorIds },
@@ -157,7 +157,7 @@ export function updateEquipe(
 export function marcarKickoff(projetoId: number, dataKickoff: string, token: string) {
   return apiFetch<{ id: number; data_kickoff: string; status: StatusProjeto }>(
     `/projetos/${projetoId}/kickoff`,
-    { method: "PATCH", token, body: JSON.stringify({ data_kickoff: dataKickoff }) },
+    { aviso: "Kickoff marcado", method: "PATCH", token, body: JSON.stringify({ data_kickoff: dataKickoff }) },
   );
 }
 
@@ -177,7 +177,7 @@ export function marcarInicioAmbientacao(
 ) {
   return apiFetch<{ id: number; data_inicio_ambientacao: string | null; status: StatusProjeto }>(
     `/projetos/${projetoId}/inicio-ambientacao`,
-    { method: "PATCH", token, body: JSON.stringify({ data_inicio_ambientacao: dataInicio }) },
+    { aviso: "Início da ambientação salvo", method: "PATCH", token, body: JSON.stringify({ data_inicio_ambientacao: dataInicio }) },
   );
 }
 
@@ -201,7 +201,7 @@ export function updateEntregaPrevistaCliente(
   return apiFetch<{ id: number; data_entrega_prevista_cliente: string | null }>(
     `/projetos/${projetoId}/entrega-prevista-cliente`,
     {
-      method: "PATCH",
+      aviso: "Entrega prevista salva", method: "PATCH",
       token,
       body: JSON.stringify({ data_entrega_prevista_cliente: data }),
     },
@@ -212,14 +212,14 @@ export function updateEntregaPrevistaCliente(
 export function mudarStatus(projetoId: number, statusNovo: string, token: string) {
   return apiFetch<{ id: number; status_anterior: StatusProjeto; status: StatusProjeto }>(
     `/projetos/${projetoId}/status`,
-    { method: "PATCH", token, body: JSON.stringify({ status_novo: statusNovo }) },
+    { aviso: "Etapa do projeto atualizada", method: "PATCH", token, body: JSON.stringify({ status_novo: statusNovo }) },
   );
 }
 
 export function updateDescricao(projetoId: number, descricao: string, token: string) {
   return apiFetch<{ id: number; nome: string; descricao: string | null }>(
     `/projetos/${projetoId}/descricao`,
-    { method: "PATCH", token, body: JSON.stringify({ descricao }) },
+    { aviso: "Descrição salva", method: "PATCH", token, body: JSON.stringify({ descricao }) },
   );
 }
 
@@ -229,7 +229,7 @@ export function updateDescricao(projetoId: number, descricao: string, token: str
 export function renomearProjeto(projetoId: number, nome: string, token: string) {
   return apiFetch<{ id: number; nome: string; descricao: string | null }>(
     `/projetos/${projetoId}/descricao`,
-    { method: "PATCH", token, body: JSON.stringify({ nome }) },
+    { aviso: "Nome salvo", method: "PATCH", token, body: JSON.stringify({ nome }) },
   );
 }
 
@@ -237,7 +237,7 @@ export function renomearProjeto(projetoId: number, nome: string, token: string) 
 export function updateCliente(projetoId: number, cliente: string, token: string) {
   return apiFetch<{ id: number; cliente: string | null }>(
     `/projetos/${projetoId}/descricao`,
-    { method: "PATCH", token, body: JSON.stringify({ cliente }) },
+    { aviso: "Cliente salvo", method: "PATCH", token, body: JSON.stringify({ cliente }) },
   );
 }
 
@@ -245,7 +245,7 @@ export function updateCliente(projetoId: number, cliente: string, token: string)
 export function updateLinkProposta(projetoId: number, linkProposta: string, token: string) {
   return apiFetch<{ id: number; link_proposta: string | null }>(
     `/projetos/${projetoId}/descricao`,
-    { method: "PATCH", token, body: JSON.stringify({ link_proposta: linkProposta }) },
+    { aviso: "Link da proposta salvo", method: "PATCH", token, body: JSON.stringify({ link_proposta: linkProposta }) },
   );
 }
 
@@ -254,7 +254,7 @@ export function updateLinkProposta(projetoId: number, linkProposta: string, toke
 export function updateFrentes(projetoId: number, frenteIds: number[], token: string) {
   return apiFetch<{ id: number; frente_ids: number[]; sinergico: boolean }>(
     `/projetos/${projetoId}/frentes`,
-    { method: "PATCH", token, body: JSON.stringify({ frente_ids: frenteIds }) },
+    { aviso: "Frentes salvas", method: "PATCH", token, body: JSON.stringify({ frente_ids: frenteIds }) },
   );
 }
 
@@ -263,14 +263,14 @@ export function updateFrentes(projetoId: number, frenteIds: number[], token: str
 export function updateDiasAmbientacao(projetoId: number, diasAmbientacao: number, token: string) {
   return apiFetch<{ id: number; dias_ambientacao: number; status: StatusProjeto }>(
     `/projetos/${projetoId}/dias-ambientacao`,
-    { method: "PATCH", token, body: JSON.stringify({ dias_ambientacao: diasAmbientacao }) },
+    { aviso: "Dias de ambientação salvos", method: "PATCH", token, body: JSON.stringify({ dias_ambientacao: diasAmbientacao }) },
   );
 }
 
 export function updateDiaReuniaoPadrao(projetoId: number, diaReuniaoPadrao: number | null, token: string) {
   return apiFetch<{ id: number; dia_reuniao_padrao: number | null }>(
     `/projetos/${projetoId}/dia-reuniao-padrao`,
-    { method: "PATCH", token, body: JSON.stringify({ dia_reuniao_padrao: diaReuniaoPadrao }) },
+    { aviso: "Dia da reunião salvo", method: "PATCH", token, body: JSON.stringify({ dia_reuniao_padrao: diaReuniaoPadrao }) },
   );
 }
 
@@ -279,7 +279,7 @@ export function updateDiaReuniaoPadrao(projetoId: number, diaReuniaoPadrao: numb
 export function updateMaxConsultores(projetoId: number, maxConsultores: number, token: string) {
   return apiFetch<{ id: number; max_consultores: number }>(
     `/projetos/${projetoId}/max-consultores`,
-    { method: "PATCH", token, body: JSON.stringify({ max_consultores: maxConsultores }) },
+    { aviso: "Máximo de consultores salvo", method: "PATCH", token, body: JSON.stringify({ max_consultores: maxConsultores }) },
   );
 }
 
@@ -288,7 +288,12 @@ export function updateMaxConsultores(projetoId: number, maxConsultores: number, 
 export function updateVagasAbertas(projetoId: number, vagasAbertas: boolean, token: string) {
   return apiFetch<{ id: number; vagas_abertas: boolean }>(
     `/projetos/${projetoId}/vagas-abertas`,
-    { method: "PATCH", token, body: JSON.stringify({ vagas_abertas: vagasAbertas }) },
+    {
+      method: "PATCH",
+      token,
+      body: JSON.stringify({ vagas_abertas: vagasAbertas }),
+      aviso: vagasAbertas ? "Vagas abertas, consultores das frentes avisados" : "Vagas fechadas",
+    },
   );
 }
 
@@ -305,7 +310,7 @@ export function registrarJustificativaAtraso(
   motivoTipo?: string,
 ) {
   return apiFetch<HistoricoEntrada>(`/projetos/${projetoId}/justificativa-atraso`, {
-    method: "POST",
+    aviso: "Justificativa registrada", method: "POST",
     token,
     body: JSON.stringify({
       texto,
@@ -333,14 +338,14 @@ export function pedirJustificativaAtraso(
 ) {
   return apiFetch<{ id: number; solicitado_em: string; coordenador_id: number }>(
     `/projetos/${projetoId}/pedido-justificativa`,
-    { method: "POST", token, body: JSON.stringify(dados) },
+    { aviso: "Pedido de justificativa enviado", method: "POST", token, body: JSON.stringify(dados) },
   );
 }
 
 /** §7.4 — não é edição de rotina, é pra corrigir engano/teste. Só diretoria. */
 export function excluirJustificativaAtraso(projetoId: number, justificativaId: number, token: string) {
   return apiFetch<null>(`/projetos/${projetoId}/justificativa-atraso/${justificativaId}`, {
-    method: "DELETE",
+    aviso: "Justificativa excluída", method: "DELETE",
     token,
   });
 }
@@ -348,7 +353,7 @@ export function excluirJustificativaAtraso(projetoId: number, justificativaId: n
 /** Mesma lógica da justificativa de atraso acima. Só diretoria. */
 export function excluirRemarcacaoBanca(projetoId: number, remarcacaoId: number, token: string) {
   return apiFetch<null>(`/projetos/${projetoId}/remarcacao-banca/${remarcacaoId}`, {
-    method: "DELETE",
+    aviso: "Remarcação excluída", method: "DELETE",
     token,
   });
 }
@@ -359,14 +364,14 @@ export function excluirRemarcacaoBanca(projetoId: number, remarcacaoId: number, 
 export function ocultarHistorico(projetoId: number, token: string) {
   return apiFetch<{ id: number; historico_oculto_ate: string }>(
     `/projetos/${projetoId}/historico/ocultar`,
-    { method: "PATCH", token },
+    { aviso: "Histórico limpo", method: "PATCH", token },
   );
 }
 
 export function mostrarHistoricoCompleto(projetoId: number, token: string) {
   return apiFetch<{ id: number; historico_oculto_ate: null }>(
     `/projetos/${projetoId}/historico/mostrar-tudo`,
-    { method: "PATCH", token },
+    { aviso: "Histórico completo de volta", method: "PATCH", token },
   );
 }
 
@@ -420,14 +425,14 @@ export function getEscoposProjeto(projetoId: number, token: string) {
 
 export function createEscopoProjeto(projetoId: number, dados: EscopoVendidoPayload, token: string) {
   return apiFetch<{ id: number }>(`/projetos/${projetoId}/escopos`, {
-    method: "POST",
+    aviso: "Escopo adicionado", method: "POST",
     token,
     body: JSON.stringify(dados),
   });
 }
 
 export function deleteEscopoProjeto(escopoId: number, token: string) {
-  return apiFetch(`/escopos-projeto/${escopoId}`, { method: "DELETE", token });
+  return apiFetch(`/escopos-projeto/${escopoId}`, { aviso: "Escopo removido", method: "DELETE", token });
 }
 
 export interface UpdateEscopoProjetoPayload {
@@ -457,7 +462,7 @@ export function updateEscopoProjeto(
   token: string,
 ) {
   return apiFetch<{ id: number }>(`/escopos-projeto/${escopoId}`, {
-    method: "PATCH",
+    aviso: "Escopo salvo", method: "PATCH",
     token,
     body: JSON.stringify(dados),
   });
@@ -495,7 +500,7 @@ export function marcarEntregaEscopo(
     /** true enquanto ninguém confirmou a entrega — o status segue parado. */
     aguardando_confirmacao: boolean;
   }>(`/escopos-projeto/${escopoId}/entrega`, {
-    method: "PATCH",
+    aviso: "Entrega marcada", method: "PATCH",
     token,
     body: JSON.stringify({ data_entrega_real: data, justificativa }),
   });
@@ -522,7 +527,7 @@ export function confirmarEntregaEscopo(
   return apiFetch<{ id: number; status: string; entrega_confirmada_em: string }>(
     `/escopos-projeto/${escopoId}/confirmar-entrega`,
     {
-      method: "POST",
+      aviso: "Entrega confirmada", method: "POST",
       token,
       body: JSON.stringify({ data_entrega_real: dataEntregaReal ?? null }),
     },
@@ -549,7 +554,7 @@ export function marcarBancaDoEscopo(
     status: string;
     projeto_escopo_ids: number[];
   }>(`/escopos-projeto/${escopoId}/banca`, {
-    method: "PUT",
+    aviso: "Banca marcada", method: "PUT",
     token,
     body: JSON.stringify({
       data_hora: dataHora,

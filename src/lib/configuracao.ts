@@ -23,7 +23,7 @@ export function updateConfiguracao(
   token: string,
 ) {
   return apiFetch<Configuracao>("/configuracao", {
-    method: "PATCH",
+    aviso: "Configuração salva", method: "PATCH",
     token,
     body: JSON.stringify(dados),
   });
@@ -90,7 +90,7 @@ export function salvarComposicaoBanca(
   token: string,
 ) {
   return apiFetch<{ combinacao: string }>(`/composicao-banca/${combinacao}`, {
-    method: "PUT",
+    aviso: "Composição salva", method: "PUT",
     token,
     // ⭐ O teto vai junto: ele é da COMBINAÇÃO desde 2026-09-02, e não mais o
     // `vagas_por_banca` global que esta tela editava à parte. O global

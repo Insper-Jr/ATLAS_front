@@ -16,7 +16,7 @@ export function createSolicitacaoTroca(
   usuarioConvidadoId?: number,
 ) {
   return apiFetch<SolicitacaoTroca>("/solicitacoes-troca", {
-    method: "POST",
+    aviso: "Pedido de troca enviado", method: "POST",
     token,
     body: JSON.stringify({
       candidatura_id: candidaturaId,
@@ -27,14 +27,14 @@ export function createSolicitacaoTroca(
 
 export function confirmarSolicitacaoTroca(solicitacaoId: number, token: string) {
   return apiFetch<SolicitacaoTroca>(`/solicitacoes-troca/${solicitacaoId}/confirmar`, {
-    method: "POST",
+    aviso: "Troca confirmada", method: "POST",
     token,
   });
 }
 
 export function cancelarSolicitacaoTroca(solicitacaoId: number, token: string) {
   return apiFetch<SolicitacaoTroca>(`/solicitacoes-troca/${solicitacaoId}/cancelar`, {
-    method: "POST",
+    aviso: "Pedido de troca cancelado", method: "POST",
     token,
   });
 }

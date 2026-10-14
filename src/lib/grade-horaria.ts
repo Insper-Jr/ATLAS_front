@@ -40,7 +40,7 @@ export function getGradesPreenchidas(token: string) {
 /** Substitui a grade inteira. Lista vazia limpa, é gravação válida. */
 export function salvarGrade(faixas: FaixaGrade[], token: string) {
   return apiFetch<MinhaGrade>("/grade-horaria", {
-    method: "PUT",
+    aviso: "Grade horária salva", method: "PUT",
     token,
     body: JSON.stringify({ faixas }),
   });

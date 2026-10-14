@@ -36,7 +36,7 @@ export function createColuna(
   token: string,
 ) {
   return apiFetch<ColunaTarefa>(base(projetoId), {
-    method: "POST",
+    aviso: "Coluna criada", method: "POST",
     token,
     body: JSON.stringify(dados),
   });
@@ -49,7 +49,7 @@ export function updateColuna(
   token: string,
 ) {
   return apiFetch<ColunaTarefa>(`${base(projetoId)}/${colunaId}`, {
-    method: "PATCH",
+    aviso: "Coluna salva", method: "PATCH",
     token,
     body: JSON.stringify(dados),
   });
@@ -72,7 +72,7 @@ export function deleteColuna(
   moverPara?: number,
 ) {
   const query = moverPara ? `?mover_para=${moverPara}` : "";
-  return apiFetch(`${base(projetoId)}/${colunaId}${query}`, { method: "DELETE", token });
+  return apiFetch(`${base(projetoId)}/${colunaId}${query}`, { aviso: "Coluna excluída", method: "DELETE", token });
 }
 
 /* ------------------------------------------------------------------ */

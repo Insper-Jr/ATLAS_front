@@ -72,7 +72,7 @@ export function createEtapa(
   token: string,
 ) {
   return apiFetch<EtapaCronograma>(`/escopos-projeto/${escopoId}/etapas`, {
-    method: "POST",
+    aviso: "Etapa criada", method: "POST",
     token,
     body: JSON.stringify(dados),
   });
@@ -93,7 +93,7 @@ export function editarEtapa(
   token: string,
 ) {
   return apiFetch(`/cronograma/etapas/${etapaId}`, {
-    method: "PATCH",
+    aviso: "Etapa salva", method: "PATCH",
     token,
     body: JSON.stringify(dados),
   });
@@ -115,7 +115,7 @@ export function ajustarJanelaManual(
   token: string,
 ) {
   return apiFetch(`/escopos-projeto/${escopoId}/ajuste-manual`, {
-    method: "PUT",
+    aviso: "Janela ajustada", method: "PUT",
     token,
     body: JSON.stringify(dados),
   });
@@ -123,7 +123,7 @@ export function ajustarJanelaManual(
 
 /** Apaga a etapa e, com ela, a pintura dos dias que eram dela. */
 export function deleteEtapa(etapaId: number, token: string) {
-  return apiFetch(`/cronograma/etapas/${etapaId}`, { method: "DELETE", token });
+  return apiFetch(`/cronograma/etapas/${etapaId}`, { aviso: "Etapa excluída", method: "DELETE", token });
 }
 
 export function createMarco(
@@ -132,14 +132,14 @@ export function createMarco(
   token: string,
 ) {
   return apiFetch<MarcoCronograma>(`/projetos/${projetoId}/marcos`, {
-    method: "POST",
+    aviso: "Marco criado", method: "POST",
     token,
     body: JSON.stringify(dados),
   });
 }
 
 export function deleteMarco(marcoId: number, token: string) {
-  return apiFetch(`/cronograma/marcos/${marcoId}`, { method: "DELETE", token });
+  return apiFetch(`/cronograma/marcos/${marcoId}`, { aviso: "Marco excluído", method: "DELETE", token });
 }
 
 /**
@@ -154,7 +154,7 @@ export function definirEntregaPlanejada(
   token: string,
 ) {
   return apiFetch(`/escopos-projeto/${escopoId}`, {
-    method: "PATCH",
+    aviso: "Entrega planejada salva", method: "PATCH",
     token,
     body: JSON.stringify({ data_entrega_planejada: data }),
   });
@@ -162,7 +162,7 @@ export function definirEntregaPlanejada(
 
 /** cravar o cronograma, marco informativo, não trava mais edição. */
 export function oficializarCronograma(escopoId: number, token: string) {
-  return apiFetch(`/escopos-projeto/${escopoId}/oficializar`, { method: "POST", token });
+  return apiFetch(`/escopos-projeto/${escopoId}/oficializar`, { aviso: "Cronograma oficializado", method: "POST", token });
 }
 
 /* -----------------------------------------------  · dias de ajuste */
@@ -191,7 +191,7 @@ export function pedirDiasDeAjuste(
   token: string,
 ) {
   return apiFetch(`/escopos-projeto/${escopoId}/reajuste`, {
-    method: "POST",
+    aviso: "Pedido de dias de ajuste enviado", method: "POST",
     token,
     body: JSON.stringify(dados),
   });
@@ -213,7 +213,7 @@ export function responderPedidoDeDias(
   token: string,
 ) {
   return apiFetch(`/reajustes/${solicitacaoId}/responder`, {
-    method: "PATCH",
+    aviso: "Pedido respondido", method: "PATCH",
     token,
     body: JSON.stringify(dados),
   });

@@ -175,7 +175,7 @@ export function getAcoesDoProjeto(projetoId: number, token: string) {
 
 export function criarAcao(projetoId: number, dados: AcaoPayload, token: string) {
   return apiFetch<Acao>(`/health-track/projetos/${projetoId}/acoes`, {
-    method: "POST",
+    aviso: "Ação criada", method: "POST",
     token,
     body: JSON.stringify(dados),
   });
@@ -183,7 +183,7 @@ export function criarAcao(projetoId: number, dados: AcaoPayload, token: string) 
 
 export function editarAcao(projetoId: number, acaoId: number, dados: AcaoPayload, token: string) {
   return apiFetch<Acao>(`/health-track/projetos/${projetoId}/acoes/${acaoId}`, {
-    method: "PUT",
+    aviso: "Ação salva", method: "PUT",
     token,
     body: JSON.stringify(dados),
   });
@@ -191,13 +191,13 @@ export function editarAcao(projetoId: number, acaoId: number, dados: AcaoPayload
 
 export function concluirAcao(projetoId: number, acaoId: number, concluida: boolean, token: string) {
   return apiFetch<Acao>(`/health-track/projetos/${projetoId}/acoes/${acaoId}/concluir?concluida=${concluida}`, {
-    method: "POST",
+    aviso: "Ação atualizada", method: "POST",
     token,
   });
 }
 
 export function apagarAcao(projetoId: number, acaoId: number, token: string) {
-  return apiFetch<void>(`/health-track/projetos/${projetoId}/acoes/${acaoId}`, { method: "DELETE", token });
+  return apiFetch<void>(`/health-track/projetos/${projetoId}/acoes/${acaoId}`, { aviso: "Ação apagada", method: "DELETE", token });
 }
 
 /** As ações atribuídas a MIM, em qualquer projeto. Sem a caixa do Health
@@ -208,7 +208,7 @@ export function getMinhasAcoes(token: string) {
 
 export function concluirMinhaAcao(acaoId: number, concluida: boolean, token: string) {
   return apiFetch<Acao>(`/health-track/minhas-acoes/${acaoId}/concluir?concluida=${concluida}`, {
-    method: "POST",
+    aviso: "Ação atualizada", method: "POST",
     token,
   });
 }
@@ -258,16 +258,16 @@ export function getRodadas(token: string) {
 }
 
 export function abrirRodada(token: string) {
-  return apiFetch<Rodada>("/health-track/rodadas", { method: "POST", token });
+  return apiFetch<Rodada>("/health-track/rodadas", { aviso: "Rodada aberta", method: "POST", token });
 }
 
 export function concluirRodada(id: number, token: string) {
-  return apiFetch<Rodada>(`/health-track/rodadas/${id}/concluir`, { method: "POST", token });
+  return apiFetch<Rodada>(`/health-track/rodadas/${id}/concluir`, { aviso: "Rodada concluída", method: "POST", token });
 }
 
 export function justificarProjeto(rodadaId: number, projetoId: number, justificativa: string, token: string) {
   return apiFetch<Rodada>(`/health-track/rodadas/${rodadaId}/projetos/${projetoId}/justificativa`, {
-    method: "PUT",
+    aviso: "Justificativa salva", method: "PUT",
     token,
     body: JSON.stringify({ justificativa }),
   });
@@ -275,7 +275,7 @@ export function justificarProjeto(rodadaId: number, projetoId: number, justifica
 
 export function desfazerJustificativa(rodadaId: number, projetoId: number, token: string) {
   return apiFetch<Rodada>(`/health-track/rodadas/${rodadaId}/projetos/${projetoId}/justificativa`, {
-    method: "DELETE",
+    aviso: "Justificativa desfeita", method: "DELETE",
     token,
   });
 }
@@ -291,7 +291,7 @@ export function getPilares(token: string, todos = false) {
 
 export function criarPilar(dados: { nome: string; descricao?: string | null }, token: string) {
   return apiFetch<Pilar>("/health-track/pilares", {
-    method: "POST",
+    aviso: "Pilar criado", method: "POST",
     token,
     body: JSON.stringify(dados),
   });
@@ -303,7 +303,7 @@ export function editarPilar(
   token: string,
 ) {
   return apiFetch<Pilar>(`/health-track/pilares/${id}`, {
-    method: "PUT",
+    aviso: "Pilar salvo", method: "PUT",
     token,
     body: JSON.stringify(dados),
   });
@@ -323,7 +323,7 @@ export function getCiclos(projetoId: number, token: string) {
 
 export function registrarAvaliacao(projetoId: number, avaliacoes: CorPilarEnvio[], token: string) {
   return apiFetch<AvaliacaoPilar[]>(`/health-track/projetos/${projetoId}/avaliacoes`, {
-    method: "POST",
+    aviso: "Avaliação registrada", method: "POST",
     token,
     body: JSON.stringify({ avaliacoes }),
   });
@@ -333,14 +333,14 @@ export function registrarAvaliacao(projetoId: number, avaliacoes: CorPilarEnvio[
 export function apagarCiclo(projetoId: number, avaliadoEm: string, token: string) {
   return apiFetch<{ apagadas: number }>(
     `/health-track/projetos/${projetoId}/avaliacoes/ciclos?avaliado_em=${encodeURIComponent(avaliadoEm)}`,
-    { method: "DELETE", token },
+    { aviso: "Ciclo apagado", method: "DELETE", token },
   );
 }
 
 /** Apaga todas as avaliações, rodadas e ações. Pilares e regra ficam. */
 export function zerarHealthTrack(token: string) {
   return apiFetch<{ avaliacoes: number; rodadas: number; acoes: number }>("/health-track/tudo", {
-    method: "DELETE",
+    aviso: "Health Track zerado", method: "DELETE",
     token,
   });
 }
@@ -355,7 +355,7 @@ export function getHistoricoRegra(token: string) {
 
 export function atualizarRegra(dados: EditarRegra, token: string) {
   return apiFetch<RegraStatus>("/health-track/regra", {
-    method: "PUT",
+    aviso: "Regra salva", method: "PUT",
     token,
     body: JSON.stringify(dados),
   });

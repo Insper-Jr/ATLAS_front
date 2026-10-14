@@ -116,7 +116,7 @@ export function submeterAvaliacao(
   return apiFetch<{ id: number; status: string; comentario_feedback: string | null }>(
     `/avaliacoes/${avaliacaoId}/submeter`,
     {
-      method: "POST",
+      aviso: "Avaliação enviada", method: "POST",
       token,
       body: JSON.stringify({
         comentario_feedback: comentario || null,

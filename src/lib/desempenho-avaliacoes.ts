@@ -23,7 +23,7 @@ export function submitAvaliacao(
   token: string,
 ) {
   return apiFetch<DesempenhoAvaliacaoSubmissao>("/desempenho/avaliacoes", {
-    method: "POST",
+    aviso: "Avaliação enviada", method: "POST",
     token,
     body: JSON.stringify(payload),
   });
@@ -38,12 +38,12 @@ export function getAvaliacaoDetalhe(avaliacaoId: number, token: string) {
 }
 
 export function deleteAvaliacao(avaliacaoId: number, token: string) {
-  return apiFetch(`/desempenho/avaliacoes/${avaliacaoId}`, { method: "DELETE", token });
+  return apiFetch(`/desempenho/avaliacoes/${avaliacaoId}`, { aviso: "Avaliação apagada", method: "DELETE", token });
 }
 
 export function finalizarDesempenho(usuarioId: number, loteId: number, token: string) {
   return apiFetch<{ lote_id: number; usuario_id: number; finalizado: boolean }>(
     `/usuarios/${usuarioId}/desempenho/finalizar`,
-    { method: "POST", token, body: JSON.stringify({ lote_id: loteId }) },
+    { aviso: "Desempenho finalizado", method: "POST", token, body: JSON.stringify({ lote_id: loteId }) },
   );
 }

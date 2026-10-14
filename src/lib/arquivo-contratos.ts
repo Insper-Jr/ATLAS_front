@@ -14,7 +14,7 @@ export function buscarArquivo(termo: string, token: string) {
 
 export function criarPastaArquivo(nome: string, paiId: number | null, token: string) {
   return apiFetch<PastaArquivo>("/arquivo-contratos/pastas", {
-    method: "POST",
+    aviso: "Pasta criada", method: "POST",
     token,
     body: JSON.stringify({ nome, pai_id: paiId }),
   });
@@ -22,7 +22,7 @@ export function criarPastaArquivo(nome: string, paiId: number | null, token: str
 
 export function renomearPastaArquivo(pastaId: number, nome: string, token: string) {
   return apiFetch<PastaArquivo>(`/arquivo-contratos/pastas/${pastaId}`, {
-    method: "PATCH",
+    aviso: "Pasta renomeada", method: "PATCH",
     token,
     body: JSON.stringify({ nome }),
   });
@@ -30,7 +30,7 @@ export function renomearPastaArquivo(pastaId: number, nome: string, token: strin
 
 export function moverPastaArquivo(pastaId: number, paiId: number | null, token: string) {
   return apiFetch<PastaArquivo>(`/arquivo-contratos/pastas/${pastaId}`, {
-    method: "PATCH",
+    aviso: "Pasta movida", method: "PATCH",
     token,
     body: JSON.stringify({ pai_id: paiId, mover: true }),
   });
@@ -38,13 +38,13 @@ export function moverPastaArquivo(pastaId: number, paiId: number | null, token: 
 
 /** `recursivo`: apaga também tudo que está dentro (a tela confirma antes). */
 export function apagarPastaArquivo(pastaId: number, token: string, recursivo = false) {
-  return apiFetch<void>(`/arquivo-contratos/pastas/${pastaId}?recursivo=${recursivo}`, { method: "DELETE", token });
+  return apiFetch<void>(`/arquivo-contratos/pastas/${pastaId}?recursivo=${recursivo}`, { aviso: "Pasta apagada", method: "DELETE", token });
 }
 
 export function importarItemArquivo(pastaId: number, arquivo: File, token: string) {
   const body = new FormData();
   body.append("arquivo", arquivo);
-  return apiFetch<ItemArquivo>(`/arquivo-contratos/pastas/${pastaId}/itens`, { method: "POST", token, body });
+  return apiFetch<ItemArquivo>(`/arquivo-contratos/pastas/${pastaId}/itens`, { aviso: "Arquivo importado", method: "POST", token, body });
 }
 
 export async function baixarItemArquivo(item: ItemArquivo, token: string) {
@@ -75,7 +75,7 @@ export async function abrirItemArquivo(item: ItemArquivo, token: string) {
 
 export function renomearItemArquivo(itemId: number, nome: string, token: string) {
   return apiFetch<ItemArquivo>(`/arquivo-contratos/itens/${itemId}`, {
-    method: "PATCH",
+    aviso: "Arquivo renomeado", method: "PATCH",
     token,
     body: JSON.stringify({ nome }),
   });
@@ -83,7 +83,7 @@ export function renomearItemArquivo(itemId: number, nome: string, token: string)
 
 export function moverItemArquivo(itemId: number, pastaId: number, token: string) {
   return apiFetch<ItemArquivo>(`/arquivo-contratos/itens/${itemId}`, {
-    method: "PATCH",
+    aviso: "Arquivo movido", method: "PATCH",
     token,
     body: JSON.stringify({ pasta_id: pastaId }),
   });
@@ -92,9 +92,9 @@ export function moverItemArquivo(itemId: number, pastaId: number, token: string)
 export function substituirItemArquivo(itemId: number, arquivo: File, token: string) {
   const body = new FormData();
   body.append("arquivo", arquivo);
-  return apiFetch<ItemArquivo>(`/arquivo-contratos/itens/${itemId}/arquivo`, { method: "PUT", token, body });
+  return apiFetch<ItemArquivo>(`/arquivo-contratos/itens/${itemId}/arquivo`, { aviso: "Arquivo substituído", method: "PUT", token, body });
 }
 
 export function apagarItemArquivo(itemId: number, token: string) {
-  return apiFetch<void>(`/arquivo-contratos/itens/${itemId}`, { method: "DELETE", token });
+  return apiFetch<void>(`/arquivo-contratos/itens/${itemId}`, { aviso: "Arquivo apagado", method: "DELETE", token });
 }

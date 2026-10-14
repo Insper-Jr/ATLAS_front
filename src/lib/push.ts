@@ -113,7 +113,7 @@ export async function desativarPush(token: string | null): Promise<void> {
     if (!inscricao) return;
     if (token) {
       await apiFetch("/push/inscricoes", {
-        method: "DELETE",
+        aviso: "Notificações desativadas neste aparelho", method: "DELETE",
         token,
         body: JSON.stringify({ endpoint: inscricao.endpoint }),
       }).catch(() => undefined);
@@ -142,5 +142,5 @@ export async function sincronizarPush(token: string): Promise<void> {
 }
 
 export function enviarPushTeste(token: string) {
-  return apiFetch<{ entregues: number }>("/push/teste", { method: "POST", token });
+  return apiFetch<{ entregues: number }>("/push/teste", { aviso: "Notificação de teste enviada", method: "POST", token });
 }

@@ -71,7 +71,7 @@ export function enviarComunicado(
   token: string,
 ) {
   return apiFetch<ComunicadoEnviado>("/comunicados", {
-    method: "POST",
+    aviso: "Comunicado enviado", method: "POST",
     token,
     body: JSON.stringify(payload),
   });
@@ -112,7 +112,7 @@ export function getComunicados(token: string) {
 /** Tira do histórico e do sino de quem recebeu. O e-mail que saiu não volta. */
 export function apagarComunicado(comunicadoId: string, token: string) {
   return apiFetch<{ apagadas: number }>(`/comunicados/${encodeURIComponent(comunicadoId)}`, {
-    method: "DELETE",
+    aviso: "Comunicado apagado", method: "DELETE",
     token,
   });
 }

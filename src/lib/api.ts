@@ -1,7 +1,13 @@
 import { API_URL } from "@/config/config";
+import { avisar } from "@/lib/toast";
 
 interface ApiOptions extends RequestInit {
   token?: string | null;
+  /** Texto do aviso de sucesso no canto da tela quando a resposta for 2xx
+   *  (2026-10-14, a pedido: a maioria das ações não dizia nada ao dar
+   *  certo). Só pra ação que a pessoa disparou com um clique; chamada de
+   *  fundo (marcar lida, arrastar, salvar sozinho) fica sem. */
+  aviso?: string;
 }
 
 /**
@@ -64,7 +70,7 @@ function formatApiDetail(detail: unknown): string {
 }
 
 export async function apiFetch<T>(endpoint: string, options: ApiOptions = {}): Promise<T> {
-  const { token, headers, ...rest } = options;
+  const { token, headers, aviso, ...rest } = options;
   // FormData define seu próprio Content-Type (com o boundary do multipart) —
   // se a gente fixar "application/json" aqui, o navegador não sobrescreve e o
   // backend não consegue parsear o corpo.
@@ -143,6 +149,7 @@ export async function apiFetch<T>(endpoint: string, options: ApiOptions = {}): P
     );
   }
 
+  if (aviso) avisar(aviso);
   if (response.status === 204) return null as T;
   return response.json();
 }

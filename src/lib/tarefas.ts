@@ -28,7 +28,7 @@ export interface CreateTarefaPayload {
 /** Devolve uma lista: 1 card na conjunta, N na "cada um faz a sua parte". */
 export function createTarefa(projetoId: number, dados: CreateTarefaPayload, token: string) {
   return apiFetch<Tarefa[]>(`/projetos/${projetoId}/tarefas`, {
-    method: "POST",
+    aviso: "Tarefa criada", method: "POST",
     token,
     body: JSON.stringify(dados),
   });
@@ -48,7 +48,7 @@ export function updateTarefa(
 }
 
 export function deleteTarefa(tarefaId: number, token: string) {
-  return apiFetch(`/tarefas/${tarefaId}`, { method: "DELETE", token });
+  return apiFetch(`/tarefas/${tarefaId}`, { aviso: "Tarefa excluída", method: "DELETE", token });
 }
 
 /* ------------------------------------------------------------------ */
@@ -61,14 +61,14 @@ export function getComentarios(tarefaId: number, token: string) {
 
 export function createComentario(tarefaId: number, texto: string, token: string) {
   return apiFetch<ComentarioTarefa>(`/tarefas/${tarefaId}/comentarios`, {
-    method: "POST",
+    aviso: "Comentário enviado", method: "POST",
     token,
     body: JSON.stringify({ texto }),
   });
 }
 
 export function deleteComentario(comentarioId: number, token: string) {
-  return apiFetch(`/comentarios/${comentarioId}`, { method: "DELETE", token });
+  return apiFetch(`/comentarios/${comentarioId}`, { aviso: "Comentário excluído", method: "DELETE", token });
 }
 
 /* ------------------------------------------------------------------ */
@@ -169,7 +169,7 @@ export function createReuniao(
   observacoes?: string | null,
 ) {
   return apiFetch<ReuniaoRegistrada>(`/projetos/${projetoId}/reunioes`, {
-    method: "POST",
+    aviso: "Reunião registrada", method: "POST",
     token,
     body: JSON.stringify({
       data_reuniao: data,
@@ -193,7 +193,7 @@ export function updateReuniao(
   observacoes?: string | null,
 ) {
   return apiFetch<ReuniaoRegistrada>(`/reunioes/${reuniaoId}`, {
-    method: "PATCH",
+    aviso: "Reunião salva", method: "PATCH",
     token,
     body: JSON.stringify({
       data_reuniao: data,
@@ -204,5 +204,5 @@ export function updateReuniao(
 }
 
 export function deleteReuniao(reuniaoId: number, token: string) {
-  return apiFetch(`/reunioes/${reuniaoId}`, { method: "DELETE", token });
+  return apiFetch(`/reunioes/${reuniaoId}`, { aviso: "Reunião excluída", method: "DELETE", token });
 }

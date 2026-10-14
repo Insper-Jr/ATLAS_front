@@ -39,7 +39,7 @@ export function getSituacoesCarga(token: string) {
 
 export function atualizarSituacaoCarga(id: number, dados: EditarSituacao, token: string) {
   return apiFetch<SituacaoCarga>(`/situacoes-carga/${id}`, {
-    method: "PATCH",
+    aviso: "Situação salva", method: "PATCH",
     token,
     body: JSON.stringify(dados),
   });

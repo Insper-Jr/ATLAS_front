@@ -39,7 +39,7 @@ export interface UpdateUsuarioPayload {
 
 export function updateUsuario(usuarioId: number, dados: UpdateUsuarioPayload, token: string) {
   return apiFetch<UsuarioResumo>(`/usuarios/${usuarioId}`, {
-    method: "PATCH",
+    aviso: "Dados salvos", method: "PATCH",
     token,
     body: JSON.stringify(dados),
   });
@@ -49,7 +49,7 @@ export function updateUsuario(usuarioId: number, dados: UpdateUsuarioPayload, to
  *  Sempre a PRÓPRIA foto, a rota não aceita `usuario_id`. */
 export function atualizarMinhaFoto(foto: string, token: string) {
   return apiFetch<UsuarioResumo>("/usuarios/me/foto", {
-    method: "PUT",
+    aviso: "Foto atualizada", method: "PUT",
     token,
     body: JSON.stringify({ foto }),
   });
@@ -57,7 +57,7 @@ export function atualizarMinhaFoto(foto: string, token: string) {
 
 export function removerMinhaFoto(token: string) {
   return apiFetch<UsuarioResumo>("/usuarios/me/foto", {
-    method: "DELETE",
+    aviso: "Foto removida", method: "DELETE",
     token,
   });
 }
@@ -68,14 +68,14 @@ export function removerMinhaFoto(token: string) {
 export function atualizarMinhasNotificacoesEmail(desativadas: string[], token: string) {
   return apiFetch<{ notificacoes_email_desativadas: string[] }>(
     "/usuarios/me/notificacoes-email",
-    { method: "PATCH", token, body: JSON.stringify({ desativadas }) },
+    { aviso: "Preferência salva", method: "PATCH", token, body: JSON.stringify({ desativadas }) },
   );
 }
 
 /** Sem volta, o backend só aceita se o usuário já estiver desligado. */
 export function deletarUsuarioPermanente(usuarioId: number, token: string) {
   return apiFetch<{ nome: string }>(`/usuarios/${usuarioId}/permanente`, {
-    method: "DELETE",
+    aviso: "Pessoa apagada", method: "DELETE",
     token,
   });
 }
@@ -123,7 +123,7 @@ export interface TransferirDiretoriaPayload {
 export function transferirDiretoria(dados: TransferirDiretoriaPayload, token: string) {
   return apiFetch<{ novo_diretor: { id: number; nome: string } }>(
     "/usuarios/transferir-diretoria",
-    { method: "POST", token, body: JSON.stringify(dados) },
+    { aviso: "Diretoria transferida", method: "POST", token, body: JSON.stringify(dados) },
   );
 }
 
@@ -135,7 +135,7 @@ export function transferirDiretoria(dados: TransferirDiretoriaPayload, token: st
  */
 export function registrarUsuario(dados: RegistrarUsuarioPayload, token: string) {
   return apiFetch<UsuarioResumo & SenhaProvisoriaEmitida>("/auth/registrar", {
-    method: "POST",
+    aviso: "Pessoa cadastrada", method: "POST",
     token,
     body: JSON.stringify(dados),
   });
@@ -151,6 +151,6 @@ export function registrarUsuario(dados: RegistrarUsuarioPayload, token: string) 
 export function reenviarSenhaProvisoria(usuarioId: number, token: string) {
   return apiFetch<{ id: number; email_insper: string } & SenhaProvisoriaEmitida>(
     `/usuarios/${usuarioId}/senha-provisoria`,
-    { method: "POST", token },
+    { aviso: "Senha provisória reenviada", method: "POST", token },
   );
 }

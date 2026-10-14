@@ -7,14 +7,14 @@ export function getMentorias(token: string) {
 
 export function createMentoria(payload: { mentor_id: number; mentorado_id: number }, token: string) {
   return apiFetch<DesempenhoMentoria>("/desempenho/mentorias", {
-    method: "POST",
+    aviso: "Mentoria criada", method: "POST",
     token,
     body: JSON.stringify(payload),
   });
 }
 
 export function deleteMentoria(mentoriaId: number, token: string) {
-  return apiFetch(`/desempenho/mentorias/${mentoriaId}`, { method: "DELETE", token });
+  return apiFetch(`/desempenho/mentorias/${mentoriaId}`, { aviso: "Mentoria removida", method: "DELETE", token });
 }
 
 export function getMeusMentorados(usuarioId: number, token: string) {

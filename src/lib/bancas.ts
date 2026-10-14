@@ -29,7 +29,7 @@ import type {
  */
 export function cancelarBanca(bancaId: number, token: string) {
   return apiFetch<{ id: number; cancelada_em: string }>(`/bancas/${bancaId}/cancelar`, {
-    method: "POST",
+    aviso: "Banca cancelada", method: "POST",
     token,
   });
 }
@@ -52,7 +52,7 @@ export function registrarAprovacaoBanca(
   // ⭐ Devolve a situação inteira (resultado + as duas assinaturas) para a
   // tela atualizar o card na hora, sem precisar recarregar tudo de novo.
   return apiFetch<{ banca_id: number } & AprovacaoDaBanca>(`/bancas/${bancaId}/aprovacao`, {
-    method: "POST",
+    aviso: "Resultado da banca registrado", method: "POST",
     token,
     body: JSON.stringify({ aprovado, nota }),
   });
@@ -128,7 +128,7 @@ export function quemDecidiu(situacao: {
  */
 export function registrarDescricaoCoordenador(bancaId: number, descricao: string, token: string) {
   return apiFetch(`/bancas/${bancaId}/descricao-coordenador`, {
-    method: "PATCH",
+    aviso: "Relato salvo", method: "PATCH",
     token,
     body: JSON.stringify({ descricao }),
   });
@@ -156,7 +156,7 @@ export function pushAlocacao(token: string) {
  */
 export function alocarUsuario(bancaId: number, usuarioId: number, token: string) {
   return apiFetch("/candidaturas", {
-    method: "POST",
+    aviso: "Pessoa alocada na banca", method: "POST",
     token,
     body: JSON.stringify({ banca_id: bancaId, usuario_id: usuarioId }),
   });
@@ -226,7 +226,7 @@ export function definirPrazoAvaliacaoBanca(
     prazo_avaliacao: string | null;
     avaliacao_aberta: boolean;
   }>(`/bancas/${bancaId}/prazo-avaliacao`, {
-    method: "PUT",
+    aviso: "Prazo de avaliação atualizado", method: "PUT",
     token,
     body: JSON.stringify({ override }),
   });
@@ -234,7 +234,7 @@ export function definirPrazoAvaliacaoBanca(
 
 export function registrarLocalBanca(bancaId: number, local: string, token: string) {
   return apiFetch<{ id: number; local: string }>(`/bancas/${bancaId}/local`, {
-    method: "PUT",
+    aviso: "Local da banca salvo", method: "PUT",
     token,
     body: JSON.stringify({ local }),
   });
@@ -244,14 +244,14 @@ export function registrarLocalBanca(bancaId: number, local: string, token: strin
  *  arquivo foi removido. */
 export function registrarEntregaLinkBanca(bancaId: number, link: string, token: string) {
   return apiFetch<{ id: number; entrega_link: string | null }>(`/bancas/${bancaId}/entrega-link`, {
-    method: "PUT",
+    aviso: "Link da entrega salvo", method: "PUT",
     token,
     body: JSON.stringify({ link }),
   });
 }
 
 export function removerEntregaBanca(bancaId: number, token: string) {
-  return apiFetch<null>(`/bancas/${bancaId}/entrega`, { method: "DELETE", token });
+  return apiFetch<null>(`/bancas/${bancaId}/entrega`, { aviso: "Entrega removida", method: "DELETE", token });
 }
 
 export function getCandidaturas(token: string) {
@@ -270,14 +270,16 @@ export function getBancasParaAvaliar(usuarioId: number, token: string) {
 
 export function alocar(bancaId: number, token: string) {
   return apiFetch<Candidatura>("/candidaturas", {
-    method: "POST",
+    aviso: "Você entrou na banca", method: "POST",
     token,
     body: JSON.stringify({ banca_id: bancaId }),
   });
 }
 
-export function desalocar(candidaturaId: number, token: string) {
-  return apiFetch("/candidaturas/" + candidaturaId, { method: "DELETE", token });
+/** Serve pra própria pessoa sair e pra quem gere membros tirar alguém; o
+ *  aviso de sucesso muda conforme o caso. */
+export function desalocar(candidaturaId: number, token: string, aviso = "Você saiu da banca") {
+  return apiFetch("/candidaturas/" + candidaturaId, { method: "DELETE", token, aviso });
 }
 
 export function getEscopos(token: string) {
@@ -330,7 +332,7 @@ export interface UpdateBancaPayload {
 
 export function createBanca(dados: CreateBancaPayload, token: string) {
   return apiFetch<Banca>("/bancas", {
-    method: "POST",
+    aviso: "Banca marcada", method: "POST",
     token,
     body: JSON.stringify(dados),
   });
@@ -338,14 +340,14 @@ export function createBanca(dados: CreateBancaPayload, token: string) {
 
 export function updateBanca(bancaId: number, dados: UpdateBancaPayload, token: string) {
   return apiFetch<Banca>(`/bancas/${bancaId}`, {
-    method: "PATCH",
+    aviso: "Banca atualizada", method: "PATCH",
     token,
     body: JSON.stringify(dados),
   });
 }
 
 export function deleteBanca(bancaId: number, token: string) {
-  return apiFetch(`/bancas/${bancaId}`, { method: "DELETE", token });
+  return apiFetch(`/bancas/${bancaId}`, { aviso: "Banca excluída", method: "DELETE", token });
 }
 
 function createEquipeProjeto(dados: { banca_id: number; usuario_id: number }, token: string) {
@@ -666,7 +668,7 @@ export function solicitarExcecaoChoque(
   token: string,
 ) {
   return apiFetch<{ id: number; status: string }>("/bancas/excecoes-choque", {
-    method: "POST",
+    aviso: "Pedido de exceção enviado", method: "POST",
     token,
     body: JSON.stringify(dados),
   });
@@ -698,7 +700,7 @@ export function decidirExcecaoChoque(
   token: string,
 ) {
   return apiFetch(`/bancas/excecoes-choque/${pedidoId}`, {
-    method: "PATCH",
+    aviso: "Decisão registrada", method: "PATCH",
     token,
     body: JSON.stringify(dados),
   });
@@ -718,7 +720,7 @@ export function solicitarForaJanela(
   token: string,
 ) {
   return apiFetch<{ id: number; status: string }>("/bancas/fora-janela", {
-    method: "POST",
+    aviso: "Pedido enviado à diretoria", method: "POST",
     token,
     body: JSON.stringify(dados),
   });
@@ -753,7 +755,7 @@ export function decidirForaJanela(
   token: string,
 ) {
   return apiFetch(`/bancas/fora-janela/${pedidoId}`, {
-    method: "PATCH",
+    aviso: "Decisão registrada", method: "PATCH",
     token,
     body: JSON.stringify(dados),
   });
@@ -772,7 +774,7 @@ export function solicitarRemarcacao(
   token: string,
 ) {
   return apiFetch<{ id: number; status: string }>("/bancas/remarcacao", {
-    method: "POST",
+    aviso: "Pedido de remarcação enviado", method: "POST",
     token,
     body: JSON.stringify(dados),
   });
@@ -805,7 +807,7 @@ export function decidirRemarcacao(
   token: string,
 ) {
   return apiFetch(`/bancas/remarcacao/${pedidoId}`, {
-    method: "PATCH",
+    aviso: "Decisão registrada", method: "PATCH",
     token,
     body: JSON.stringify(dados),
   });
@@ -868,7 +870,7 @@ export function decidirEntradaBanca(
   token: string,
 ) {
   return apiFetch(`/bancas/entrada/${pedidoId}`, {
-    method: "PATCH",
+    aviso: "Pedido respondido", method: "PATCH",
     token,
     body: JSON.stringify(dados),
   });

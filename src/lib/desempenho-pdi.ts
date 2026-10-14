@@ -20,7 +20,7 @@ export function createPastaPdi(
   token: string,
 ) {
   return apiFetch<DesempenhoPdiPasta>("/desempenho/pdi/pastas", {
-    method: "POST",
+    aviso: "Pasta criada", method: "POST",
     token,
     body: JSON.stringify(payload),
   });
@@ -32,14 +32,14 @@ export function updatePastaPdi(
   token: string,
 ) {
   return apiFetch<DesempenhoPdiPasta>(`/desempenho/pdi/pastas/${pastaId}`, {
-    method: "PATCH",
+    aviso: "Pasta salva", method: "PATCH",
     token,
     body: JSON.stringify(payload),
   });
 }
 
 export function deletePastaPdi(pastaId: number, token: string) {
-  return apiFetch(`/desempenho/pdi/pastas/${pastaId}`, { method: "DELETE", token });
+  return apiFetch(`/desempenho/pdi/pastas/${pastaId}`, { aviso: "Pasta excluída", method: "DELETE", token });
 }
 
 export function getItensPdi(pastaId: number, token: string) {
@@ -52,7 +52,7 @@ export function createItemPdi(
   token: string,
 ) {
   return apiFetch<DesempenhoPdiItem>(`/desempenho/pdi/pastas/${pastaId}/itens`, {
-    method: "POST",
+    aviso: "Item criado", method: "POST",
     token,
     body: JSON.stringify(payload),
   });
@@ -64,14 +64,14 @@ export function updateItemPdi(
   token: string,
 ) {
   return apiFetch<DesempenhoPdiItem>(`/desempenho/pdi/itens/${itemId}`, {
-    method: "PATCH",
+    aviso: "Item salvo", method: "PATCH",
     token,
     body: JSON.stringify(payload),
   });
 }
 
 export function deleteItemPdi(itemId: number, token: string) {
-  return apiFetch(`/desempenho/pdi/itens/${itemId}`, { method: "DELETE", token });
+  return apiFetch(`/desempenho/pdi/itens/${itemId}`, { aviso: "Item excluído", method: "DELETE", token });
 }
 
 export function getPendenciasPdi(itemId: number, token: string) {
@@ -96,13 +96,13 @@ export function uploadEnvioPdi(usuarioId: number, itemId: number, arquivo: File,
   formData.append("arquivo", arquivo);
   return apiFetch<{ item_id: number; mentorado_id: number; arquivo_nome: string; enviado_em: string }>(
     `/usuarios/${usuarioId}/desempenho/pdi/itens/${itemId}/envio`,
-    { method: "POST", token, body: formData },
+    { aviso: "Arquivo enviado", method: "POST", token, body: formData },
   );
 }
 
 export function deleteEnvioPdi(usuarioId: number, itemId: number, token: string) {
   return apiFetch(`/usuarios/${usuarioId}/desempenho/pdi/itens/${itemId}/envio`, {
-    method: "DELETE",
+    aviso: "Envio removido", method: "DELETE",
     token,
   });
 }

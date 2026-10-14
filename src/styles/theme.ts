@@ -127,7 +127,7 @@ export const theme = {
   },
 
   /**
-   * A escala de empilhamento, quatro degraus e nada entre eles.
+   * A escala de empilhamento, cinco degraus e nada entre eles.
    *
    * O app tem portal (`SelectCustom`), cabeçalho de tabela `sticky`, barra de
    * filtros e modal convivendo na mesma tela. Sem uma escala, cada um chuta um
@@ -138,13 +138,16 @@ export const theme = {
    * `base` é o piso de quem só precisa passar por cima do irmão (cabeçalho de
    * tabela sobre as linhas). `sticky` é a barra que acompanha a rolagem.
    * `popover` é o que abre por cima do conteúdo sem bloqueá-lo (listbox do
-   * select, popover de datas). `modal` é o que bloqueia a tela.
+   * select, popover de datas). `modal` é o que bloqueia a tela. `toast` é o
+   * aviso passageiro de canto (`<Toasts />`): passa por cima do modal porque
+   * a ação que ele confirma costuma ter sido disparada de dentro de um.
    */
   zIndex: {
     base: 10,
     sticky: 20,
     popover: 30,
     modal: 50,
+    toast: 60,
   },
 };
 

@@ -12,7 +12,7 @@ export function updatePosicaoPermissao(
   token: string,
 ) {
   return apiFetch<PosicaoPermissao>(`/posicoes-permissoes/${posicao}`, {
-    method: "PATCH",
+    aviso: "Permissões salvas", method: "PATCH",
     token,
     body: JSON.stringify(dados),
   });
@@ -28,7 +28,7 @@ export function updatePosicaoPermissao(
  *  `cargo_extra` de qualquer pessoa?). */
 export function createPosicaoPermissao(nome: string, sobreponivel: boolean, token: string) {
   return apiFetch<PosicaoPermissao>("/posicoes-permissoes", {
-    method: "POST",
+    aviso: "Cargo criado", method: "POST",
     token,
     body: JSON.stringify({ nome, sobreponivel }),
   });
@@ -38,7 +38,7 @@ export function createPosicaoPermissao(nome: string, sobreponivel: boolean, toke
  *  recusados pelo backend, e quem ainda tem gente no cargo também. */
 export function deletePosicaoPermissao(posicao: Posicao, token: string) {
   return apiFetch<void>(`/posicoes-permissoes/${posicao}`, {
-    method: "DELETE",
+    aviso: "Cargo apagado", method: "DELETE",
     token,
   });
 }

@@ -1,5 +1,6 @@
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { AuthProvider } from "@/context/AuthContext";
+import { Toasts } from "@/components/Toasts";
 import { PrivateRoute } from "@/routes/PrivateRoute";
 import { AdminRoute } from "@/routes/AdminRoute";
 import { FormularioRoute } from "@/routes/FormularioRoute";
@@ -269,6 +270,7 @@ export default function App() {
           </Route>
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
+        <Toasts />
       </AuthProvider>
     </BrowserRouter>
   );

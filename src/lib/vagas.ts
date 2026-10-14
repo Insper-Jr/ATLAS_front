@@ -178,7 +178,7 @@ export function alocarDireto(projetoId: number, usuarioId: number, token: string
   return apiFetch<{ projeto_id: number; usuario_id: number; papel: string }>(
     "/solicitacoes-projeto/alocar",
     {
-      method: "POST",
+      aviso: "Alocação feita", method: "POST",
       token,
       body: JSON.stringify({ projeto_id: projetoId, usuario_id: usuarioId }),
     },
@@ -187,7 +187,7 @@ export function alocarDireto(projetoId: number, usuarioId: number, token: string
 
 export function criarSolicitacao(projetoId: number, justificativa: string, token: string) {
   return apiFetch<{ id: number; status: string }>("/solicitacoes-projeto", {
-    method: "POST",
+    aviso: "Pedido de entrada enviado", method: "POST",
     token,
     body: JSON.stringify({ projeto_id: projetoId, justificativa }),
   });
@@ -201,12 +201,12 @@ export function responderSolicitacao(
   resposta?: string,
 ) {
   return apiFetch<{ id: number; status: string }>(`/solicitacoes-projeto/${solicitacaoId}`, {
-    method: "PATCH",
+    aviso: "Pedido respondido", method: "PATCH",
     token,
     body: JSON.stringify({ aprovar, resposta: resposta ?? null }),
   });
 }
 
 export function cancelarSolicitacao(solicitacaoId: number, token: string) {
-  return apiFetch<void>(`/solicitacoes-projeto/${solicitacaoId}`, { method: "DELETE", token });
+  return apiFetch<void>(`/solicitacoes-projeto/${solicitacaoId}`, { aviso: "Pedido cancelado", method: "DELETE", token });
 }

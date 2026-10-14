@@ -52,7 +52,7 @@ export function createSemestre(
   token: string,
 ) {
   return apiFetch<Semestre>("/semestres", {
-    method: "POST",
+    aviso: "Semestre criado", method: "POST",
     token,
     body: JSON.stringify(dados),
   });
@@ -65,7 +65,7 @@ export function updateSemestre(
   token: string,
 ) {
   return apiFetch<Semestre>(`/semestres/${semestreId}`, {
-    method: "PATCH",
+    aviso: "Semestre salvo", method: "PATCH",
     token,
     body: JSON.stringify(dados),
   });
@@ -135,7 +135,7 @@ export function definirCalendarioPadrao(
   token: string,
 ) {
   return apiFetch(`/frentes/${frenteId}`, {
-    method: "PATCH",
+    aviso: "Calendário padrão definido", method: "PATCH",
     token,
     body: JSON.stringify({ calendario_padrao: calendario }),
   });
@@ -240,7 +240,7 @@ export function carregarDiasNaoLetivos(
   opcoes?: { frenteId?: number | null; substituir?: boolean; variante?: string | null },
 ) {
   return apiFetch<ResultadoCarga>(`/semestres/${semestreId}/dias-nao-letivos`, {
-    method: "POST",
+    aviso: "Dias não letivos carregados", method: "POST",
     token,
     body: JSON.stringify({
       dias,
@@ -252,11 +252,11 @@ export function carregarDiasNaoLetivos(
 }
 
 export function deleteDiaNaoLetivo(diaId: number, token: string) {
-  return apiFetch(`/dias-nao-letivos/${diaId}`, { method: "DELETE", token });
+  return apiFetch(`/dias-nao-letivos/${diaId}`, { aviso: "Dia removido", method: "DELETE", token });
 }
 
 export function limparDiasNaoLetivos(semestreId: number, token: string) {
-  return apiFetch(`/semestres/${semestreId}/dias-nao-letivos`, { method: "DELETE", token });
+  return apiFetch(`/semestres/${semestreId}/dias-nao-letivos`, { aviso: "Dias não letivos limpos", method: "DELETE", token });
 }
 
 /**
