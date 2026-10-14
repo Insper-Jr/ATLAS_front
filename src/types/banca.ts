@@ -246,6 +246,8 @@ export interface SessaoDeBanca {
   resultado: ResultadoBanca | null;
   /** Preenchido = tentativa arquivada; a corrente é a única sem ele. */
   encerrada_em: string | null;
+  /** A tentativa foi cancelada e a banca marcada de novo (2026-10-13). */
+  cancelada_em: string | null;
 }
 
 /** Uma nota (ou resposta) dada a um critério do formulário. */

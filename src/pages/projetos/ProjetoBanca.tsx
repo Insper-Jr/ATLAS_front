@@ -429,8 +429,8 @@ function FichaDaBanca({
           <>
             <SecaoTitulo>Tentativas</SecaoTitulo>
             <Ajuda>
-              A banca reprovada não some do registro: cada tentativa fica aqui com o veredito que
-              recebeu.
+              A banca reprovada ou cancelada não some do registro: cada tentativa fica aqui com o
+              que aconteceu com ela.
             </Ajuda>
             <Lista>
               {banca.sessoes.map((s) => (
@@ -438,12 +438,14 @@ function FichaDaBanca({
                   <TentativaTopo>
                     <TentativaNome>{nomeDaTentativa(s.numero)}</TentativaNome>
                     <TentativaMeta>{formatarDataHora(s.data_hora)}</TentativaMeta>
-                    <TentativaMeta>· {rotuloDoResultado(s.resultado)}</TentativaMeta>
+                    <TentativaMeta>· {s.cancelada_em ? "Cancelada" : rotuloDoResultado(s.resultado)}</TentativaMeta>
                   </TentativaTopo>
                   <TentativaMeta>
-                    {s.realizado_em
-                      ? `Realizada em ${formatarDataHora(s.realizado_em)}`
-                      : "Ainda não aconteceu"}
+                    {s.cancelada_em
+                      ? `Cancelada em ${formatarDataHora(s.cancelada_em)} e marcada de novo`
+                      : s.realizado_em
+                        ? `Realizada em ${formatarDataHora(s.realizado_em)}`
+                        : "Ainda não aconteceu"}
                   </TentativaMeta>
                 </Tentativa>
               ))}
