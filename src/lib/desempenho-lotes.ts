@@ -1,5 +1,5 @@
 import { apiFetch } from "@/lib/api";
-import type { DesempenhoLote, DesempenhoPendencia, DesempenhoTipo } from "@/types/desempenho";
+import type { DesempenhoLote, DesempenhoPendencia, DesempenhoPendenciaFechada, DesempenhoTipo } from "@/types/desempenho";
 
 export function getLotes(token: string, abertos = true) {
   return apiFetch<DesempenhoLote[]>(`/desempenho/lotes?abertos=${abertos}`, { token });
@@ -50,6 +50,11 @@ export function seguirDatasLote(loteId: number, token: string) {
 
 export function getPendencias(loteId: number, token: string) {
   return apiFetch<DesempenhoPendencia[]>(`/desempenho/lotes/${loteId}/pendencias`, { token });
+}
+
+/** Quem ficou pendente em cada formulário já fechado, por pessoa. */
+export function getPendenciasFechados(token: string) {
+  return apiFetch<DesempenhoPendenciaFechada[]>("/desempenho/lotes/pendencias-fechados", { token });
 }
 
 /** Exclusão de verdade (fora da regra 2.6 do doc, por pedido explícito), o

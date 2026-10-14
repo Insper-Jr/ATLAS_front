@@ -72,6 +72,26 @@ export interface DesempenhoPendencia {
   respondida: boolean;
 }
 
+/** Quem ficou pendente nos formulários já fechados, por pessoa (2026-10-13). */
+export interface DesempenhoPendenciaFechada {
+  avaliador_id: number;
+  avaliador_nome: string | null;
+  total: number;
+  lotes: {
+    lote_id: number;
+    lote_nome: string;
+    lote_tipo: DesempenhoTipo;
+    fechado_em: string;
+    pendentes: number;
+    itens: {
+      avaliado_nome: string | null;
+      form_type: DesempenhoPapel;
+      projeto_nomes: (string | null)[];
+      escopo_nome: string | null;
+    }[];
+  }[];
+}
+
 export interface DesempenhoFilaItem {
   lote_id: number;
   lote_nome: string;

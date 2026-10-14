@@ -9,6 +9,7 @@ import {
   fecharLote,
   getLotes,
   getPendencias,
+  getPendenciasFechados,
   seguirDatasLote,
   updateLote,
 } from "@/lib/desempenho-lotes";
@@ -16,7 +17,7 @@ import { getProjetos, paraDataUtc } from "@/lib/projetos";
 import { getFrentes } from "@/lib/frentes";
 import type { Frente } from "@/types/banca";
 import { ConfirmarModal } from "@/components/ConfirmarModal";
-import type { DesempenhoLote, DesempenhoPendencia, DesempenhoTipo } from "@/types/desempenho";
+import type { DesempenhoLote, DesempenhoPendencia, DesempenhoPendenciaFechada, DesempenhoTipo } from "@/types/desempenho";
 import type { ProjetoResumo } from "@/types/projeto";
 import {
   EmptyText,
@@ -153,6 +154,12 @@ export function PainelLotes() {
   // todos" traz o histórico, em ordem de fechamento, do mais recente pro
   // mais antigo. Os filtros valem nos dois casos.
   const [mostrarTodos, setMostrarTodos] = useState(false);
+  // Quem ficou pendente nos formulários FECHADOS, por pessoa (2026-10-13, a
+  // pedido). `null` = ainda não pediu; abre e fecha pelo botão do cabeçalho.
+  const [fechados, setFechados] = useState<DesempenhoPendenciaFechada[] | null>(null);
+  const [fechadosAberto, setFechadosAberto] = useState(false);
+  const [fechadosCarregando, setFechadosCarregando] = useState(false);
+  const [fechadosErro, setFechadosErro] = useState("");
   const [filtroTipo, setFiltroTipo] = useState<DesempenhoTipo | "todos">("todos");
   const [filtroFrente, setFiltroFrente] = useState<string>("todas");
   const [carregando, setCarregando] = useState(true);
@@ -391,6 +398,25 @@ export function PainelLotes() {
     }
   }
 
+  async function handleVerFechados() {
+    if (!token) return;
+    if (fechadosAberto) {
+      setFechadosAberto(false);
+      return;
+    }
+    setFechadosAberto(true);
+    if (fechados !== null) return;
+    setFechadosCarregando(true);
+    setFechadosErro("");
+    try {
+      setFechados(await getPendenciasFechados(token));
+    } catch (err) {
+      setFechadosErro(err instanceof Error ? err.message : "Erro ao carregar as pendências");
+    } finally {
+      setFechadosCarregando(false);
+    }
+  }
+
   if (erro) {
     return (
       <ErrorBlock>
@@ -563,6 +589,12 @@ export function PainelLotes() {
             Formulários ({lotesVisiveis.length}
             {!mostrarTodos && totalFechados > 0 ? ` abertos, ${totalFechados} no histórico` : ""})
           </PageCardTitle>
+          {totalFechados > 0 && (
+            <PageButtonSm type="button" $variant={fechadosAberto ? "primary" : "outline"} onClick={handleVerFechados}>
+              <AlertTriangle size={14} />
+              Pendências dos fechados
+            </PageButtonSm>
+          )}
         </PageCardHeader>
         <PageCardContent>
           <FiltrosRow>
@@ -591,6 +623,43 @@ export function PainelLotes() {
               {mostrarTodos ? "Só abertos" : "Mostrar todos"}
             </PageButtonSm>
           </FiltrosRow>
+          {fechadosAberto && (
+            <SubLista>
+              {fechadosErro ? (
+                <ErrorText>{fechadosErro}</ErrorText>
+              ) : fechadosCarregando || fechados === null ? (
+                <EmptyText>Carregando quem ficou pendente...</EmptyText>
+              ) : fechados.length === 0 ? (
+                <EmptyText>Ninguém ficou pendente nos formulários fechados.</EmptyText>
+              ) : (
+                fechados.map((pessoa) => (
+                  <PendenciaCard key={pessoa.avaliador_id}>
+                    <PendenciaIcone>
+                      <AlertTriangle size={16} />
+                    </PendenciaIcone>
+                    <PendenciaTexto>
+                      <PendenciaNome>{pessoa.avaliador_nome}</PendenciaNome>{" "}
+                      <PendenciaFaltamRotulo>
+                        {pessoa.total} {pessoa.total === 1 ? "avaliação" : "avaliações"} sem resposta
+                      </PendenciaFaltamRotulo>
+                      {pessoa.lotes.map((l) => (
+                        <div key={l.lote_id} style={{ marginTop: "0.25rem" }}>
+                          <strong>{l.lote_nome}</strong> (fechado em {formatarData(l.fechado_em)}):{" "}
+                          {l.itens
+                            .map((p) =>
+                              p.form_type === "escopo"
+                                ? `Escopo ${p.escopo_nome ?? ""}`.trim()
+                                : `${p.avaliado_nome ?? ""} (${p.projeto_nomes.filter(Boolean).join(", ")})`,
+                            )
+                            .join(", ")}
+                        </div>
+                      ))}
+                    </PendenciaTexto>
+                  </PendenciaCard>
+                ))
+              )}
+            </SubLista>
+          )}
           {lotes.length === 0 ? (
             <EmptyText>Nenhum formulário criado ainda.</EmptyText>
           ) : lotesVisiveis.length === 0 ? (
