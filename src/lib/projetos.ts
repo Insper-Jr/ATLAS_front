@@ -642,10 +642,15 @@ export const STATUS_ORDEM: StatusProjeto[] = [
  * esse destino a partir deste status. `pausado` não tem destino por aqui:
  * sai pelo retomar.
  */
-export function destinosValidos(atual: StatusProjeto, temKickoff: boolean): StatusProjeto[] {
+export function destinosValidos(
+  atual: StatusProjeto,
+  temKickoff: boolean,
+  livreDeKickoff = false,
+): StatusProjeto[] {
   if (atual === "pausado") return [];
   if (atual === "contrato_em_elaboracao") return ["vendido"];
-  if (atual === "vendido") return temKickoff ? ["ambientacao"] : [];
+  // Projeto do atalho (2026-10-14): kickoff opcional, Vendido sai livre.
+  if (atual === "vendido") return livreDeKickoff ? STATUS_ORDEM.slice(2) : temKickoff ? ["ambientacao"] : [];
   return STATUS_ORDEM.slice(2).filter((s) => s !== atual);
 }
 

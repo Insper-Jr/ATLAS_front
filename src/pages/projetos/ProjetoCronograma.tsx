@@ -1791,7 +1791,9 @@ export function ProjetoCronograma() {
   if (carregando || !dados) return <PageLoadingBlock />;
 
   // Cronograma antes do kickoff não tem o que dizer, é o estado honesto.
-  if (!dados.data_kickoff) {
+  // Menos no projeto do atalho (2026-10-14): lá o kickoff é opcional e o
+  // cronograma (e a banca) precisam andar sem ele.
+  if (!dados.data_kickoff && !projeto.criado_pelo_atalho) {
     return (
       <AvisoBanner>
         Marque o kickoff na aba <Link to={`/projetos/${projeto.id}`}>Visão geral</Link> para montar

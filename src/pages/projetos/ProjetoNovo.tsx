@@ -386,7 +386,9 @@ export function ProjetoNovo() {
           Este é um atalho — o projeto nasce direto como <strong>Vendido</strong>, sem passar pelo
           Contrato de Prestação de Serviços. O fluxo ideal é abrir o contrato pela aba Contratos e
           deixar ele levar o projeto a Vendido quando for assinado; use esta tela só quando isso não
-          for viável. Aqui, dias de ambientação e máximo de consultores são opcionais.
+          for viável. Aqui, dias de ambientação e máximo de consultores são opcionais, o kickoff não é
+          cobrado (cronograma, banca e etapa ficam liberados sem ele) e a declaração de interesse não
+          abre sozinha: abra na Visão geral quando quiser avisar os consultores.
         </div>
       )}
 

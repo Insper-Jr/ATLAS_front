@@ -236,7 +236,8 @@ function doEscopo(escopo: EscopoVendido, silenciarBancaSemData = false): Pendenc
 export function derivarPendencias(projeto: ProjetoCompleto): Pendencia[] {
   const lista: Pendencia[] = [];
 
-  if (!projeto.data_kickoff && projeto.status !== "finalizado") {
+  // Não no projeto do atalho (2026-10-14): lá o kickoff é opcional.
+  if (!projeto.data_kickoff && projeto.status !== "finalizado" && !projeto.criado_pelo_atalho) {
     lista.push({
       id: "projeto-sem-kickoff",
       acao: "Kickoff",

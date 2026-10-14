@@ -315,6 +315,9 @@ export function ProjetosAtivosTabela() {
                         <TableCell>
                           {p.kickoff_pendente ? (
                             <Pilula $tom="atencao">Kickoff pendente</Pilula>
+                          ) : p.dias_em_execucao == null ? (
+                            // Projeto do atalho sem kickoff: não é pendência, mas também não há de onde contar.
+                            <SemDado>sem kickoff</SemDado>
                           ) : (
                             <CelulaDias>
                               {p.dias_em_execucao}

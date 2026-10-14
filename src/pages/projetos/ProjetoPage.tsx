@@ -362,7 +362,7 @@ export function ProjetoPage() {
    * ela desenha como marcador. Vendido só libera Ambientação, e só com uma
    * data de kickoff marcada. Pausado não tem destino aqui: sai pelo Retomar.
    */
-  const destinosDaEtapa = new Set(destinosValidos(projeto.status, temKickoff));
+  const destinosDaEtapa = new Set(destinosValidos(projeto.status, temKickoff, projeto.criado_pelo_atalho));
 
   /**
    * A equipe na pilha de rostos: coordenação primeiro, consultores depois.

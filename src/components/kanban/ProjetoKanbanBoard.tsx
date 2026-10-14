@@ -55,8 +55,8 @@ const COLUNAS = (Object.keys(ROTULO_STATUS) as StatusProjeto[])
  * sentidos). `pausado` não entra: o alvo do retomar é decidido no backend,
  * não dá pra adivinhar arrastando pra uma coluna específica.
  */
-function statusAlvoValidos(atual: StatusProjeto, temKickoff: boolean): StatusProjeto[] {
-  const alvos = destinosValidos(atual, temKickoff);
+function statusAlvoValidos(atual: StatusProjeto, temKickoff: boolean, livreDeKickoff = false): StatusProjeto[] {
+  const alvos = destinosValidos(atual, temKickoff, livreDeKickoff);
   return podePausar(atual) ? [...alvos, "pausado"] : alvos;
 }
 
@@ -102,7 +102,7 @@ export function ProjetoKanbanBoard({
     if (!destino) return;
     const projeto = projetos.find((p) => p.id === Number(evento.active.id));
     if (!projeto || projeto.status === destino) return;
-    if (!statusAlvoValidos(projeto.status, !!projeto.data_kickoff).includes(destino)) return;
+    if (!statusAlvoValidos(projeto.status, !!projeto.data_kickoff, projeto.criado_pelo_atalho).includes(destino)) return;
     onMover(projeto.id, destino);
   }
 
@@ -191,7 +191,8 @@ function CardArrastavel({
   nomeFrente: (id: number) => string;
   temPendencia: boolean;
 }) {
-  const arrastavel = podeArrastar && statusAlvoValidos(projeto.status, !!projeto.data_kickoff).length > 0;
+  const arrastavel =
+    podeArrastar && statusAlvoValidos(projeto.status, !!projeto.data_kickoff, projeto.criado_pelo_atalho).length > 0;
   const { attributes, listeners, setNodeRef, isDragging } = useDraggable({
     id: projeto.id,
     disabled: !arrastavel,

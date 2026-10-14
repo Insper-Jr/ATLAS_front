@@ -317,6 +317,11 @@ function EquipeCard() {
                 $variant="outline"
                 disabled={alternandoVagas}
                 onClick={alternarVagasAbertas}
+                title={
+                  projeto.vagas_abertas
+                    ? "Tira o projeto de Vagas em Projetos."
+                    : "Põe o projeto em Vagas em Projetos e avisa os consultores das frentes dele."
+                }
               >
                 {alternandoVagas ? "..." : projeto.vagas_abertas ? "Fechar vagas" : "Abrir vagas"}
               </PageButtonSm>

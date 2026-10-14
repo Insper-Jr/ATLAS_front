@@ -33,6 +33,10 @@ export interface ProjetoResumo {
    *  existe pra pendurar um documento jurídico. Fica fora da lista/Kanban
    *  geral de projetos e do Monitoramento pra sempre. */
   institucional: boolean;
+  /** Nasceu pelo "+ Novo projeto (atalho)" (2026-10-14). Kickoff opcional:
+   *  sem pendência, sem alerta, e Vendido sai pra qualquer etapa; cronograma
+   *  e banca não dependem dele. A declaração de interesse não abre sozinha. */
+  criado_pelo_atalho: boolean;
   frente_ids: number[];
   /** 2 frentes = projeto sinérgico; aparece para os dois gerentes. */
   sinergico: boolean;
