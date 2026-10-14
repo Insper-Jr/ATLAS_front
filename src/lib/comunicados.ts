@@ -13,6 +13,7 @@ export type SegmentoComunicado =
   | "zero_bancas"
   | "bancas_acima_de"
   | "pendentes_do_lote"
+  | "pendentes_do_pdi"
   | "inscritos_da_banca"
   | "por_posicao"
   | "todos"
@@ -23,6 +24,8 @@ export interface FiltroComunicado {
   filtro_bancas?: FiltroCargaBancas;
   minimo_bancas?: number | null;
   lote_id?: number | null;
+  /** `pendentes_do_pdi`: qual pasta. Nula = a mais próxima. */
+  pasta_pdi_id?: number | null;
   banca_id?: number | null;
   so_confirmados?: boolean;
   posicoes?: string[];

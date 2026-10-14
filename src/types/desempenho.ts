@@ -207,6 +207,21 @@ export interface DesempenhoPdiItem {
   ordem: number;
 }
 
+/** A pasta inteira, por mentorado: botão "Pendências" ao lado de "Resultados" (2026-10-13). */
+export interface DesempenhoPdiPendenciasPasta {
+  pasta_id: number;
+  pasta_nome: string;
+  prazo: string;
+  total_itens: number;
+  pessoas: {
+    mentorado_id: number;
+    mentorado_nome: string | null;
+    mentor_id: number;
+    mentor_nome: string | null;
+    itens: { item_id: number; item_nome: string; status: "pendente" | "atrasado"; enviado_em: string | null }[];
+  }[];
+}
+
 export interface DesempenhoPdiPendencia {
   mentorado_id: number;
   mentorado_nome: string | null;

@@ -7,6 +7,7 @@ import type {
   DesempenhoPdiPastaComItens,
   DesempenhoPdiPastaTipo,
   DesempenhoPdiPendencia,
+  DesempenhoPdiPendenciasPasta,
   DesempenhoPdiResultadosPasta,
 } from "@/types/desempenho";
 
@@ -75,6 +76,11 @@ export function deleteItemPdi(itemId: number, token: string) {
 
 export function getPendenciasPdi(itemId: number, token: string) {
   return apiFetch<DesempenhoPdiPendencia[]>(`/desempenho/pdi/itens/${itemId}/pendencias`, { token });
+}
+
+/** A pasta inteira, por mentorado. */
+export function getPendenciasPastaPdi(pastaId: number, token: string) {
+  return apiFetch<DesempenhoPdiPendenciasPasta>(`/desempenho/pdi/pastas/${pastaId}/pendencias`, { token });
 }
 
 export function getResultadosPastaPdi(pastaId: number, token: string) {

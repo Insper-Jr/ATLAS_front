@@ -12,12 +12,13 @@ import {
   type SegmentoComunicado,
 } from "@/lib/comunicados";
 import { getLotes } from "@/lib/desempenho-lotes";
+import { getPastasPdi } from "@/lib/desempenho-pdi";
 import { getPosicoesPermissoes } from "@/lib/posicoes-permissoes";
 import { paraDataUtc } from "@/lib/projetos";
 import { getUsuarios } from "@/lib/usuarios";
 import type { PosicaoPermissao, UsuarioResumo } from "@/types/auth";
 import type { Banca } from "@/types/banca";
-import type { DesempenhoLote } from "@/types/desempenho";
+import type { DesempenhoLote, DesempenhoPdiPasta } from "@/types/desempenho";
 import { theme } from "@/styles/theme";
 import {
   FieldContador,
@@ -37,6 +38,7 @@ const ROTULO_SEGMENTO: Record<SegmentoComunicado, string> = {
   zero_bancas: "Quem está com 0 bancas",
   bancas_acima_de: "Quem tem N ou mais bancas",
   pendentes_do_lote: "Quem ainda não respondeu um formulário de desempenho",
+  pendentes_do_pdi: "Quem ainda não enviou uma pasta de PDI (e os mentores)",
   inscritos_da_banca: "Inscritos numa banca",
   por_posicao: "Por posição",
   todos: "Todo mundo ativo",
@@ -122,6 +124,8 @@ export function ComunicadoFormulario({ onEnviado }: { onEnviado: (enviados: numb
   const [catalogo, setCatalogo] = useState<PosicaoPermissao[]>([]);
   const [pessoas, setPessoas] = useState<UsuarioResumo[]>([]);
   const [lotes, setLotes] = useState<DesempenhoLote[]>([]);
+  const [pastasPdi, setPastasPdi] = useState<DesempenhoPdiPasta[]>([]);
+  const [pastaPdiId, setPastaPdiId] = useState<number | null>(null);
   const [bancas, setBancas] = useState<Banca[]>([]);
   const [previa, setPrevia] = useState<{ rotulo: string; destinatarios: DestinatarioComunicado[] } | null>(null);
   const [previaErro, setPreviaErro] = useState("");
@@ -137,12 +141,13 @@ export function ComunicadoFormulario({ onEnviado }: { onEnviado: (enviados: numb
       filtro_bancas: filtroBancas,
       minimo_bancas: Number.isFinite(minimo) && minimo >= 1 ? minimo : null,
       lote_id: loteId,
+      pasta_pdi_id: pastaPdiId,
       banca_id: bancaId,
       so_confirmados: soConfirmados,
       posicoes,
       usuario_ids: usuarioIds,
     };
-  }, [segmento, filtroBancas, minimoBancas, loteId, bancaId, soConfirmados, posicoes, usuarioIds]);
+  }, [segmento, filtroBancas, minimoBancas, loteId, pastaPdiId, bancaId, soConfirmados, posicoes, usuarioIds]);
 
   // Listas de apoio: só carregam quando o segmento pede, e uma vez só.
   useEffect(() => {
@@ -167,6 +172,18 @@ export function ComunicadoFormulario({ onEnviado }: { onEnviado: (enviados: numb
         )
         .catch(() => setLotes([]));
     }
+    if (segmento === "pendentes_do_pdi" && pastasPdi.length === 0) {
+      getPastasPdi(token)
+        .then((lista) => {
+          const ordenadas = [...lista].sort((a, b) => a.prazo.localeCompare(b.prazo));
+          setPastasPdi(ordenadas);
+          // Padrão: a mais próxima ainda não vencida; se todas venceram, a última.
+          const hoje = new Date().toISOString().slice(0, 10);
+          const proxima = ordenadas.find((p) => p.prazo >= hoje) ?? ordenadas[ordenadas.length - 1];
+          setPastaPdiId((atual) => atual ?? proxima?.id ?? null);
+        })
+        .catch(() => setPastasPdi([]));
+    }
     if (segmento === "inscritos_da_banca" && bancas.length === 0) {
       getBancas(token)
         .then((lista) =>
@@ -178,13 +195,14 @@ export function ComunicadoFormulario({ onEnviado }: { onEnviado: (enviados: numb
         )
         .catch(() => setBancas([]));
     }
-  }, [segmento, token, catalogo.length, pessoas.length, lotes.length, bancas.length]);
+  }, [segmento, token, catalogo.length, pessoas.length, lotes.length, pastasPdi.length, bancas.length]);
 
   // O recorte ainda não dá pra resolver (falta o mínimo, a posição, a
   // pessoa, o lote, a banca). Derivado, não estado.
   const incompleto =
     (segmento === "bancas_acima_de" && filtro.minimo_bancas == null) ||
     (segmento === "pendentes_do_lote" && loteId == null) ||
+    (segmento === "pendentes_do_pdi" && pastaPdiId == null) ||
     (segmento === "inscritos_da_banca" && bancaId == null) ||
     (segmento === "por_posicao" && posicoes.length === 0) ||
     (segmento === "manual" && usuarioIds.length === 0);
@@ -350,6 +368,28 @@ export function ComunicadoFormulario({ onEnviado }: { onEnviado: (enviados: numb
               </option>
             ))}
           </FieldSelect>
+        </FieldGroup>
+      )}
+
+      {segmento === "pendentes_do_pdi" && (
+        <FieldGroup>
+          <FieldLabel htmlFor="comunicado-pasta-pdi">Pasta de PDI</FieldLabel>
+          <FieldSelect
+            id="comunicado-pasta-pdi"
+            value={pastaPdiId ?? ""}
+            onChange={(e) => {
+              setPastaPdiId(e.target.value ? Number(e.target.value) : null);
+              setExcluidos(new Set());
+            }}
+          >
+            <option value="">Escolha uma pasta</option>
+            {pastasPdi.map((p) => (
+              <option key={p.id} value={p.id}>
+                {p.nome} · prazo {p.prazo.slice(8, 10)}/{p.prazo.slice(5, 7)}
+              </option>
+            ))}
+          </FieldSelect>
+          <FieldHint>Vai pro mentorado que ainda não enviou e pro mentor dele. Quem entregou atrasado já entregou.</FieldHint>
         </FieldGroup>
       )}
 

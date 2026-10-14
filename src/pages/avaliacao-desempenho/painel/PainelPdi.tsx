@@ -12,6 +12,7 @@ import {
   deletePastaPdi,
   getItensPdi,
   getPastasPdi,
+  getPendenciasPastaPdi,
   getPendenciasPdi,
   getResultadosPastaPdi,
   baixarEnvioPdi,
@@ -21,7 +22,10 @@ import {
 } from "@/lib/desempenho-pdi";
 import { formatarData } from "@/lib/projetos";
 import { FotoCircular } from "@/components/Avatar";
-import type { DesempenhoMentoria } from "@/types/desempenho";
+import type {
+  DesempenhoMentoria,
+  DesempenhoPdiPendenciasPasta,
+} from "@/types/desempenho";
 import type { UsuarioResumo } from "@/types/auth";
 import type {
   DesempenhoPdiItem,
@@ -416,6 +420,24 @@ function PastasPdiCard() {
   const [resultados, setResultados] = useState<DesempenhoPdiResultadosPasta | null>(null);
   const [resultadosErro, setResultadosErro] = useState("");
 
+  // "Pendências" da pasta inteira, ao lado de "Resultados" (2026-10-13, a
+  // pedido): antes só aparecia item a item, dentro do "Editar".
+  const [pendenciasPasta, setPendenciasPasta] = useState<DesempenhoPdiPasta | null>(null);
+  const [pendenciasPastaDados, setPendenciasPastaDados] = useState<DesempenhoPdiPendenciasPasta | null>(null);
+  const [pendenciasPastaErro, setPendenciasPastaErro] = useState("");
+
+  async function abrirPendenciasPasta(pasta: DesempenhoPdiPasta) {
+    if (!token) return;
+    setPendenciasPasta(pasta);
+    setPendenciasPastaDados(null);
+    setPendenciasPastaErro("");
+    try {
+      setPendenciasPastaDados(await getPendenciasPastaPdi(pasta.id, token));
+    } catch (err) {
+      setPendenciasPastaErro(err instanceof Error ? err.message : "Erro ao carregar as pendências");
+    }
+  }
+
   async function abrirResultados(pasta: DesempenhoPdiPasta) {
     if (!token) return;
     setResultadosPasta(pasta);
@@ -698,6 +720,9 @@ function PastasPdiCard() {
                     <PageButtonSm type="button" $variant="outline" onClick={() => handleIniciarEdicao(pasta)}>
                       Editar
                     </PageButtonSm>
+                    <PageButtonSm type="button" $variant="outline" onClick={() => abrirPendenciasPasta(pasta)}>
+                      Pendências
+                    </PageButtonSm>
                     <PageButtonSm type="button" onClick={() => abrirResultados(pasta)}>
                       Resultados
                     </PageButtonSm>
@@ -708,6 +733,61 @@ function PastasPdiCard() {
           </PastasGrid>
         )}
       </PageCardContent>
+
+      {pendenciasPasta && (
+        <ModalOverlay onClick={() => setPendenciasPasta(null)}>
+          <ModalContent onClick={(e) => e.stopPropagation()}>
+            <ModalHeader>
+              <ModalTitle>
+                Pendências
+                <br />
+                <small>
+                  {pendenciasPasta.nome} · prazo {formatarData(pendenciasPasta.prazo)}
+                </small>
+              </ModalTitle>
+              <ModalClose type="button" aria-label="Fechar" onClick={() => setPendenciasPasta(null)}>
+                <X size={18} />
+              </ModalClose>
+            </ModalHeader>
+            <ModalBody>
+              {pendenciasPastaErro && <ErrorText>{pendenciasPastaErro}</ErrorText>}
+              {!pendenciasPastaDados && !pendenciasPastaErro ? (
+                <PageLoadingBlock />
+              ) : pendenciasPastaDados && pendenciasPastaDados.pessoas.length === 0 ? (
+                <EmptyText>Todo mundo enviou tudo no prazo.</EmptyText>
+              ) : (
+                pendenciasPastaDados && (
+                  <SubLista>
+                    <LoteCardMeta>
+                      {pendenciasPastaDados.pessoas.length}{" "}
+                      {pendenciasPastaDados.pessoas.length === 1 ? "pessoa" : "pessoas"} · {pendenciasPastaDados.total_itens}{" "}
+                      {pendenciasPastaDados.total_itens === 1 ? "item exigido" : "itens exigidos"}
+                    </LoteCardMeta>
+                    {pendenciasPastaDados.pessoas.map((pessoa) => (
+                      <ResultadoPessoa key={pessoa.mentorado_id}>
+                        <ResultadoPessoaTitulo>
+                          <strong>{pessoa.mentorado_nome}</strong>
+                          {pessoa.mentor_nome && <> · mentorado(a) de {pessoa.mentor_nome}</>}
+                        </ResultadoPessoaTitulo>
+                        {pessoa.itens.map((item) => (
+                          <ResultadoArquivo key={item.item_id}>
+                            <span>{item.item_nome}</span>
+                            <PageBadge $tone={item.status === "pendente" ? "danger" : "warning"}>
+                              {item.status === "pendente"
+                                ? "Não enviou"
+                                : `Enviou atrasado${item.enviado_em ? ` em ${formatarData(item.enviado_em)}` : ""}`}
+                            </PageBadge>
+                          </ResultadoArquivo>
+                        ))}
+                      </ResultadoPessoa>
+                    ))}
+                  </SubLista>
+                )
+              )}
+            </ModalBody>
+          </ModalContent>
+        </ModalOverlay>
+      )}
 
       {resultadosPasta && (
         <ModalOverlay onClick={() => setResultadosPasta(null)}>
