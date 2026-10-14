@@ -12,6 +12,11 @@
 export interface Permissoes {
   /** 1. Criar projeto e alocar equipe */
   pode_criar_projeto: boolean;
+  /** O botão "+ Novo projeto (atalho)" (2026-10-13): o projeto nasce
+   *  Vendido sem Contrato de Prestação, e ambientação e máximo de
+   *  consultores ficam opcionais. Nasce marcada só pra diretoria de
+   *  projetos; antes era decidido pelo cargo. */
+  pode_criar_projeto_atalho: boolean;
   /** 2. Editar a equipe de um projeto */
   pode_editar_equipe: boolean;
   /** 3. Gerir membros (posição e status) */

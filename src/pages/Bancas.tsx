@@ -220,6 +220,10 @@ interface Contexto {
    *  realizadas precisa continuar cobrando até a última avaliação entrar.
    *  Só preenchido pra quem pode agendar (a rota exige). */
   faltamAvaliar: Record<number, number[]>;
+  /** Só quem ainda PODE enviar: pendência dentro do prazo (ou reaberta pela
+   *  diretoria). É o que decide se uma banca já aprovada continua
+   *  "aguardando avaliações" (2026-10-13, a pedido). */
+  faltamAvaliarNoPrazo: Record<number, number[]>;
 }
 
 export function Bancas() {
@@ -403,6 +407,12 @@ export function Bancas() {
           (mapa[item.banca_id] ??= []).push(item.usuario_id);
           return mapa;
         }, {}),
+        faltamAvaliarNoPrazo: pendentesDeTodos
+          .filter((item) => !item.prazo_expirado)
+          .reduce<Record<number, number[]>>((mapa, item) => {
+            (mapa[item.banca_id] ??= []).push(item.usuario_id);
+            return mapa;
+          }, {}),
       });
       setFormulario(formularioAtivo);
       setEsperandoAprovacao(esperandoAprovacaoResp);
@@ -568,11 +578,16 @@ export function Bancas() {
   // ⚠ 2026-10-09, a pedido: uma banca APROVADA com avaliação faltando
   // continua aqui. Antes, registrar o resultado a tirava da seção e ninguém
   // mais via que ainda faltava gente enviar o formulário.
+  // 2026-10-13, a pedido: mas só enquanto alguém ainda PODE enviar. Passado
+  // o prazo (7 dias da realização, salvo reabertura pela diretoria), quem
+  // não avaliou não consegue mais, e a banca com resultado não está
+  // aguardando nada. Sem resultado ela fica de qualquer jeito.
   const realizadasAguardandoResultado = bancas
     .filter((b) => {
       if (!b.realizado_em) return false;
       const faltam = (contexto?.faltamAvaliar[b.id] ?? []).length > 0;
-      if (b.resultado && !faltam) return false;
+      const faltamNoPrazo = (contexto?.faltamAvaliarNoPrazo[b.id] ?? []).length > 0;
+      if (b.resultado && !faltamNoPrazo) return false;
       // Se EU sou avaliador pendente, ela já está em "Para avaliar".
       if (paraAvaliar.some((p) => p.id === b.id)) return false;
       // Sem resultado e já avaliada por mim: só fica se faltar outra pessoa.

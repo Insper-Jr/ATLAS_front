@@ -64,9 +64,11 @@ export interface CreateProjetoPayload {
   descricao?: string | null;
   link_proposta?: string | null;
   frente_ids: number[];
-  dias_ambientacao: number;
-  /** Teto de consultores, decide quando o projeto sai da lista de vagas. */
-  max_consultores: number;
+  /** Em branco (atalho, 2026-10-13) o backend usa o padrão: 5 dias úteis. */
+  dias_ambientacao?: number;
+  /** Teto de consultores, decide quando o projeto sai da lista de vagas.
+   *  Em branco o backend usa o padrão: 3. */
+  max_consultores?: number;
   equipe: MembroEquipePayload[];
   /** Quem vendeu. Opcional e sem obrigatoriedade: nem toda venda tem vendedor
    *  identificado, e exigir travaria o cadastro por um dado que às vezes

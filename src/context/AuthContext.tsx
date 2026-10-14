@@ -47,6 +47,7 @@ const AuthContext = createContext<AuthContextType | null>(null);
  *  lida de verdade. */
 const PERMISSOES_PLACEHOLDER: Permissoes = {
   pode_criar_projeto: false,
+  pode_criar_projeto_atalho: false,
   pode_editar_equipe: false,
   pode_gerir_membros: false,
   pode_marcar_kickoff: false,

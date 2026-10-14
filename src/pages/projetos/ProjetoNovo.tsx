@@ -145,9 +145,12 @@ export function ProjetoNovo() {
   const [erroAnexo, setErroAnexo] = useState("");
   const anexoRef = useRef<HTMLInputElement>(null);
   const [frenteIds, setFrenteIds] = useState<number[]>([]);
-  const [diasAmbientacao, setDiasAmbientacao] = useState("5");
+  // No atalho (2026-10-13, a pedido) os dois são opcionais e começam em
+  // branco: em branco o backend usa o padrão (5 e 3) e a Visão geral deixa
+  // mudar depois. Serve pra criar um projeto só pra gerar a banca dele.
+  const [diasAmbientacao, setDiasAmbientacao] = useState(veioDoAtalho ? "" : "5");
   // 3 é o padrão combinado com o núcleo para o time de consultores.
-  const [maxConsultores, setMaxConsultores] = useState("3");
+  const [maxConsultores, setMaxConsultores] = useState(veioDoAtalho ? "" : "3");
   const [diaReuniao, setDiaReuniao] = useState("");
   // A promessa feita ao cliente na venda. Opcional: nem toda venda fecha com
   // data combinada, e exigi-la aqui travaria o cadastro por um dado que às
@@ -280,8 +283,10 @@ export function ProjetoNovo() {
             descricao: descricao.trim() || null,
             link_proposta: modoProposta === "link" ? linkProposta.trim() || null : null,
             frente_ids: frenteIds,
-            dias_ambientacao: Number(diasAmbientacao) || 5,
-            max_consultores: Number(maxConsultores) || 3,
+            // Em branco vai sem o campo e o backend aplica o padrão. (Antes
+            // era `Number(x) || 5`, que também trocava um 0 digitado por 5.)
+            dias_ambientacao: diasAmbientacao.trim() === "" ? undefined : Number(diasAmbientacao),
+            max_consultores: maxConsultores.trim() === "" ? undefined : Number(maxConsultores),
             equipe: montarEquipePayload(equipe),
             vendedor_ids: vendedorIds,
             dia_reuniao_padrao: diaReuniao ? Number(diaReuniao) : null,
@@ -381,7 +386,7 @@ export function ProjetoNovo() {
           Este é um atalho — o projeto nasce direto como <strong>Vendido</strong>, sem passar pelo
           Contrato de Prestação de Serviços. O fluxo ideal é abrir o contrato pela aba Contratos e
           deixar ele levar o projeto a Vendido quando for assinado; use esta tela só quando isso não
-          for viável.
+          for viável. Aqui, dias de ambientação e máximo de consultores são opcionais.
         </div>
       )}
 
@@ -495,7 +500,7 @@ export function ProjetoNovo() {
                 {/* "dias úteis" volta pro rótulo: sem a frase de apoio embaixo,
                     é a única coisa que diz que 5 não são 5 dias corridos. */}
                 <FieldLabel htmlFor="projeto-ambientacao">
-                  Dias de ambientação (dias úteis)<Required>*</Required>
+                  Dias de ambientação (dias úteis){!veioDoAtalho && <Required>*</Required>}
                 </FieldLabel>
                 <FieldInput
                   id="projeto-ambientacao"
@@ -504,8 +509,12 @@ export function ProjetoNovo() {
                   max={60}
                   value={diasAmbientacao}
                   onChange={(e) => setDiasAmbientacao(e.target.value)}
-                  required
+                  placeholder={veioDoAtalho ? "5" : undefined}
+                  required={!veioDoAtalho}
                 />
+                {veioDoAtalho && (
+                  <CampoAjuda>Opcional no atalho: em branco fica 5 e dá pra mudar depois na Visão geral.</CampoAjuda>
+                )}
               </FieldGroup>
 
               {/* A data combinada com o cliente, registrada já na venda,
@@ -526,7 +535,7 @@ export function ProjetoNovo() {
             <CamposGrade>
               <FieldGroup>
                 <FieldLabel htmlFor="projeto-max-consultores">
-                  Máximo de consultores<Required>*</Required>
+                  Máximo de consultores{!veioDoAtalho && <Required>*</Required>}
                 </FieldLabel>
                 <FieldInput
                   id="projeto-max-consultores"
@@ -535,8 +544,12 @@ export function ProjetoNovo() {
                   max={10}
                   value={maxConsultores}
                   onChange={(e) => setMaxConsultores(e.target.value)}
-                  required
+                  placeholder={veioDoAtalho ? "3" : undefined}
+                  required={!veioDoAtalho}
                 />
+                {veioDoAtalho && (
+                  <CampoAjuda>Opcional no atalho: em branco fica 3 e dá pra mudar depois na Visão geral.</CampoAjuda>
+                )}
               </FieldGroup>
 
               <FieldGroup>

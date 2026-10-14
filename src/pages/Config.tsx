@@ -87,6 +87,12 @@ const PERMISSOES = [
       "Abrir um projeto novo e escolher coordenador e consultores na criação.",
   },
   {
+    campo: "pode_criar_projeto_atalho" as const,
+    titulo: "Criar projeto pelo atalho (nasce Vendido)",
+    descricao:
+      "O botão \"+ Novo projeto (atalho)\" em Projetos: o projeto nasce direto como Vendido, sem passar pelo Contrato de Prestação, e dias de ambientação e máximo de consultores ficam opcionais (em branco valem 5 e 3, editáveis depois na Visão geral). Serve pra criar um projeto só pra gerar a banca dele. Precisa também de \"Criar projeto e alocar equipe\". Nasce marcada só pra diretoria de projetos.",
+  },
+  {
     campo: "pode_editar_equipe" as const,
     titulo: "Editar a equipe de um projeto",
     descricao:

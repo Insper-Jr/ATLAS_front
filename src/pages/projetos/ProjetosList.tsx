@@ -489,14 +489,15 @@ export function ProjetosList() {
               </FrenteFilterPanel>
             )}
           </FrenteFilterWrap>
-          {/* ⭐ 2026-09-23 — a pedido: atalho SÓ pra diretoria de projetos
-              (não é a caixa `pode_criar_projeto` — jurídico/gerente também
-              têm essa caixa, mas não este atalho). O fluxo normal é abrir o
-              Contrato de Prestação na aba Contratos e deixar ele levar o
-              projeto a "vendido" sozinho quando assinado; isto aqui pula
-              direto pra "vendido" pra quando esse fluxo não é viável — não é
-              o caminho ideal, só uma exceção. */}
-          {usuario?.posicao === "diretor_projetos" && (
+          {/* 2026-09-23, a pedido: atalho que pula direto pra "vendido".
+              O fluxo normal é abrir o Contrato de Prestação na aba Contratos
+              e deixar ele levar o projeto a "vendido" sozinho quando
+              assinado; isto aqui é pra quando esse fluxo não é viável, não o
+              caminho ideal. Desde 2026-10-13 quem vê é a caixa
+              `pode_criar_projeto_atalho` (nasce só na diretoria de
+              projetos), não mais o cargo. `podeCriar` junto porque a rota
+              `/projetos/novo` continua exigindo `pode_criar_projeto`. */}
+          {podeCriar && usuario?.permissoes.pode_criar_projeto_atalho && (
             <PageButton
               as={Link}
               to="/projetos/novo"
