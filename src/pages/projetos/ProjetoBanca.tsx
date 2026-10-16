@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from "react";
+import { Fragment, useCallback, useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { AlertTriangle, Trash2 } from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
@@ -19,13 +19,14 @@ import {
 } from "@/lib/bancas";
 import { ehDiretoriaDeProjetos } from "@/utils/permissoes";
 import { BancaFormModal } from "@/components/bancas/BancaFormModal";
-import { createAvaliacao, getFormularioAtivo, submeterAvaliacao } from "@/lib/avaliacoes";
+import { createAvaliacao, formatNota, getFormularioAtivo, submeterAvaliacao, tomDaNota } from "@/lib/avaliacoes";
 import { formatarDataHora } from "@/lib/projetos";
 import { ConfirmarModal } from "@/components/ConfirmarModal";
 import { AvaliadoresAgrupados } from "@/components/bancas/AvaliadoresAgrupados";
 import { LocalEEntregaBloco } from "@/components/bancas/LocalEEntregaBloco";
 import type {
   AprovacaoDaBanca,
+  AvaliacaoDaBanca,
   AvaliadorDaBanca,
   Banca,
   BancaDetalhes,
@@ -73,6 +74,10 @@ import {
   CampoValor,
   Colunas,
   Comentario,
+  CriterioNota,
+  CriterioResposta,
+  Criterios,
+  CriterioTexto,
   Lista,
   ListaNomes,
   MeuVoto,
@@ -81,6 +86,10 @@ import {
   TentativaMeta,
   TentativaNome,
   TentativaTopo,
+  Voto,
+  VotoAutor,
+  VotoBotao,
+  VotoTopo,
 } from "./ProjetoBanca.styled";
 import { useProjeto } from "./ProjetoPage";
 
@@ -190,6 +199,7 @@ export function ProjetoBanca() {
           usuarios={usuarios}
           frentes={frentes}
           somenteLeitura={somenteLeitura}
+          visitante={projeto.apenas_banca}
           onMudou={carregar}
           onAprovacaoDecidida={handleAprovacaoDecidida}
         />
@@ -205,6 +215,7 @@ function FichaDaBanca({
   usuarios,
   frentes,
   somenteLeitura,
+  visitante,
   onMudou,
   onAprovacaoDecidida,
 }: {
@@ -216,6 +227,9 @@ function FichaDaBanca({
   usuarios: UsuarioResumo[];
   frentes: Frente[];
   somenteLeitura: boolean;
+  /** Avaliador escalado sem outro vínculo com o projeto (`apenas_banca`):
+   *  entra pra votar e não lê os resultados, nem anônimos. */
+  visitante: boolean;
   onMudou: () => Promise<void>;
   onAprovacaoDecidida: (bancaId: number, situacao: AprovacaoDaBanca) => void;
 }) {
@@ -351,9 +365,8 @@ function FichaDaBanca({
             <CampoRotulo>Frentes</CampoRotulo>
             <CampoValor>{banca.frentes.join(", ") || "—"}</CampoValor>
           </Campo>
-          {/* "Nota final" saiu daqui junto com a seção de Avaliações
-              (2026-09-10) — é resultado de avaliação, e isso é só no
-              Dashboard de Bancas. O veredito (aprovada/reprovada), que é o
+          {/* A nota mora na seção Resultados, abaixo, junto das avaliações
+              de que ela é a média. O veredito (aprovada/reprovada), que é o
               que libera a entrega ao cliente, continua no cabeçalho. */}
         </Colunas>
 
@@ -425,6 +438,18 @@ function FichaDaBanca({
           onDecidiu={(situacao) => onAprovacaoDecidida(banca.id, situacao)}
         />
 
+        {/* Resultados (2026-10-16, a pedido): as notas e os comentários de
+            quem avaliou, pra equipe ajustar o trabalho a tempo. Sem autor
+            pra quem é do projeto, com nome pra quem tem o Dashboard de
+            Bancas: é a rota que decide (`avaliacoes_anonimas`), a tela só
+            rotula. O visitante não tem a seção: ele só vota. */}
+        {!visitante && (
+          <>
+            <SecaoTitulo>Resultados</SecaoTitulo>
+            <ResultadosBloco banca={banca} />
+          </>
+        )}
+
         {banca.sessoes.length > 1 && (
           <>
             <SecaoTitulo>Tentativas</SecaoTitulo>
@@ -452,12 +477,6 @@ function FichaDaBanca({
             </Lista>
           </>
         )}
-
-        {/* Nada de "Avaliações" aqui (2026-09-10, a pedido): a nota e o
-            comentário de cada avaliador vivem SÓ no Dashboard de Bancas.
-            Nesta aba, quem lê vê e envia A SUA em `MeuVotoBloco` acima, e
-            mais nada. O backend também não manda mais `avaliacoes`/
-            `nota_final` pra quem não tem o dashboard. */}
 
         <SecaoTitulo>Relato da coordenação</SecaoTitulo>
         <RelatoDaCoordenacao banca={banca} token={token} onSalvou={onMudou} />
@@ -830,6 +849,173 @@ function AprovacaoBloco({
         />
       )}
     </>
+  );
+}
+
+/**
+ * As notas e os comentários da banca, lidos pela equipe do projeto.
+ *
+ * Agrupado por tentativa, a mais recente primeiro: numa banca reprovada e
+ * refeita, o que interessa é o que disseram da segunda. A média geral e as
+ * médias por critério são calculadas aqui, das mesmas notas que a lista
+ * mostra, e só com as notas daquela tentativa, a mesma régua da
+ * `nota_final` do backend.
+ */
+function ResultadosBloco({ banca }: { banca: BancaDetalhes }) {
+  if (!banca.realizado_em) {
+    return (
+      <Ajuda>As notas e os comentários dos avaliadores aparecem aqui depois que a banca acontece.</Ajuda>
+    );
+  }
+  if (banca.avaliacoes.length === 0) {
+    return <EmptyText>Nenhuma avaliação enviada ainda.</EmptyText>;
+  }
+
+  const porSessao = new Map<number, AvaliacaoDaBanca[]>();
+  for (const a of banca.avaliacoes) {
+    porSessao.set(a.sessao, [...(porSessao.get(a.sessao) ?? []), a]);
+  }
+  const sessoes = [...porSessao.entries()].sort((a, b) => b[0] - a[0]);
+
+  return (
+    <>
+      <Ajuda>
+        {banca.avaliacoes_anonimas
+          ? "As avaliações são anônimas: você vê as notas e os comentários, não quem escreveu cada um."
+          : "Você vê o nome de quem avaliou porque tem acesso ao Dashboard de Bancas. A equipe do projeto lê a mesma lista sem os nomes."}
+      </Ajuda>
+      {sessoes.map(([numero, avaliacoes]) => (
+        <ResultadoDaTentativa
+          key={numero}
+          titulo={sessoes.length > 1 ? nomeDaTentativa(numero) : null}
+          avaliacoes={avaliacoes}
+        />
+      ))}
+    </>
+  );
+}
+
+/** Média geral e por critério, só das notas numéricas. É a mesma conta de
+ *  `calcular_nota_final` e `calcular_notas_por_pergunta` no backend, feita
+ *  aqui pra não precisar de outra rota: as notas já vieram na ficha. */
+function mediasDasAvaliacoes(avaliacoes: AvaliacaoDaBanca[]) {
+  const porCriterio = new Map<string, { pergunta: string; ordem: number; soma: number; n: number }>();
+  let soma = 0;
+  let n = 0;
+  for (const a of avaliacoes) {
+    for (const nota of a.notas) {
+      if (nota.nota === null) continue;
+      soma += nota.nota;
+      n += 1;
+      const chave = `${nota.ordem}|${nota.pergunta}`;
+      const atual = porCriterio.get(chave) ?? { pergunta: nota.pergunta, ordem: nota.ordem, soma: 0, n: 0 };
+      atual.soma += nota.nota;
+      atual.n += 1;
+      porCriterio.set(chave, atual);
+    }
+  }
+  return {
+    media: n > 0 ? soma / n : null,
+    porCriterio: [...porCriterio.values()]
+      .sort((a, b) => a.ordem - b.ordem || a.pergunta.localeCompare(b.pergunta))
+      .map((c) => ({ pergunta: c.pergunta, ordem: c.ordem, media: c.soma / c.n })),
+  };
+}
+
+function ResultadoDaTentativa({
+  titulo,
+  avaliacoes,
+}: {
+  titulo: string | null;
+  avaliacoes: AvaliacaoDaBanca[];
+}) {
+  const { media, porCriterio } = mediasDasAvaliacoes(avaliacoes);
+  return (
+    <div>
+      {titulo && <SecaoTitulo>{titulo}</SecaoTitulo>}
+      <Colunas>
+        <Campo>
+          <CampoRotulo>Média geral</CampoRotulo>
+          <CampoValor>
+            {media === null ? "sem notas" : <PageBadge $tone={tomDaNota(media)}>{formatNota(media)}</PageBadge>}
+          </CampoValor>
+        </Campo>
+        <Campo>
+          <CampoRotulo>Avaliações enviadas</CampoRotulo>
+          <CampoValor>{avaliacoes.length}</CampoValor>
+        </Campo>
+      </Colunas>
+      {porCriterio.length > 0 && (
+        <Campo style={{ marginTop: "0.75rem" }}>
+          <CampoRotulo>Médias por critério</CampoRotulo>
+          <Criterios>
+            {porCriterio.map((c) => (
+              <Fragment key={`${c.ordem}|${c.pergunta}`}>
+                <CriterioTexto>{c.pergunta}</CriterioTexto>
+                <CriterioNota>{formatNota(c.media)}</CriterioNota>
+              </Fragment>
+            ))}
+          </Criterios>
+        </Campo>
+      )}
+      <Lista style={{ marginTop: "0.75rem" }}>
+        {avaliacoes.map((a, i) => (
+          <AvaliacaoLinha key={a.id} avaliacao={a} rotulo={a.avaliador ?? `Avaliação ${i + 1}`} />
+        ))}
+      </Lista>
+    </div>
+  );
+}
+
+/**
+ * Uma avaliação: o comentário sempre à vista, as notas por critério atrás
+ * de um clique. O comentário é o que a equipe precisa ler; dez critérios de
+ * cinco avaliadores abertos de uma vez viram uma parede de números.
+ * `rotulo` é o nome do avaliador, ou "Avaliação n" quando a lista é anônima.
+ */
+function AvaliacaoLinha({ avaliacao, rotulo }: { avaliacao: AvaliacaoDaBanca; rotulo: string }) {
+  const [aberta, setAberta] = useState(false);
+  const valores = avaliacao.notas.map((n) => n.nota).filter((v): v is number => v !== null);
+  const media = valores.length ? valores.reduce((s, v) => s + v, 0) / valores.length : null;
+  const temNotas = avaliacao.notas.length > 0;
+
+  const topo = (
+    <VotoTopo>
+      <VotoAutor>{rotulo}</VotoAutor>
+      {avaliacao.submetida_em && <TentativaMeta>{formatarDataHora(avaliacao.submetida_em)}</TentativaMeta>}
+      {media !== null && <PageBadge $tone={tomDaNota(media)}>{formatNota(media)}</PageBadge>}
+      {temNotas && <TentativaMeta>{aberta ? "ocultar notas" : "ver notas por critério"}</TentativaMeta>}
+    </VotoTopo>
+  );
+
+  return (
+    <Voto $aprova={null}>
+      {/* Sem notas não vira botão: um clique que não faz nada é pior que
+          nenhum clique. */}
+      {temNotas ? (
+        <VotoBotao type="button" aria-expanded={aberta} onClick={() => setAberta((v) => !v)}>
+          {topo}
+        </VotoBotao>
+      ) : (
+        topo
+      )}
+      {avaliacao.comentario_feedback ? (
+        <Comentario>{avaliacao.comentario_feedback}</Comentario>
+      ) : (
+        <Ajuda>Enviada sem comentário.</Ajuda>
+      )}
+      {aberta && (
+        <Criterios>
+          {avaliacao.notas.map((n, i) => (
+            <Fragment key={`${n.ordem}-${i}`}>
+              <CriterioTexto>{n.pergunta}</CriterioTexto>
+              <CriterioNota>{formatNota(n.nota)}</CriterioNota>
+              {n.resposta_texto && <CriterioResposta>{n.resposta_texto}</CriterioResposta>}
+            </Fragment>
+          ))}
+        </Criterios>
+      )}
+    </Voto>
   );
 }
 

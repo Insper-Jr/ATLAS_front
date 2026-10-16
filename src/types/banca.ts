@@ -188,6 +188,11 @@ export interface BancaDetalhes {
   /** ⭐ As notas e o feedback de quem avaliou — pedagógico, não decide a
    *  banca. Só avaliações SUBMETIDAS. */
   avaliacoes: AvaliacaoDaBanca[];
+  /** `true` quando a rota tirou o autor de cada avaliação (2026-10-16: quem
+   *  é do projeto e não tem o Dashboard de Bancas lê notas e comentários
+   *  sem saber de quem). Aí `avaliador` vem nulo e a ordem da lista não é a
+   *  de envio. Com o dashboard vem `false`, com os nomes. */
+  avaliacoes_anonimas: boolean;
   /** ⭐ Quem aprova a banca é diretoria + gerente da frente, não os
    *  avaliadores (§5.5, §8). */
   aprovacao: AprovacaoDaBanca;
@@ -261,12 +266,15 @@ export interface NotaDoCriterio {
 
 /** A avaliação de um avaliador numa tentativa — notas e feedback pedagógico. */
 export interface AvaliacaoDaBanca {
+  /** Com `BancaDetalhes.avaliacoes_anonimas`, é só a posição na lista. */
   id: number;
-  avaliador: string;
-  avaliador_id: number;
+  /** Nulos na versão anônima. */
+  avaliador: string | null;
+  avaliador_id: number | null;
   /** A tentativa a que esta avaliação pertence. */
   sessao: number;
   comentario_feedback: string | null;
+  /** Também nulo na versão anônima: a hora do envio entregaria quem foi. */
   submetida_em: string | null;
   /** ⭐ Critério a critério — é o que a aba abre ao clicar no nome. */
   notas: NotaDoCriterio[];
