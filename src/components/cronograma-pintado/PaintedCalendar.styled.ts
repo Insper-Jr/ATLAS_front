@@ -175,11 +175,19 @@ export const NumeroDia = styled.span<{ $texto?: string; $hoje?: boolean }>`
   font-size: ${theme.fontSize.xs};
   font-weight: ${({ $hoje }) => ($hoje ? theme.fontWeight.bold : theme.fontWeight.medium)};
   color: ${({ $texto }) => $texto ?? theme.colors.foreground};
+  /* Hoje ganha um círculo na cor do número, que já contrasta com o fundo da
+     etapa. A célula alinha no início, então o círculo não estica na largura. */
   ${({ $hoje }) =>
     $hoje &&
     css`
-      text-decoration: underline;
-      text-underline-offset: 2px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-width: 1.6em;
+      height: 1.6em;
+      padding: 0 0.2em;
+      border: 1.5px solid currentColor;
+      border-radius: ${theme.borderRadius.full};
     `}
 `;
 
