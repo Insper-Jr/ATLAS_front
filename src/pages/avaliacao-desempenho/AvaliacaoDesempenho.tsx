@@ -114,6 +114,36 @@ interface Rascunho {
   // completou (ver o guard lá).
   notaGeral: number | null;
   comentarios: string;
+  // Todos os critérios, nota geral e comentário preenchidos (2026-10-16).
+  // Antes a fila tratava "tem rascunho" como "Concluída", e o rascunho nasce
+  // só de abrir a pessoa: quem abria e voltava via verde sem ter respondido.
+  completo?: boolean;
+}
+
+function criteriosFaltando(formulario: DesempenhoFormulario, notas: Record<number, DesempenhoNotaInput>) {
+  return formulario.secoes
+    .flatMap((s) => s.criterios)
+    .filter((c) => {
+      const resposta = notas[c.id];
+      if (c.tipo_resposta === "nota") return !resposta || resposta.nota == null;
+      return !resposta || !resposta.resposta_texto?.trim();
+    });
+}
+
+function estaCompleto(
+  formulario: DesempenhoFormulario,
+  notas: Record<number, DesempenhoNotaInput>,
+  notaGeral: number | null,
+  comentarios: string,
+) {
+  return criteriosFaltando(formulario, notas).length === 0 && notaGeral != null && comentarios.length > 0;
+}
+
+/** Rascunho salvo antes de existir `completo` cai na regra antiga: tem nota
+ *  geral. Se faltar critério, o backend recusa no envio com a mensagem dele. */
+function rascunhoCompleto(rascunho: Rascunho | undefined): boolean {
+  if (!rascunho) return false;
+  return rascunho.completo ?? rascunho.notaGeral != null;
 }
 
 // O escopo entra na chave porque a Avaliação do Escopo é um item POR ESCOPO
@@ -198,12 +228,17 @@ export function AvaliacaoDesempenho() {
   // ou nunca aberta, continuava seguro. Espelha a cada tecla, igual ao
   // efeito acima.
   useEffect(() => {
-    if (!pessoaAtual || !rascunhosCarregados) return;
+    if (!pessoaAtual || !formulario || !rascunhosCarregados) return;
     setRascunhos((atual) => ({
       ...atual,
-      [chave(pessoaAtual)]: { notas: { ...notas }, notaGeral, comentarios },
+      [chave(pessoaAtual)]: {
+        notas: { ...notas },
+        notaGeral,
+        comentarios,
+        completo: estaCompleto(formulario, notas, notaGeral, comentarios),
+      },
     }));
-  }, [pessoaAtual, notas, notaGeral, comentarios, rascunhosCarregados]);
+  }, [pessoaAtual, formulario, notas, notaGeral, comentarios, rascunhosCarregados]);
 
   const nomesProjeto = useMemo(() => new Map(projetos.map((p) => [p.id, p.nome])), [projetos]);
 
@@ -334,13 +369,7 @@ export function AvaliacaoDesempenho() {
     e.preventDefault();
     if (!pessoaAtual || !formulario) return;
 
-    const criterios = formulario.secoes.flatMap((s) => s.criterios);
-    const faltando = criterios.filter((c) => {
-      const resposta = notas[c.id];
-      if (c.tipo_resposta === "nota") return !resposta || resposta.nota == null;
-      return !resposta || !resposta.resposta_texto?.trim();
-    });
-    if (faltando.length > 0) {
+    if (criteriosFaltando(formulario, notas).length > 0) {
       setErroForm("Responda todos os critérios antes de continuar.");
       return;
     }
@@ -355,7 +384,12 @@ export function AvaliacaoDesempenho() {
     setErroForm("");
     setRascunhos((atual) => ({
       ...atual,
-      [chave(pessoaAtual)]: { notas: { ...notas }, notaGeral, comentarios },
+      [chave(pessoaAtual)]: {
+        notas: { ...notas },
+        notaGeral,
+        comentarios,
+        completo: estaCompleto(formulario, notas, notaGeral, comentarios),
+      },
     }));
     setPessoaAtual(null);
     setFormulario(null);
@@ -388,12 +422,11 @@ export function AvaliacaoDesempenho() {
 
       for (const item of filaOriginalDoTipo) {
         const rascunho = rascunhos[chave(item)];
-        // O rascunho agora nasce incompleto (espelhado a cada tecla, antes
-        // de "Continuar"), então `notaGeral` pode ainda estar nulo aqui —
-        // só devia acontecer se a fila mudou por fora entre abrir e clicar
-        // "Enviar tudo" (já coberto pelo `fecharamAgora` acima), mas o guard
-        // evita mandar `nota_geral: null` pro backend em vez de estourar.
-        if (!rascunho || rascunho.notaGeral == null) continue;
+        // Item de lote já fechado fica de fora: o backend recusa, e a recusa
+        // interrompia o laço antes de chegar nos itens abertos que vinham
+        // depois dele. O botão só libera com todo item aberto completo, então
+        // o guard da nota geral é só pra nunca mandar `nota_geral: null`.
+        if (!item.aberto || !rascunho || rascunho.notaGeral == null) continue;
         await submitAvaliacao(
           {
             lote_id: item.lote_id,
@@ -463,10 +496,16 @@ export function AvaliacaoDesempenho() {
   // então não pode travar o "Enviar avaliações" das pessoas que ainda dá.
   const itensAindaAbertos = filaOriginalDoTipo.filter((item) => item.aberto);
   const totalNaRodada = itensAindaAbertos.length;
-  const concluidosNaRodada = itensAindaAbertos.filter((item) => !!rascunhos[chave(item)]).length;
-  const progressoPercent = totalNaRodada > 0 ? (concluidosNaRodada / totalNaRodada) * 100 : 0;
-  const prontoParaEnviar = totalNaRodada > 0 && concluidosNaRodada === totalNaRodada;
+  const preenchidasNaRodada = itensAindaAbertos.filter((item) => rascunhoCompleto(rascunhos[chave(item)])).length;
+  const progressoPercent = totalNaRodada > 0 ? (preenchidasNaRodada / totalNaRodada) * 100 : 0;
+  const prontoParaEnviar = totalNaRodada > 0 && preenchidasNaRodada === totalNaRodada;
   const algumFechado = filaOriginalDoTipo.some((item) => !item.aberto);
+
+  // Preenchida e não enviada fica só no localStorage de quem respondeu: a
+  // diretoria vê como pendente e a pessoa achava que tinha terminado
+  // (2026-10-16, três casos). `fila` vem do backend, então quem já foi
+  // enviado não entra aqui.
+  const naoEnviadas = fila.filter((item) => item.aberto && rascunhoCompleto(rascunhos[chave(item)])).length;
 
   // "Não quero responder o outro agora" só faz sentido quando sobra
   // exatamente UM tipo com pendência, se os dois já estão vazios (tudo
@@ -512,6 +551,20 @@ export function AvaliacaoDesempenho() {
           <AvisoFechadoLinha>
             Não dá mais pra enviar essas avaliações. Se sobrar alguma outra pendência, ela continua
             valendo normalmente.
+          </AvisoFechadoLinha>
+        </AvisoFechadoCard>
+      )}
+
+      {naoEnviadas > 0 && (passo === "escolha" || passo === "fila") && (
+        <AvisoFechadoCard>
+          <AvisoFechadoTitulo>
+            {naoEnviadas === 1
+              ? "Você preencheu 1 avaliação e ainda não enviou"
+              : `Você preencheu ${naoEnviadas} avaliações e ainda não enviou`}
+          </AvisoFechadoTitulo>
+          <AvisoFechadoLinha>
+            Elas ficam guardadas só neste navegador e não contam até você clicar em "Enviar avaliações", no fim
+            da lista. O envio é de uma vez só, depois que todas da lista estiverem preenchidas.
           </AvisoFechadoLinha>
         </AvisoFechadoCard>
       )}
@@ -581,7 +634,7 @@ export function AvaliacaoDesempenho() {
                 <ProgressoBarFill $percent={progressoPercent} />
               </ProgressoBarTrack>
               <ProgressoTexto>
-                {concluidosNaRodada} de {totalNaRodada} concluídas
+                {preenchidasNaRodada} de {totalNaRodada} preenchidas
               </ProgressoTexto>
             </ProgressoRow>
 
@@ -595,7 +648,7 @@ export function AvaliacaoDesempenho() {
             <FilaList>
               {ordenarFila(filaOriginalDoTipo).map((item) => {
                 const fechado = !item.aberto;
-                const concluido = !!rascunhos[chave(item)];
+                const preenchida = rascunhoCompleto(rascunhos[chave(item)]);
                 return (
                   <MotivoDesabilitado
                     key={chave(item)}
@@ -616,8 +669,10 @@ export function AvaliacaoDesempenho() {
                       <FilaItemNome>{nomeDoItem(item)}</FilaItemNome>
                       <FilaItemMeta>{projetosDaPessoa(item)}</FilaItemMeta>
                     </FilaItemInfo>
-                    <PageBadge $tone={fechado ? "danger" : concluido ? "success" : "warning"}>
-                      {fechado ? "Fechado" : concluido ? "Concluída · editar" : "Pendente"}
+                    {/* Verde nunca: preenchida não é enviada. Quem foi
+                        enviado sai da fila, que vem do backend. */}
+                    <PageBadge $tone={fechado ? "danger" : preenchida ? "default" : "warning"}>
+                      {fechado ? "Fechado" : preenchida ? "Preenchida · falta enviar" : "Pendente"}
                     </PageBadge>
                   </FilaItem>
                   </MotivoDesabilitado>
@@ -638,7 +693,7 @@ export function AvaliacaoDesempenho() {
                   ? null
                   : totalNaRodada === 0
                     ? "Não há ninguém para avaliar nesta rodada."
-                    : `Faltam ${totalNaRodada - concluidosNaRodada} de ${totalNaRodada} — ` +
+                    : `Faltam ${totalNaRodada - preenchidasNaRodada} de ${totalNaRodada} — ` +
                       "as avaliações são enviadas todas juntas, então preencha as que ficaram abertas na lista acima."
               }
             >
@@ -754,7 +809,7 @@ export function AvaliacaoDesempenho() {
 
               {erroForm && <FormErrorText>{erroForm}</FormErrorText>}
 
-              <PageButton type="submit">Concluir avaliação</PageButton>
+              <PageButton type="submit">Salvar e voltar pra lista</PageButton>
             </FormStack>
           </PageCardContent>
         </PageCard>
