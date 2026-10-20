@@ -1,11 +1,12 @@
 import { useState, type FormEvent } from "react";
-import { Navigate, useNavigate } from "react-router-dom";
+import { Navigate, useLocation, useNavigate } from "react-router-dom";
 import { Eye, EyeOff, Lock } from "lucide-react";
 import insperJrLogo from "@/assets/insperjr2.png";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useAuth } from "@/context/AuthContext";
 import { definirSenha } from "@/lib/auth";
+import { lerVolta } from "@/lib/volta-login";
 import {
   AuthPageWrapper,
   LoginRightPanel,
@@ -40,6 +41,9 @@ const TAMANHO_MINIMO = 8;
 export function DefinirSenha() {
   const { usuario, token, recarregarUsuario } = useAuth();
   const navigate = useNavigate();
+  // Primeiro acesso vindo de um link (ex.: /vagas): depois de definir a senha
+  // a pessoa segue pra lá, não pra /projetos.
+  const destino = lerVolta(useLocation().search);
 
   const [senha, setSenha] = useState("");
   const [confirmacao, setConfirmacao] = useState("");
@@ -50,7 +54,7 @@ export function DefinirSenha() {
 
   // Quem já tem senha própria não tem o que fazer aqui, inclusive logo depois
   // de definir, quando o `recarregarUsuario` derruba o flag.
-  if (usuario && !usuario.senha_provisoria) return <Navigate to="/projetos" replace />;
+  if (usuario && !usuario.senha_provisoria) return <Navigate to={destino} replace />;
 
   async function handleSubmit(e: FormEvent<HTMLFormElement>) {
     e.preventDefault();
@@ -75,7 +79,7 @@ export function DefinirSenha() {
       // `senha_provisoria` no contexto. Sem isso o `PrivateRoute` devolveria a
       // pessoa para esta mesma tela.
       await recarregarUsuario();
-      navigate("/projetos");
+      navigate(destino);
     } catch (err) {
       setErro(err instanceof Error ? err.message : "Erro ao definir a senha");
       setPronto(false);

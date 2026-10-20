@@ -1,7 +1,8 @@
 import { useEffect, useState } from "react";
 import type { FormEvent } from "react";
-import { useNavigate } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 import { useAuth } from "@/context/AuthContext";
+import { lerVolta } from "@/lib/volta-login";
 import { getPrimeirosNomes } from "@/lib/auth";
 import { MembersGlobe } from "@/components/MembersGlobe";
 import insperJrLogo from "@/assets/insperjr2.png";
@@ -48,6 +49,7 @@ export function Login() {
   const [nomes, setNomes] = useState<string[]>([]);
   const { login } = useAuth();
   const navigate = useNavigate();
+  const { search } = useLocation();
 
   const digitacaoCompleta = tamanhoDigitado >= TITULO_BOAS_VINDAS.length;
 
@@ -77,7 +79,9 @@ export function Login() {
       // "Meus projetos" abre deslocado.
       if (document.activeElement instanceof HTMLElement) document.activeElement.blur();
       window.scrollTo(0, 0);
-      navigate("/projetos");
+      // Volta pra tela que a pessoa tinha aberto antes de cair aqui (ex.:
+      // link de /vagas); sem destino, /projetos como sempre.
+      navigate(lerVolta(search));
     } catch (err) {
       setErro(err instanceof Error ? err.message : "Erro ao fazer login");
     } finally {

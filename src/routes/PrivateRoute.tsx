@@ -1,5 +1,6 @@
 import { Navigate, Outlet, useLocation } from "react-router-dom";
 import { useAuth } from "@/context/AuthContext";
+import { comVolta } from "@/lib/volta-login";
 import { PageLoadingBlock } from "@/styles/page.styled";
 
 /**
@@ -17,15 +18,18 @@ import { PageLoadingBlock } from "@/styles/page.styled";
  */
 export function PrivateRoute() {
   const { token, usuario, carregando } = useAuth();
-  const { pathname } = useLocation();
+  const { pathname, search, hash } = useLocation();
+  // A tela que a pessoa pediu, levada pro login e pro definir-senha para
+  // voltar a ela depois (ver `lib/volta-login.ts`).
+  const pedida = pathname + search + hash;
 
   // Só cai aqui no cold start sem sessão em cache (primeiro login, ou
   // localStorage limpo); a sessão conhecida abre otimista, ver AuthContext.
   if (carregando) return <PageLoadingBlock />;
-  if (!token) return <Navigate to="/login" replace />;
+  if (!token) return <Navigate to={comVolta("/login", pedida)} replace />;
 
   if (usuario?.senha_provisoria && pathname !== "/definir-senha") {
-    return <Navigate to="/definir-senha" replace />;
+    return <Navigate to={comVolta("/definir-senha", pedida)} replace />;
   }
 
   return <Outlet />;

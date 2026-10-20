@@ -1,5 +1,6 @@
 import { API_URL } from "@/config/config";
 import { avisar } from "@/lib/toast";
+import { comVolta } from "@/lib/volta-login";
 
 interface ApiOptions extends RequestInit {
   token?: string | null;
@@ -113,7 +114,8 @@ export async function apiFetch<T>(endpoint: string, options: ApiOptions = {}): P
     if (response.status === 401 && token) {
       localStorage.removeItem("token");
       if (typeof window !== "undefined" && window.location.pathname !== "/login") {
-        window.location.href = "/login";
+        const { pathname, search, hash } = window.location;
+        window.location.href = comVolta("/login", pathname + search + hash);
       }
     }
 
