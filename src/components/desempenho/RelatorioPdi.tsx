@@ -5,7 +5,7 @@ import { theme } from "@/styles/theme";
 import { useAuth } from "@/context/AuthContext";
 import { baixarEnvioPdi, deleteEnvioPdi, getEnvioPdiBlob, getEnviosPdi, uploadEnvioPdi } from "@/lib/desempenho-pdi";
 import { PreviewArquivoModal } from "@/components/PreviewArquivoModal";
-import { formatarData } from "@/lib/projetos";
+import { formatarData, formatarDataHora } from "@/lib/projetos";
 import type { DesempenhoPdiItemComEnvio, DesempenhoPdiPastaComItens } from "@/types/desempenho";
 import { EmptyText, PageBadge, PageButtonSm, PageLoadingBlock } from "@/styles/page.styled";
 import { FormErrorText } from "@/pages/Bancas.styled";
@@ -262,7 +262,7 @@ export function RelatorioPdi({ usuarioId, podeEnviarInicial, podeEnviarEncontro 
                       <PastaLinhaNome>{nomePasta}</PastaLinhaNome>
                       <PastaLinhaMeta>
                         Prazo: {formatarData(pasta.prazo)}
-                        {item.envio && ` · enviado por ${item.envio.enviado_por_nome ?? "—"} em ${formatarData(item.envio.enviado_em)}`}
+                        {item.envio && ` · enviado por ${item.envio.enviado_por_nome ?? "—"} em ${formatarDataHora(item.envio.enviado_em)}`}
                       </PastaLinhaMeta>
                     </PastaLinhaInfo>
                     <PastaLinhaAcoes>
@@ -290,7 +290,7 @@ export function RelatorioPdi({ usuarioId, podeEnviarInicial, podeEnviarEncontro 
                               <SubItemMeta>
                                 {" "}
                                 · enviado por {item.envio.enviado_por_nome ?? "—"} em{" "}
-                                {formatarData(item.envio.enviado_em)}
+                                {formatarDataHora(item.envio.enviado_em)}
                               </SubItemMeta>
                             )}
                           </div>

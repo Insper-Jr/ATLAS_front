@@ -20,7 +20,7 @@ import {
   updateItemPdi,
   updatePastaPdi,
 } from "@/lib/desempenho-pdi";
-import { formatarData } from "@/lib/projetos";
+import { formatarData, formatarDataHora } from "@/lib/projetos";
 import { FotoCircular } from "@/components/Avatar";
 import type {
   DesempenhoMentoria,
@@ -775,7 +775,7 @@ function PastasPdiCard() {
                             <PageBadge $tone={item.status === "pendente" ? "danger" : "warning"}>
                               {item.status === "pendente"
                                 ? "Não enviou"
-                                : `Enviou atrasado${item.enviado_em ? ` em ${formatarData(item.enviado_em)}` : ""}`}
+                                : `Enviou atrasado${item.enviado_em ? ` em ${formatarDataHora(item.enviado_em)}` : ""}`}
                             </PageBadge>
                           </ResultadoArquivo>
                         ))}
@@ -845,7 +845,7 @@ function PastasPdiCard() {
                               <Download size={14} />
                             </PageButtonSm>
                             <span className="meta">
-                              enviado por {envio.enviado_por_nome ?? "?"} em {formatarData(envio.enviado_em)}
+                              enviado por {envio.enviado_por_nome ?? "?"} em {formatarDataHora(envio.enviado_em)}
                             </span>
                             {envio.atrasado && <PendenciaAtrasoRotulo>Entregue com atraso</PendenciaAtrasoRotulo>}
                           </ResultadoArquivo>
@@ -999,7 +999,7 @@ function PastasPdiCard() {
                                     {p.status === "atrasado" && (
                                       <PendenciaAtrasoRotulo>
                                         Entregue com atraso
-                                        {p.enviado_em && ` em ${formatarData(p.enviado_em)}`}
+                                        {p.enviado_em && ` em ${formatarDataHora(p.enviado_em)}`}
                                       </PendenciaAtrasoRotulo>
                                     )}
                                   </PendenciaTexto>
