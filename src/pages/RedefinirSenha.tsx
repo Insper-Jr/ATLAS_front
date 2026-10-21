@@ -1,7 +1,7 @@
 import { useState, type FormEvent } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { Eye, EyeOff, Lock } from "lucide-react";
-import insperJrLogo from "@/assets/insperjr2.png";
+import { useLogoInsperJr } from "@/lib/logo-insper-jr";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { redefinirSenha } from "@/lib/auth";
@@ -37,6 +37,7 @@ const TAMANHO_MINIMO = 8;
  * abriria para quem justamente não consegue entrar.
  */
 export function RedefinirSenha() {
+  const insperJrLogo = useLogoInsperJr("horizontal");
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
   const token = searchParams.get("token") ?? "";

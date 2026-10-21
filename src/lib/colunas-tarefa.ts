@@ -101,11 +101,17 @@ export function tonsDaColuna(cor: string): TonsColuna {
   const { h, s } = hexParaHsl(cor);
   // Satura um mínimo para cinzas não virarem fundo branco invisível.
   const saturacao = Math.max(s, 12);
+  const cheia = `hsl(${h} ${saturacao}% 50%)`;
+  // Os tons saem da mistura com os tokens do tema, não de uma luminosidade
+  // fixa: no claro a mistura com o card branco dá o pastel de sempre; no
+  // escuro (modo noturno, 2026-10-21) o mesmo percentual escurece o card
+  // na matiz da cor e o texto clareia, em vez de ficar texto claro sobre
+  // fundo pastel ilegível.
   return {
     ponto: cor,
-    fundo: `hsl(${h} ${saturacao}% 96%)`,
-    borda: `hsl(${h} ${saturacao}% 86%)`,
-    texto: `hsl(${h} ${Math.min(saturacao, 55)}% 34%)`,
+    fundo: `color-mix(in srgb, ${cheia} 10%, var(--atlas-card))`,
+    borda: `color-mix(in srgb, ${cheia} 30%, var(--atlas-card))`,
+    texto: `color-mix(in srgb, ${cheia} 60%, var(--atlas-foreground))`,
   };
 }
 

@@ -1,6 +1,6 @@
 import { useState, type FormEvent } from "react";
 import { Mail } from "lucide-react";
-import insperJrLogo from "@/assets/insperjr2.png";
+import { useLogoInsperJr } from "@/lib/logo-insper-jr";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { solicitarRecuperacao } from "@/lib/auth";
@@ -32,6 +32,7 @@ import {
  * informação que o backend esconde.
  */
 export function EsqueciSenha() {
+  const insperJrLogo = useLogoInsperJr("horizontal");
   const [email, setEmail] = useState("");
   const [enviado, setEnviado] = useState(false);
   const [erro, setErro] = useState("");

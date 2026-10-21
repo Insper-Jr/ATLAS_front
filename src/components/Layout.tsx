@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { Outlet, useLocation, useNavigate } from "react-router-dom";
 import { Bell, Menu } from "lucide-react";
 import { NotificacoesProvider, useNotificacoes } from "@/context/NotificacoesContext";
-import insperJrLogo from "@/assets/insperjr.png";
+import { useLogoInsperJr } from "@/lib/logo-insper-jr";
 import { Sidebar } from "./Sidebar";
 import {
   ID_MENU_LATERAL,
@@ -23,6 +23,7 @@ import {
  * o `Layout` está FORA do provider que ele mesmo monta.
  */
 function TopbarMobile({ menuAberto, onAbrirMenu }: { menuAberto: boolean; onAbrirMenu: () => void }) {
+  const insperJrLogo = useLogoInsperJr("simbolo");
   const { naoLidas } = useNotificacoes();
   const navigate = useNavigate();
 

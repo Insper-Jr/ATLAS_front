@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { useParams } from "react-router-dom";
-import insperJrLogo from "@/assets/insperjr2.png";
+import { useLogoInsperJr } from "@/lib/logo-insper-jr";
 import { getAprovacao, getTextoAprovacao, responderAprovacao, urlArquivoAprovacao } from "@/lib/contratos";
 import type { AprovacaoPublica } from "@/types/contratos";
 import { ROTULO_TIPO_DOCUMENTO } from "@/types/contratos";
@@ -42,6 +42,7 @@ const MAXIMO_TRECHOS = 20;
  * abre não tem conta no ATLAS.
  */
 export function AprovacaoContratual() {
+  const insperJrLogo = useLogoInsperJr("horizontal");
   const { token = "" } = useParams<{ token: string }>();
   const [info, setInfo] = useState<AprovacaoPublica | null>(null);
   const [paragrafos, setParagrafos] = useState<string[]>([]);

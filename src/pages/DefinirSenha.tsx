@@ -1,7 +1,7 @@
 import { useState, type FormEvent } from "react";
 import { Navigate, useLocation, useNavigate } from "react-router-dom";
 import { Eye, EyeOff, Lock } from "lucide-react";
-import insperJrLogo from "@/assets/insperjr2.png";
+import { useLogoInsperJr } from "@/lib/logo-insper-jr";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useAuth } from "@/context/AuthContext";
@@ -39,6 +39,7 @@ const TAMANHO_MINIMO = 8;
  * acontece, então um atalho na tela só levaria a uma tela vazia.
  */
 export function DefinirSenha() {
+  const insperJrLogo = useLogoInsperJr("horizontal");
   const { usuario, token, recarregarUsuario } = useAuth();
   const navigate = useNavigate();
   // Primeiro acesso vindo de um link (ex.: /vagas): depois de definir a senha

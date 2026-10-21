@@ -5,7 +5,7 @@ import { useAuth } from "@/context/AuthContext";
 import { lerVolta } from "@/lib/volta-login";
 import { getPrimeirosNomes } from "@/lib/auth";
 import { MembersGlobe } from "@/components/MembersGlobe";
-import insperJrLogo from "@/assets/insperjr2.png";
+import { useLogoInsperJr } from "@/lib/logo-insper-jr";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Mail, Lock, ArrowRight, Eye, EyeOff } from "lucide-react";
@@ -40,6 +40,7 @@ const INICIO_DESTAQUE = "Bem-vindo à ".length;
 const VELOCIDADE_DIGITACAO_MS = 80;
 
 export function Login() {
+  const insperJrLogo = useLogoInsperJr("horizontal");
   const [email, setEmail] = useState("");
   const [senha, setSenha] = useState("");
   const [erro, setErro] = useState("");

@@ -10,7 +10,7 @@ import { getNotificacoes, marcarNotificacaoLida } from "@/lib/notificacoes";
 import { getMinhasEleicoes } from "@/lib/sabatina";
 import { getMinhaFila } from "@/lib/desempenho-avaliacoes";
 import type { Notificacao } from "@/types/notificacao";
-import insperJrLogo from "@/assets/insperjr.png";
+import { useLogoInsperJr } from "@/lib/logo-insper-jr";
 import { Bell, Moon, Sun, LogOut } from "lucide-react";
 import { FotoCircular } from "@/components/Avatar";
 import { ID_MENU_LATERAL } from "./Layout.styled";
@@ -56,6 +56,7 @@ interface SidebarProps {
 }
 
 export function Sidebar({ aberta = false }: SidebarProps) {
+  const insperJrLogo = useLogoInsperJr("simbolo");
   const { usuario, token, logout } = useAuth();
   const { temaAtual, setPreferencia } = useTema();
   // O contador vem do contexto, não desta lista: ele é atualizado a cada ~60s
