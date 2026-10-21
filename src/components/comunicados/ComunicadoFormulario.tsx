@@ -33,6 +33,7 @@ import {
   FormStack,
 } from "@/pages/Bancas.styled";
 import { EmptyText, PageButton } from "@/styles/page.styled";
+import { FUSO, hojeEmBrasilia } from "@/lib/fuso";
 
 const ROTULO_SEGMENTO: Record<SegmentoComunicado, string> = {
   zero_bancas: "Quem está com 0 bancas",
@@ -94,7 +95,7 @@ const Acoes = styled.div`
 
 function dataCurta(iso: string | null): string {
   if (!iso) return "sem data";
-  return paraDataUtc(iso).toLocaleDateString("pt-BR");
+  return paraDataUtc(iso).toLocaleDateString("pt-BR", { timeZone: FUSO });
 }
 
 /**
@@ -178,7 +179,7 @@ export function ComunicadoFormulario({ onEnviado }: { onEnviado: (enviados: numb
           const ordenadas = [...lista].sort((a, b) => a.prazo.localeCompare(b.prazo));
           setPastasPdi(ordenadas);
           // Padrão: a mais próxima ainda não vencida; se todas venceram, a última.
-          const hoje = new Date().toISOString().slice(0, 10);
+          const hoje = hojeEmBrasilia();
           const proxima = ordenadas.find((p) => p.prazo >= hoje) ?? ordenadas[ordenadas.length - 1];
           setPastaPdiId((atual) => atual ?? proxima?.id ?? null);
         })

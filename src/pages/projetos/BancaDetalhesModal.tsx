@@ -20,6 +20,7 @@ import {
 } from "@/pages/Bancas.styled";
 import { AvaliadoresAgrupados } from "@/components/bancas/AvaliadoresAgrupados";
 import { EmptyText, ErrorText, PageButton } from "@/styles/page.styled";
+import { FUSO } from "@/lib/fuso";
 
 const ROTULO_STATUS: Record<BancaDetalhes["status"], string> = {
   nao_marcada: "Não marcada",
@@ -112,13 +113,13 @@ export function BancaDetalhesModal({
             <DetailList>
               <DetailRow>
                 <DetailTerm>Data</DetailTerm>
-                <DetailValue>{data ? data.toLocaleDateString("pt-BR") : "—"}</DetailValue>
+                <DetailValue>{data ? data.toLocaleDateString("pt-BR", { timeZone: FUSO }) : "—"}</DetailValue>
               </DetailRow>
               <DetailRow>
                 <DetailTerm>Horário</DetailTerm>
                 <DetailValue>
                   {data
-                    ? data.toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" })
+                    ? data.toLocaleTimeString("pt-BR", { timeZone: FUSO, hour: "2-digit", minute: "2-digit" })
                     : "—"}
                 </DetailValue>
               </DetailRow>

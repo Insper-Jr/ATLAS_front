@@ -169,6 +169,7 @@ import {
   FiltroFrenteSelect,
   CardHeaderTitulo,
 } from "./Bancas.styled";
+import { FUSO, partesEmBrasilia } from "@/lib/fuso";
 
 type AbaBancas = "meus" | "alocacao" | "avaliacao" | "aprovacao" | "desempenho" | "calendario";
 
@@ -312,10 +313,10 @@ export function Bancas() {
     return bancas
       .filter((b) => {
         if (!b.data_hora || b.status === "cancelada") return false;
-        const dh = new Date(b.data_hora);
+        const dh = paraDataUtc(b.data_hora);
         return dh >= agora && dh <= limite && b.piso_minimo > b.alocados;
       })
-      .sort((a, b) => new Date(a.data_hora!).getTime() - new Date(b.data_hora!).getTime());
+      .sort((a, b) => paraDataUtc(a.data_hora!).getTime() - paraDataUtc(b.data_hora!).getTime());
   }, [bancas]);
 
   const podeAgendar = !!usuario?.permissoes.pode_definir_cronograma;
@@ -1291,11 +1292,11 @@ function SecaoBancas({
     // devolve data inválida em silêncio.
     const dataHora = banca.data_hora ? paraDataUtc(banca.data_hora) : null;
     const diaSemana = dataHora
-      ? dataHora.toLocaleDateString("pt-BR", { weekday: "short" }).replace(".", "")
+      ? dataHora.toLocaleDateString("pt-BR", { timeZone: FUSO, weekday: "short" }).replace(".", "")
       : "";
-    const mes = dataHora ? dataHora.toLocaleDateString("pt-BR", { month: "short" }).replace(".", "") : "";
+    const mes = dataHora ? dataHora.toLocaleDateString("pt-BR", { timeZone: FUSO, month: "short" }).replace(".", "") : "";
     const hora = dataHora
-      ? dataHora.toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" })
+      ? dataHora.toLocaleTimeString("pt-BR", { timeZone: FUSO, hour: "2-digit", minute: "2-digit" })
       : "";
     // ⚠ 2026-09-18: não é mais só o teto — `vaga_disponivel_para_mim` já
     // considera a reserva das últimas vagas pro piso por frente. A seção
@@ -1416,7 +1417,7 @@ function SecaoBancas({
           {dataHora ? (
             <>
               <BancaDataDiaSemana>{diaSemana}</BancaDataDiaSemana>
-              <BancaDataDia>{dataHora.getDate()}</BancaDataDia>
+              <BancaDataDia>{partesEmBrasilia(dataHora).dia}</BancaDataDia>
               <BancaDataMes>{mes}</BancaDataMes>
             </>
           ) : (
@@ -1894,9 +1895,9 @@ function SecaoTrocas({
           {dataHora && (
             <>
               <BancaDataDiaSemana>
-                {dataHora.toLocaleDateString("pt-BR", { weekday: "short" }).replace(".", "")}
+                {dataHora.toLocaleDateString("pt-BR", { timeZone: FUSO, weekday: "short" }).replace(".", "")}
               </BancaDataDiaSemana>
-              <BancaDataDia>{dataHora.getDate()}</BancaDataDia>
+              <BancaDataDia>{partesEmBrasilia(dataHora).dia}</BancaDataDia>
             </>
           )}
         </BancaData>
@@ -1936,7 +1937,7 @@ function SecaoTrocas({
             {dataHora && (
               <BancaMetaItem>
                 <Clock size={12} />
-                {dataHora.toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" })}
+                {dataHora.toLocaleTimeString("pt-BR", { timeZone: FUSO, hour: "2-digit", minute: "2-digit" })}
               </BancaMetaItem>
             )}
             <BancaMetaItem
@@ -2136,14 +2137,14 @@ function VerMaisModal({
             <DetailRow>
               <DetailTerm>Data</DetailTerm>
               <DetailValue>
-                {banca.data_hora ? paraDataUtc(banca.data_hora).toLocaleDateString("pt-BR") : SEM_DATA}
+                {banca.data_hora ? paraDataUtc(banca.data_hora).toLocaleDateString("pt-BR", { timeZone: FUSO }) : SEM_DATA}
               </DetailValue>
             </DetailRow>
             <DetailRow>
               <DetailTerm>Horário</DetailTerm>
               <DetailValue>
                 {banca.data_hora
-                  ? paraDataUtc(banca.data_hora).toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" })
+                  ? paraDataUtc(banca.data_hora).toLocaleTimeString("pt-BR", { timeZone: FUSO, hour: "2-digit", minute: "2-digit" })
                   : SEM_DATA}
               </DetailValue>
             </DetailRow>

@@ -22,6 +22,7 @@ import {
   FieldLabel,
   FormErrorText,
 } from "./Projetos.styled";
+import { instanteDeBrasilia } from "@/lib/fuso";
 
 /** Abaixo desta folga, o texto do modal avisa que os avaliadores já estão
  *  escalados. Não muda mais o fluxo — TODA remarcação por quem não é da
@@ -220,7 +221,7 @@ export function MarcarBancaModal({
           // para a fila da diretoria apontando um horário em que não havia
           // choque nenhum, e o botão que existe para destravar o beco não
           // destravava nada.
-          data_hora_pretendida: new Date(`${dia}T${horario}:00`).toISOString(),
+          data_hora_pretendida: instanteDeBrasilia(dia, horario),
           justificativa: justificativa.trim(),
         },
         token,
@@ -244,7 +245,7 @@ export function MarcarBancaModal({
           // Mesma conversão de `pedirExcecao`: a autorização é aprovada para
           // um instante específico, e o backend casa pedido e marcação por
           // `data_hora` EXATA.
-          data_hora_pretendida: new Date(`${dia}T${horario}:00`).toISOString(),
+          data_hora_pretendida: instanteDeBrasilia(dia, horario),
           justificativa: justificativa.trim(),
         },
         token,
@@ -267,7 +268,7 @@ export function MarcarBancaModal({
           projeto_escopo_id: escopoId,
           // Mesma conversão de `pedirAutorizacaoJanela`: a aprovação remarca a
           // banca por `data_hora` EXATA.
-          data_hora_pretendida: new Date(`${dia}T${horario}:00`).toISOString(),
+          data_hora_pretendida: instanteDeBrasilia(dia, horario),
           justificativa: justificativa.trim(),
         },
         token,

@@ -37,6 +37,7 @@ import {
 } from "./Projetos.styled";
 import { useProjeto } from "./ProjetoPage";
 import { ColunasTarefaCard } from "./ColunasTarefaCard";
+import { hojeEmBrasilia } from "@/lib/fuso";
 
 export function ProjetoTarefas() {
   const { projeto, usuarios } = useProjeto();
@@ -232,7 +233,7 @@ function NovaTarefaModal({
   const [titulo, setTitulo] = useState("");
   const [responsavelIds, setResponsavelIds] = useState<number[]>([]);
   const [atribuicao, setAtribuicao] = useState<"conjunta" | "individual">("conjunta");
-  const [prazo, setPrazo] = useState(() => new Date().toISOString().slice(0, 10));
+  const [prazo, setPrazo] = useState(() => hojeEmBrasilia());
   const [salvando, setSalvando] = useState(false);
   const [erro, setErro] = useState("");
 

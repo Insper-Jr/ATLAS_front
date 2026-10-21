@@ -10,6 +10,7 @@ import type { DesempenhoPdiItemComEnvio, DesempenhoPdiPastaComItens } from "@/ty
 import { EmptyText, PageBadge, PageButtonSm, PageLoadingBlock } from "@/styles/page.styled";
 import { FormErrorText } from "@/pages/Bancas.styled";
 import { SubItem, SubItemMeta, SubLista } from "@/pages/avaliacao-desempenho/painel/Painel.styled";
+import { hojeEmBrasilia } from "@/lib/fuso";
 
 interface RelatorioPdiProps {
   usuarioId: number;
@@ -90,7 +91,7 @@ function statusDoItem(
   podeAgir: boolean,
 ): { tom: "success" | "warning" | "danger"; rotulo: string } {
   if (item.envio) return { tom: "success", rotulo: "Enviado" };
-  const hoje = new Date().toISOString().slice(0, 10);
+  const hoje = hojeEmBrasilia();
   const atrasado = prazo < hoje;
   // Pra quem não pode agir (mentor numa pasta "inicial"), "Pendente"/
   // "Atrasado" lê como uma cobrança sem saída — a pendência é de quem

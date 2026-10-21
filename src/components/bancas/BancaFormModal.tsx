@@ -56,6 +56,7 @@ import {
   ModalSubtitulo,
   BotaoSpinner,
 } from "@/pages/Bancas.styled";
+import { FUSO, instanteDeBrasilia } from "@/lib/fuso";
 
 /**
  * As listas do núcleo que o formulário precisa para traduzir id em nome e
@@ -335,7 +336,8 @@ export function BancaFormModal({
     setEnviando(true);
     setErro("");
     try {
-      const dataHora = new Date(`${data}T${hora}:00`).toISOString();
+      // Digitado como horário de Brasília, não do navegador.
+      const dataHora = instanteDeBrasilia(data, hora);
       // Ordem do PROJETO, não a de clique: qual escopo é "o primeiro" não pode
       // depender da ordem em que as caixas foram marcadas.
       const primeiroMarcado = escoposDoProjeto.find((e) => escoposMarcados.includes(e.id));
@@ -537,7 +539,7 @@ export function BancaFormModal({
                                 {" "}
                                 <EscopoIndisponivel>
                                   {escopo.banca.data_hora
-                                    ? `já tem banca em ${paraDataUtc(escopo.banca.data_hora).toLocaleDateString("pt-BR")}`
+                                    ? `já tem banca em ${paraDataUtc(escopo.banca.data_hora).toLocaleDateString("pt-BR", { timeZone: FUSO })}`
                                     : "já tem banca, sem data"}
                                 </EscopoIndisponivel>
                               </>

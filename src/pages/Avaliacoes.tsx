@@ -134,6 +134,7 @@ import {
   DetailValue,
   FormularioModalContent,
 } from "./Avaliacoes.styled";
+import { FUSO } from "@/lib/fuso";
 
 /** "aprovada" | "nao_aprovada" | `null` (aconteceu, ainda esperando decisão
  *  de diretoria ou gerente da frente — ver `use_cases/banca/aprovar_banca.py`). */
@@ -499,7 +500,7 @@ export function Avaliacoes() {
                         </DescricaoIndicador>
                       )}
                     </NameCell>
-                    <TableCell>{paraDataUtc(banca.data_hora).toLocaleDateString("pt-BR")}</TableCell>
+                    <TableCell>{paraDataUtc(banca.data_hora).toLocaleDateString("pt-BR", { timeZone: FUSO })}</TableCell>
                     <TableCell>{nomeUsuario(usuarios, banca.coordenador_id)}</TableCell>
                     <TableCell>{banca.escopos.join(", ") || nomeEscopo(escopos, banca.escopo_id)}</TableCell>
                     <TableCell>{banca.semestre_nome ?? "—"}</TableCell>
@@ -632,7 +633,7 @@ function JanelaAvaliacao({
   if (!banca.realizado_em) return <>banca ainda não realizada</>;
 
   const fmt = (iso: string) =>
-    paraDataUtc(iso).toLocaleString("pt-BR", { day: "2-digit", month: "2-digit", year: "numeric", hour: "2-digit", minute: "2-digit" });
+    paraDataUtc(iso).toLocaleString("pt-BR", { timeZone: FUSO, day: "2-digit", month: "2-digit", year: "numeric", hour: "2-digit", minute: "2-digit" });
   const override = banca.prazo_avaliacao_override;
 
   return (
@@ -735,7 +736,7 @@ function VerAvaliacoesModal({
           <DetailList>
             <DetailRow>
               <DetailTerm>Data</DetailTerm>
-              <DetailValue>{paraDataUtc(banca.data_hora).toLocaleDateString("pt-BR")}</DetailValue>
+              <DetailValue>{paraDataUtc(banca.data_hora).toLocaleDateString("pt-BR", { timeZone: FUSO })}</DetailValue>
             </DetailRow>
             <DetailRow>
               <DetailTerm>Coordenador</DetailTerm>
@@ -827,7 +828,7 @@ function VerAvaliacoesModal({
                           <PessoaContexto>
                             {/* `submetida_em` é UTC cru do backend — ver o
                                 comentário em Desempenho.tsx. */}
-                            ({paraDataUtc(av.submetida_em).toLocaleDateString("pt-BR")})
+                            ({paraDataUtc(av.submetida_em).toLocaleDateString("pt-BR", { timeZone: FUSO })})
                           </PessoaContexto>
                         )}
                       </span>

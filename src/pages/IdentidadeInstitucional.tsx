@@ -22,6 +22,7 @@ import {
 } from "@/styles/page.styled";
 import { FieldGroup, FieldLabel, FieldInput } from "./Bancas.styled";
 import { FormGrid, FormSecoes, FormSecaoTitulo } from "./projetos/ProjetoContratos.styled";
+import { FUSO, paraDataUtc } from "@/lib/fuso";
 
 const CAMPOS_PRESIDENTE: { campo: keyof IdentidadeInstitucionalType; label: string }[] = [
   { campo: "presidente_nome", label: "Nome" },
@@ -255,7 +256,7 @@ function ModelosContratuaisCard({ token }: { token: string }) {
                   <div style={{ fontSize: "0.8rem", color: "var(--muted-foreground, inherit)" }}>
                     {m.personalizado
                       ? `${m.arquivo_nome}, enviado${m.enviado_por_nome ? ` por ${m.enviado_por_nome}` : ""}${
-                          m.enviado_em ? ` em ${new Date(m.enviado_em).toLocaleDateString("pt-BR")}` : ""
+                          m.enviado_em ? ` em ${paraDataUtc(m.enviado_em).toLocaleDateString("pt-BR", { timeZone: FUSO })}` : ""
                         }`
                       : `padrão do sistema (${m.arquivo_padrao})`}
                   </div>

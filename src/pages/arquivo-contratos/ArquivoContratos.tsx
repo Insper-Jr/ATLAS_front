@@ -66,6 +66,7 @@ import {
   Vazio,
   Veu,
 } from "./ArquivoContratos.styled";
+import { FUSO } from "@/lib/fuso";
 
 const PREFIXO_DELETADO = "[DELETADO] ";
 const FONTE_MONTSERRAT = "https://fonts.googleapis.com/css2?family=Montserrat:wght@500;600;700&display=swap";
@@ -79,7 +80,7 @@ function tamanhoLegivel(bytes: number): string {
 }
 
 function dataCurta(iso: string): string {
-  return new Date(iso).toLocaleDateString("pt-BR");
+  return new Date(iso).toLocaleDateString("pt-BR", { timeZone: FUSO });
 }
 
 /** Montserrat só nesta página (o painel de Contratos a usa nos títulos). */

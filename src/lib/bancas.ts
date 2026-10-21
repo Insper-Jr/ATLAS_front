@@ -1,5 +1,4 @@
 import { apiFetch } from "@/lib/api";
-import { paraDataUtc } from "@/lib/projetos";
 import type {
   AprovacaoDaBanca,
   AprovacaoDiretoria,
@@ -18,6 +17,7 @@ import type {
   ResultadoBanca,
   StatusBanca,
 } from "@/types/banca";
+import { camposDeBrasilia } from "@/lib/fuso";
 
 /**
  * ⭐ A única saída manual que resta (2026-09-04, a pedido). Não existe mais
@@ -644,16 +644,14 @@ export function podeGerenciarBanca(
   );
 }
 
+/** Dia da banca em Brasília, pro `<input type="date">` da edição. */
 export function toDateInputValue(iso: string): string {
-  const d = paraDataUtc(iso);
-  const pad = (n: number) => String(n).padStart(2, "0");
-  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
+  return camposDeBrasilia(iso).dia;
 }
 
+/** Hora da banca em Brasília, pro `<input type="time">` da edição. */
 export function toTimeInputValue(iso: string): string {
-  const d = paraDataUtc(iso);
-  const pad = (n: number) => String(n).padStart(2, "0");
-  return `${pad(d.getHours())}:${pad(d.getMinutes())}`;
+  return camposDeBrasilia(iso).hora;
 }
 
 /**

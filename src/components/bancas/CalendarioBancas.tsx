@@ -1,5 +1,5 @@
 import { useMemo, useState } from "react";
-import { addDays, addMonths, format, isSameDay, isSameMonth, isToday, startOfMonth } from "date-fns";
+import { addDays, addMonths, format, isSameDay, isSameMonth, startOfMonth } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { Calendar, CalendarClock, ChevronLeft, ChevronRight, X } from "lucide-react";
 import { paraDataUtc } from "@/lib/projetos";
@@ -38,6 +38,7 @@ import {
   PilulaVagas,
   ResumoMes,
 } from "./CalendarioBancas.styled";
+import { ehHojeEmBrasilia, horaEmBrasilia, partesEmBrasilia } from "@/lib/fuso";
 
 /** Uma banca que JÁ TEM data — o único tipo que este calendário desenha.
  *
@@ -77,16 +78,15 @@ const ROTULO_CURTO: Record<StatusBanca, string> = {
   cancelada: "Cancelada",
 };
 
-/** `2026-08-12T14:00` → `14:00`, sem passar pelo fuso. */
+/** `2026-08-12T17:00` (UTC) → `14:00`, no relógio de Brasília. */
 function horaDe(iso: string): string {
-  const d = paraDataUtc(iso);
-  return `${String(d.getHours()).padStart(2, "0")}:${String(d.getMinutes()).padStart(2, "0")}`;
+  return horaEmBrasilia(paraDataUtc(iso));
 }
 
-/** Minutos desde 00:00, para posicionar a banca na timeline da visão Dia. */
+/** Minutos desde 00:00 em Brasília, para posicionar a banca na timeline da visão Dia. */
 function minutosDe(iso: string): number {
-  const d = paraDataUtc(iso);
-  return d.getHours() * 60 + d.getMinutes();
+  const p = partesEmBrasilia(paraDataUtc(iso));
+  return p.hora * 60 + p.minuto;
 }
 
 /**
@@ -260,7 +260,7 @@ export function CalendarioBancas({
 
       {visao === "dia" ? (
         <GradeWrap>
-          <TimelineDia itens={itensTimelineDoDia} ehHoje={isToday(data)} />
+          <TimelineDia itens={itensTimelineDoDia} ehHoje={ehHojeEmBrasilia(data)} />
         </GradeWrap>
       ) : (
         <GradeWrap>
@@ -279,7 +279,7 @@ export function CalendarioBancas({
                   return (
                     <DayCell key={chave} $outside={!isSameMonth(dia, data)}>
                       <LinhaDiaNumero>
-                        <DayNumber $today={isToday(dia)}>{format(dia, "d")}</DayNumber>
+                        <DayNumber $today={ehHojeEmBrasilia(dia)}>{format(dia, "d")}</DayNumber>
                         {excedentes > 0 && (
                           <AvisoMaisBancas type="button" onClick={() => setDiaAberto(dia)}>
                             +{excedentes}

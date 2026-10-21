@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { Link, useNavigate } from "react-router-dom";
-import { addDays, addMonths, format, isSameMonth, isToday } from "date-fns";
+import { addDays, addMonths, format, isSameMonth } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { veTodosOsProjetos } from "@/utils/permissoes";
 import {
@@ -80,6 +80,7 @@ import {
   PilulaTexto,
   WeekRowPreenche,
 } from "./CalendarioGeral.styled";
+import { diaDoValor, ehHojeEmBrasilia } from "@/lib/fuso";
 
 const INICIO_SEMANA = 0;
 const ROTULOS = rotulosDiaSemana(INICIO_SEMANA);
@@ -267,7 +268,8 @@ export function CalendarioGeral() {
     const mapa = new Map<string, EventoCalendario[]>();
     for (const e of eventos) {
       if (!tiposAtivos.includes(e.tipo)) continue;
-      const chave = e.data.slice(0, 10);
+      // Banca e prazos chegam como instante UTC: o dia é o de Brasília.
+      const chave = diaDoValor(e.data);
       const lista = mapa.get(chave) ?? [];
       lista.push(e);
       mapa.set(chave, lista);
@@ -310,7 +312,7 @@ export function CalendarioGeral() {
   const visiveis = eventos.filter(
     (e) =>
       tiposAtivos.includes(e.tipo) &&
-      (visao !== "mes" || isSameMonth(new Date(`${e.data.slice(0, 10)}T12:00:00`), data)),
+      (visao !== "mes" || isSameMonth(new Date(`${diaDoValor(e.data)}T12:00:00`), data)),
   );
 
   const rotuloPeriodo =
@@ -473,7 +475,7 @@ export function CalendarioGeral() {
               return (
                 <TimelineDia
                   itens={itensTimeline}
-                  ehHoje={isToday(data)}
+                  ehHoje={ehHojeEmBrasilia(data)}
                   topo={
                     semHora.length > 0 ? (
                       <DiaInteiroWrap>
@@ -525,7 +527,7 @@ export function CalendarioGeral() {
                           onMouseLeave={excedentes > 0 ? agendarFechoFlutuante : undefined}
                         >
                           <LinhaDia>
-                            <DayNumber $today={isToday(dia)}>{format(dia, "d")}</DayNumber>
+                            <DayNumber $today={ehHojeEmBrasilia(dia)}>{format(dia, "d")}</DayNumber>
                             {excedentes > 0 && <AvisoMaisEventos>+{excedentes}</AvisoMaisEventos>}
                           </LinhaDia>
                           <DayEvents>

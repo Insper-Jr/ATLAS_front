@@ -72,6 +72,7 @@ import { Th, useOrdenacao, type Colunas } from "@/components/tabela/ordenacao";
 import { useFiltroFrente } from "./FiltroFrente";
 import { useFiltroEscopo } from "./FiltroEscopo";
 import { useFiltroStatus } from "./FiltroStatus";
+import { FUSO, partesEmBrasilia } from "@/lib/fuso";
 
 /** Pra "voltar" do projeto cair de novo aqui — Visão geral é a rota índice
  *  de Monitoramento, então o destino é a pasta sem sub-rota. */
@@ -103,12 +104,12 @@ const COLUNAS_JANELA: Colunas<LinhaJanela> = {
  *  agenda de 7 dias; a data completa não acrescenta nada nessa janela. */
 function diaDaSemana(iso: string): string {
   const d = paraDataUtc(iso);
-  const dia = d.toLocaleDateString("pt-BR", { weekday: "short" }).replace(".", "");
-  return `${dia} ${d.getDate()}`;
+  const dia = d.toLocaleDateString("pt-BR", { timeZone: FUSO, weekday: "short" }).replace(".", "");
+  return `${dia} ${partesEmBrasilia(d).dia}`;
 }
 
 function horaDaBanca(iso: string): string {
-  return paraDataUtc(iso).toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" });
+  return paraDataUtc(iso).toLocaleTimeString("pt-BR", { timeZone: FUSO, hour: "2-digit", minute: "2-digit" });
 }
 
 /** Itens sem contagem de dias (kickoff não marcado, sem reunião na semana) não

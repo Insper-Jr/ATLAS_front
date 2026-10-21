@@ -8,6 +8,7 @@ import type {
   ProjetoResumo,
   StatusProjeto,
 } from "@/types/projeto";
+import { diaDoValor, horaEmBrasilia, paraDataUtc, partesEmBrasilia } from "@/lib/fuso";
 
 /* ------------------------------------------------------------------ */
 /* Rotas                                                               */
@@ -719,27 +720,20 @@ export const DIAS_REUNIAO = [
 ];
 
 /**
- * A API manda data pura (`2026-08-10`), sem fuso. `new Date("2026-08-10")`
- * interpreta como UTC e volta um dia atrás no Brasil, daí o corte manual.
+ * "dd/mm/aaaa". Data pura (`2026-08-10`) é cortada à mão: `new Date` a leria
+ * como UTC e voltaria um dia no Brasil. Instante (`2026-08-11T00:30:00`, UTC)
+ * vira o dia de Brasília em que caiu (2026-10-20): o corte cru mostrava o dia
+ * de UTC, e o que acontecia depois das 21h aparecia no dia seguinte.
  */
 export function formatarData(iso: string | null | undefined): string {
   if (!iso) return "—";
-  const [ano, mes, dia] = iso.slice(0, 10).split("-");
+  const [ano, mes, dia] = diaDoValor(iso).split("-");
   return `${dia}/${mes}/${ano}`;
 }
 
-/**
- * O backend manda datetime em UTC, mas sem o `Z` na string (datetime "naive"
- * do Python/Pydantic, ex.: `"2026-08-07T03:16:00"`). Sem fuso marcado,
- * `new Date(...)` lê a string como hora LOCAL em vez de UTC, e mostra o
- * relógio de UTC cru como se já fosse horário de Brasília, sempre 3h
- * adiantado. Não mexe em data pura (`2026-07-14`, sem hora): essa já é
- * tratada à parte, porque não é um instante pra converter, só um dia.
- */
-export function paraDataUtc(iso: string): Date {
-  const temFuso = /Z$|[+-]\d{2}:?\d{2}$/.test(iso);
-  return new Date(temFuso ? iso : `${iso}Z`);
-}
+// Mora em `lib/fuso.ts` desde 2026-10-20; reexportado porque metade do front
+// importa daqui.
+export { paraDataUtc };
 
 export function formatarDataHora(iso: string | null | undefined): string {
   if (!iso) return "—";
@@ -751,8 +745,10 @@ export function formatarDataHora(iso: string | null | undefined): string {
 
   const d = paraDataUtc(iso);
   if (Number.isNaN(d.getTime())) return formatarData(iso);
+  // Relógio de Brasília, não o do navegador (ver `lib/fuso.ts`).
+  const p = partesEmBrasilia(d);
   const pad = (n: number) => String(n).padStart(2, "0");
-  return `${pad(d.getDate())}/${pad(d.getMonth() + 1)}/${d.getFullYear()} ${pad(d.getHours())}:${pad(d.getMinutes())}`;
+  return `${pad(p.dia)}/${pad(p.mes)}/${p.ano} ${pad(p.hora)}:${pad(p.minuto)}`;
 }
 
 /**
@@ -769,8 +765,7 @@ export function horaDoEvento(iso: string | null | undefined): string | null {
   if (/^\d{4}-\d{2}-\d{2}$/.test(iso)) return null;
   const d = paraDataUtc(iso);
   if (Number.isNaN(d.getTime())) return null;
-  const pad = (n: number) => String(n).padStart(2, "0");
-  return `${pad(d.getHours())}:${pad(d.getMinutes())}`;
+  return horaEmBrasilia(d);
 }
 
 /** Minutos desde 00:00, para posicionar o evento numa timeline (ver
@@ -781,7 +776,8 @@ export function minutosDoEvento(iso: string | null | undefined): number | null {
   if (/^\d{4}-\d{2}-\d{2}$/.test(iso)) return null;
   const d = paraDataUtc(iso);
   if (Number.isNaN(d.getTime())) return null;
-  return d.getHours() * 60 + d.getMinutes();
+  const p = partesEmBrasilia(d);
+  return p.hora * 60 + p.minuto;
 }
 
 export function formatarDataHoraBanca(iso: string | null | undefined): string {

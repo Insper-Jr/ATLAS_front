@@ -60,6 +60,7 @@ import {
   InsightMeta,
   InsightAcoes,
 } from "./DashboardBancas.styled";
+import { FUSO } from "@/lib/fuso";
 
 /** Quem avalia tem 7 dias corridos a partir da banca realizada (2026-09-09).
  *  Espelha `PRAZO_AVALIACAO_DIAS` em `src/utils/avaliacoes_pendentes.py`. */
@@ -143,7 +144,7 @@ function comparecimento(
 ) {
   const realizadas = new Set(
     bancas
-      .filter((b) => b.realizado_em && agora - new Date(b.realizado_em).getTime() >= PRAZO_AVALIACAO_DIAS * DIA_MS)
+      .filter((b) => b.realizado_em && agora - paraDataUtc(b.realizado_em).getTime() >= PRAZO_AVALIACAO_DIAS * DIA_MS)
       .map((b) => b.id),
   );
   const avaliou = new Set(
@@ -302,7 +303,7 @@ export function DashboardBancas({
         const pendentes = candidaturas.filter(
           (c) => c.banca_id === b.id && !submetidas.has(`${b.id}:${c.usuario_id}`),
         );
-        const prazo = new Date(b.realizado_em!).getTime() + PRAZO_AVALIACAO_DIAS * DIA_MS;
+        const prazo = paraDataUtc(b.realizado_em!).getTime() + PRAZO_AVALIACAO_DIAS * DIA_MS;
         return { banca: b, pendentes, prazo, vencido: agora > prazo };
       })
       .filter((item) => item.pendentes.length > 0)
@@ -618,7 +619,7 @@ export function DashboardBancas({
                       <InsightNome>{banca.nome_projeto}</InsightNome>
                       <InsightMeta>
                         {banca.data_hora
-                          ? paraDataUtc(banca.data_hora).toLocaleDateString("pt-BR")
+                          ? paraDataUtc(banca.data_hora).toLocaleDateString("pt-BR", { timeZone: FUSO })
                           : "Sem data"}{" "}
                         ·{" "}
                         {banca.alocados}/{banca.piso_minimo} do mínimo · faltam {faltam}
@@ -664,7 +665,7 @@ export function DashboardBancas({
                         <InsightNome>{banca.nome_projeto}</InsightNome>
                         <InsightMeta>
                           {pendentes.length} {pendentes.length === 1 ? "pessoa não avaliou" : "pessoas não avaliaram"} ·
-                          prazo {new Date(prazo).toLocaleDateString("pt-BR")}
+                          prazo {new Date(prazo).toLocaleDateString("pt-BR", { timeZone: FUSO })}
                         </InsightMeta>
                       </InsightTexto>
                     </MotivoDesabilitado>

@@ -20,6 +20,7 @@ import {
   Pilula,
 } from "./Monitoramento.styled";
 import { AprovacaoLinha, FormDecisao } from "./AprovacaoLinha";
+import { diaDoValor, diasEntre, hojeEmBrasilia, paraDataUtc } from "@/lib/fuso";
 
 /**
  * ⭐ §8: a fila de exceções de choque de horário, para quem as decide.
@@ -61,9 +62,10 @@ export function ExcecoesDeChoqueCard({
         ) : (
           <ListaSimples>
             {itens.map((p) => {
-              const quando = new Date(p.data_hora_pretendida);
+              const quando = paraDataUtc(p.data_hora_pretendida);
               const jaPassou = quando.getTime() < Date.now();
-              const faltamDias = Math.ceil((quando.getTime() - Date.now()) / 86_400_000);
+              // Dias de calendário em Brasília: "é amanhã" é o dia daqui.
+              const faltamDias = diasEntre(hojeEmBrasilia(), diaDoValor(p.data_hora_pretendida));
               return (
                 <AprovacaoLinha
                   key={p.id}

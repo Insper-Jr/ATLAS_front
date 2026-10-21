@@ -11,6 +11,7 @@ import {
   RotuloHora,
   TimelineWrap,
 } from "./TimelineDia.styled";
+import { partesEmBrasilia } from "@/lib/fuso";
 
 export interface ItemTimeline {
   chave: string;
@@ -113,8 +114,9 @@ export function TimelineDia({
   const [horaInicio, horaFim] = useMemo(() => calcularFaixa(itens), [itens]);
   const comColuna = useMemo(() => atribuirColunas(itens), [itens]);
 
-  const agora = new Date();
-  const minutosAgora = agora.getHours() * 60 + agora.getMinutes();
+  // A linha do "agora" no relógio de Brasília, igual às bancas da timeline.
+  const agora = partesEmBrasilia(new Date());
+  const minutosAgora = agora.hora * 60 + agora.minuto;
   const mostrarLinhaAgora =
     ehHoje && minutosAgora >= horaInicio * 60 && minutosAgora <= horaFim * 60;
 

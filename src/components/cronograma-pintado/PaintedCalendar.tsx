@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { format, isToday } from "date-fns";
+import { format } from "date-fns";
 import { WeekdayCell } from "@/components/calendario/CalendarGrid.styled";
 import { chaveData } from "@/components/calendario/semanas";
 import {
@@ -22,6 +22,7 @@ import {
   TituloMes,
 } from "./PaintedCalendar.styled";
 import type { BlocoCalendario, Visao } from "./visao";
+import { ehHojeEmBrasilia } from "@/lib/fuso";
 
 export interface EtapaPintavel {
   id: number;
@@ -508,7 +509,7 @@ export function PaintedCalendar({
                       }
                       onPointerDown={(e) => iniciarArraste(e, chave)}
                     >
-                      <NumeroDia $texto={corTexto} $hoje={isToday(dia)}>
+                      <NumeroDia $texto={corTexto} $hoje={ehHojeEmBrasilia(dia)}>
                         {format(dia, "d")}
                       </NumeroDia>
 

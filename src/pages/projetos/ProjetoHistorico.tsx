@@ -75,6 +75,7 @@ import {
 } from "./Projetos.styled";
 import { HistoricoFiltros } from "./HistoricoFiltros";
 import { useProjeto } from "./ProjetoPage";
+import { diaDoValor, FUSO, hojeEmBrasilia, somarDias } from "@/lib/fuso";
 
 /**
  * A etiqueta e a cor de cada natureza de evento do Histórico.
@@ -111,7 +112,7 @@ function formatarDuracao(ms: number): string {
 
 function rotuloDia(iso: string): string {
   const data = paraDataUtc(iso);
-  return data.toLocaleDateString("pt-BR", { weekday: "long", day: "2-digit", month: "long" });
+  return data.toLocaleDateString("pt-BR", { timeZone: FUSO, weekday: "long", day: "2-digit", month: "long" });
 }
 
 /* ────────────────────────────────  · a escala da linha do tempo horizontal */
@@ -250,9 +251,7 @@ function chaveDia(iso: string): string {
   // Não é `iso.slice(0, 10)`: cortar a string pega a data em UTC, e um evento
   // entre 21h e meia-noite (horário de Brasília) cai no dia seguinte em UTC —
   // agruparia na data errada. Precisa passar pelo Date pra pegar o dia local.
-  const d = paraDataUtc(iso);
-  const pad = (n: number) => String(n).padStart(2, "0");
-  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
+  return diaDoValor(iso);
 }
 
 function ehStatus(h: HistoricoEntrada): h is StatusHistorico {
@@ -407,9 +406,9 @@ export function ProjetoHistorico() {
     );
     const duracoes = new Map<StatusProjeto, number>();
     for (let i = 0; i < ascendente.length; i++) {
-      const inicio = new Date(ascendente[i].alterado_em).getTime();
+      const inicio = paraDataUtc(ascendente[i].alterado_em).getTime();
       const fim =
-        i + 1 < ascendente.length ? new Date(ascendente[i + 1].alterado_em).getTime() : Date.now();
+        i + 1 < ascendente.length ? paraDataUtc(ascendente[i + 1].alterado_em).getTime() : Date.now();
       const status = ascendente[i].status_novo;
       duracoes.set(status, (duracoes.get(status) ?? 0) + Math.max(0, fim - inicio));
     }
@@ -453,11 +452,10 @@ export function ProjetoHistorico() {
   // Atalho pros recortes de data mais pedidos, sem isso, "só a última
   // semana" exigia calcular a data de cabeça e digitar nos dois campos.
   function aplicarPeriodoRapido(dias: number) {
-    const fim = new Date();
-    const inicio = new Date();
-    inicio.setDate(inicio.getDate() - dias);
-    setDataInicio(inicio.toISOString().slice(0, 10));
-    setDataFim(fim.toISOString().slice(0, 10));
+    // Hoje de Brasília: o dia de UTC já é amanhã a partir das 21h.
+    const fim = hojeEmBrasilia();
+    setDataInicio(somarDias(fim, -dias));
+    setDataFim(fim);
     setPeriodoRapido(dias);
   }
 

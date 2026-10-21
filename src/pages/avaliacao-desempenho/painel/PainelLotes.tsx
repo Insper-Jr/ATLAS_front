@@ -57,11 +57,19 @@ import {
   SeletorContagem,
   SubLista,
 } from "./Painel.styled";
+import { camposDeBrasilia, FUSO, instanteDeBrasilia } from "@/lib/fuso";
 
+/** Valor de `<input type="datetime-local">` no relógio de Brasília. */
 function paraDatetimeLocal(iso: string): string {
-  const data = paraDataUtc(iso);
-  const pad = (n: number) => String(n).padStart(2, "0");
-  return `${data.getFullYear()}-${pad(data.getMonth() + 1)}-${pad(data.getDate())}T${pad(data.getHours())}:${pad(data.getMinutes())}`;
+  const { dia, hora } = camposDeBrasilia(iso);
+  return `${dia}T${hora}`;
+}
+
+/** O inverso: o que foi digitado no campo é horário de Brasília, não do
+ *  navegador (quem está fora do país abriria o lote na hora errada). */
+function deDatetimeLocal(valor: string): string {
+  const [dia, hora] = valor.split("T");
+  return instanteDeBrasilia(dia, hora);
 }
 
 function agoraDatetimeLocal(): string {
@@ -69,7 +77,7 @@ function agoraDatetimeLocal(): string {
 }
 
 function formatarData(iso: string): string {
-  return paraDataUtc(iso).toLocaleString("pt-BR", { dateStyle: "short", timeStyle: "short" });
+  return paraDataUtc(iso).toLocaleString("pt-BR", { timeZone: FUSO, dateStyle: "short", timeStyle: "short" });
 }
 
 /**
@@ -116,7 +124,7 @@ function statusLote(lote: DesempenhoLote): { rotulo: string; tone: "success" | "
   if (lote.override_manual === "aberto") return { rotulo: "Aberto (manual)", tone: "success" };
   if (lote.override_manual === "fechado") return { rotulo: "Fechado (manual)", tone: "muted" };
   if (lote.aberto) return { rotulo: "Aberto", tone: "success" };
-  return new Date(lote.data_inicio) > new Date()
+  return paraDataUtc(lote.data_inicio) > new Date()
     ? { rotulo: "Agendado", tone: "warning" }
     : { rotulo: "Encerrado", tone: "muted" };
 }
@@ -293,8 +301,8 @@ export function PainelLotes() {
         {
           nome: nome.trim(),
           tipo,
-          data_inicio: new Date(dataInicio).toISOString(),
-          data_fim: new Date(dataFim).toISOString(),
+          data_inicio: deDatetimeLocal(dataInicio),
+          data_fim: deDatetimeLocal(dataFim),
           projeto_ids: projetoIds,
           inclui_avaliacao_de_escopo: incluiEscopo,
         },
@@ -360,8 +368,8 @@ export function PainelLotes() {
         loteId,
         {
           nome: editNome.trim(),
-          data_inicio: new Date(editDataInicio).toISOString(),
-          data_fim: new Date(editDataFim).toISOString(),
+          data_inicio: deDatetimeLocal(editDataInicio),
+          data_fim: deDatetimeLocal(editDataFim),
           projeto_ids: editProjetoIds,
         },
         token,

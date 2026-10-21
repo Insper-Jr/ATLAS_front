@@ -23,6 +23,7 @@ import {
   PageSubtitle,
   PageTitle,
 } from "@/styles/page.styled";
+import { FUSO } from "@/lib/fuso";
 
 const Historico = styled.div`
   display: flex;
@@ -136,7 +137,7 @@ function resumoDestinatarios(c: ComunicadoHistorico): string {
 
 function dataHora(iso: string): string {
   const d = paraDataUtc(iso);
-  return `${d.toLocaleDateString("pt-BR")} ${d.toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" })}`;
+  return `${d.toLocaleDateString("pt-BR", { timeZone: FUSO })} ${d.toLocaleTimeString("pt-BR", { timeZone: FUSO, hour: "2-digit", minute: "2-digit" })}`;
 }
 
 /**

@@ -13,6 +13,7 @@
 
 import type { HistoricoProjeto } from "@/lib/monitoramento";
 import { ROTULO_STATUS, formatarData } from "@/lib/projetos";
+import { hojeEmBrasilia } from "@/lib/fuso";
 
 /** Uma faixa da tabela: quando agrupada, o semestre e seus projetos; quando
  *  não, um bloco único com `titulo` nulo. */
@@ -22,7 +23,7 @@ export interface SecaoHistorico {
 }
 
 function nomeArquivo(extensao: string): string {
-  const hoje = new Date().toISOString().slice(0, 10);
+  const hoje = hojeEmBrasilia();
   return `historico-projetos-${hoje}.${extensao}`;
 }
 

@@ -1,4 +1,5 @@
 import type { EscopoVendido, ProjetoCompleto } from "@/types/projeto";
+import { diaDoValor, diasEntre, hojeEmBrasilia } from "@/lib/fuso";
 
 /**
  * ⭐ **O que está pendente no projeto** — a lista que a Visão geral existe
@@ -76,19 +77,18 @@ export interface Pendencia {
 
 const ORDEM: Record<GravidadePendencia, number> = { travado: 0, atencao: 1, espera: 2 };
 
-/** "2026-08-28" → "28/08". O ano é ruído dentro de um semestre só. */
+/** "2026-08-28" → "28/08". O ano é ruído dentro de um semestre só. Instante
+ *  (a hora da banca, em UTC) vira o dia de Brasília antes do corte. */
 function curta(iso: string | null): string {
   if (!iso) return "";
-  return `${iso.slice(8, 10)}/${iso.slice(5, 7)}`;
+  const dia = diaDoValor(iso);
+  return `${dia.slice(8, 10)}/${dia.slice(5, 7)}`;
 }
 
-/** Dias corridos até a data. Negativo = já passou. */
+/** Dias corridos até a data, contados em Brasília. Negativo = já passou. */
 function diasAte(iso: string | null): number | null {
   if (!iso) return null;
-  const alvo = new Date(`${iso.slice(0, 10)}T12:00:00`);
-  const hoje = new Date();
-  hoje.setHours(12, 0, 0, 0);
-  return Math.round((alvo.getTime() - hoje.getTime()) / 86_400_000);
+  return diasEntre(hojeEmBrasilia(), diaDoValor(iso));
 }
 
 function plural(n: number, um: string, muitos: string): string {

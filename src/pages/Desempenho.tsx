@@ -61,9 +61,10 @@ import {
   RespostaValor,
   ComentarioBlock,
 } from "./Desempenho.styled";
+import { FUSO, partesEmBrasilia } from "@/lib/fuso";
 
 function saudacao(): string {
-  const hora = new Date().getHours();
+  const hora = partesEmBrasilia(new Date()).hora;
   if (hora < 12) return "Bom dia";
   if (hora < 18) return "Boa tarde";
   return "Boa noite";
@@ -218,7 +219,7 @@ export function Desempenho({ embutido = false }: { embutido?: boolean } = {}) {
                   <RowGroup>
                     <RowDot aria-hidden />
                     <RowMeta>
-                      {banca.data_hora ? paraDataUtc(banca.data_hora).toLocaleDateString("pt-BR") : "Sem data"}
+                      {banca.data_hora ? paraDataUtc(banca.data_hora).toLocaleDateString("pt-BR", { timeZone: FUSO }) : "Sem data"}
                     </RowMeta>
                     <RowLabel>{banca.nome_projeto}</RowLabel>
                   </RowGroup>
@@ -296,7 +297,7 @@ function VerMinhaAvaliacaoModal({
             <DetailRow>
               <DetailTerm>Data da banca</DetailTerm>
               <DetailValue>
-                {banca.data_hora ? paraDataUtc(banca.data_hora).toLocaleDateString("pt-BR") : "Sem data"}
+                {banca.data_hora ? paraDataUtc(banca.data_hora).toLocaleDateString("pt-BR", { timeZone: FUSO }) : "Sem data"}
               </DetailValue>
             </DetailRow>
             {avaliacao.submetida_em && (
@@ -308,7 +309,7 @@ function VerMinhaAvaliacaoModal({
                     o horário de Greenwich como se fosse daqui. `paraDataUtc`
                     (mesma conversão de `banca.data_hora` acima) força a
                     leitura como UTC antes de formatar. */}
-                <DetailValue>{paraDataUtc(avaliacao.submetida_em).toLocaleString("pt-BR")}</DetailValue>
+                <DetailValue>{paraDataUtc(avaliacao.submetida_em).toLocaleString("pt-BR", { timeZone: FUSO })}</DetailValue>
               </DetailRow>
             )}
           </DetailList>

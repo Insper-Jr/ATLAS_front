@@ -29,6 +29,7 @@ import {
   SecaoTitulo,
   TituloGrafico,
 } from "./Sabatina.styled";
+import { FUSO } from "@/lib/fuso";
 
 /** Uma cor por candidato, na ordem da apuração. Branco é sempre cinza. */
 const PALETA = ["#B91C1C", "#1D4ED8", "#047857", "#B45309", "#6D28D9", "#0E7490", "#BE185D", "#4D7C0F"];
@@ -53,7 +54,7 @@ function series(g: GraficosEleicao): Serie[] {
 
 /** Datas da API vêm em UTC sem sufixo, como no resto do app. */
 function hora(iso: string) {
-  return paraDataUtc(iso).toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" });
+  return paraDataUtc(iso).toLocaleTimeString("pt-BR", { timeZone: FUSO, hour: "2-digit", minute: "2-digit" });
 }
 
 /**

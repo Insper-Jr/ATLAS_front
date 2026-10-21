@@ -100,6 +100,7 @@ import { corDaPessoa, iniciais } from "@/lib/avatar";
 import { PendenciasProjeto } from "./PendenciasProjeto";
 import { MinhasAcoesCard } from "./MinhasAcoesCard";
 import { useProjeto } from "./ProjetoPage";
+import { hojeEmBrasilia } from "@/lib/fuso";
 
 export function ProjetoVisaoGeral() {
   /* Descrição, equipe e o botão de editar subiram para o cabeçalho fixo do
@@ -831,7 +832,7 @@ function CelulaEntrega({
   const [confirmando, setConfirmando] = useState(false);
   // Sugerido, não cravado: a entrega quase nunca é no dia em que alguém lembra
   // de registrá-la, mas hoje é o palpite certo na maioria das vezes.
-  const [dia, setDia] = useState(() => new Date().toISOString().slice(0, 10));
+  const [dia, setDia] = useState(() => hojeEmBrasilia());
 
   const data = escopo.data_entrega_real ? formatarData(escopo.data_entrega_real) : null;
 

@@ -17,6 +17,7 @@ import {
   CampoDestacadoWrapper,
   CampoObrigatorioTexto,
 } from "./ProjetoContratos.styled";
+import { partesEmBrasilia } from "@/lib/fuso";
 
 /**
  * ⭐ 2026-09-17 — formulário campo-a-campo por tipo de documento, substituindo
@@ -289,10 +290,10 @@ function TestemunhasSecao({ dados, set }: { dados: Dados; set: Setter }) {
 
 function AssinaturaSecao({ dados, set }: { dados: Dados; set: Setter }) {
   function preencherHoje() {
-    const hoje = new Date();
-    set(["assinatura", "dia"], hoje.getDate());
-    set(["assinatura", "mes"], String(hoje.getMonth() + 1));
-    set(["assinatura", "ano"], hoje.getFullYear());
+    const hoje = partesEmBrasilia(new Date());
+    set(["assinatura", "dia"], hoje.dia);
+    set(["assinatura", "mes"], String(hoje.mes));
+    set(["assinatura", "ano"], hoje.ano);
   }
   return (
     <section>

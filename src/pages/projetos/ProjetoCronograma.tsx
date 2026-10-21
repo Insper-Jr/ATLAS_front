@@ -30,7 +30,6 @@ import {
   marcarBancaDoEscopo,
   marcarEntregaEscopo,
   marcarKickoff,
-  paraDataUtc,
 } from "@/lib/projetos";
 import { createReuniao, deleteReuniao, updateReuniao } from "@/lib/tarefas";
 import { chaveData } from "@/components/calendario/semanas";
@@ -108,6 +107,7 @@ import { BancaDetalhesModal } from "./BancaDetalhesModal";
 import { PedirDiasModal } from "./PedirDiasModal";
 import { CronogramaBarra } from "./CronogramaBarra";
 import { useProjeto } from "./ProjetoPage";
+import { diaDoValor, hojeEmBrasilia, instanteDeBrasilia } from "@/lib/fuso";
 
 
 /**
@@ -134,15 +134,13 @@ type ModoMarcacao = (typeof MODOS)[number]["valor"] | null;
 
 /** "2026-07-14" -> "14/07". O ano é ruído numa legenda de um semestre só. */
 function semAno(iso: string): string {
-  return `${iso.slice(8, 10)}/${iso.slice(5, 7)}`;
+  const dia = diaDoValor(iso);
+  return `${dia.slice(8, 10)}/${dia.slice(5, 7)}`;
 }
 
-/** Hoje em `yyyy-MM-dd` local, o formato de todas as datas desta tela. */
+/** Hoje em `yyyy-MM-dd` de Brasília, o formato de todas as datas desta tela. */
 function hojeIso(): string {
-  const agora = new Date();
-  const mes = String(agora.getMonth() + 1).padStart(2, "0");
-  const dia = String(agora.getDate()).padStart(2, "0");
-  return `${agora.getFullYear()}-${mes}-${dia}`;
+  return hojeEmBrasilia();
 }
 
 
@@ -178,13 +176,14 @@ function derivarPeriodosPosBanca(escopo: EscopoVendido): PeriodoPosBanca[] {
   const sessoes = escopo.banca?.sessoes ?? [];
   const realizadas = sessoes
     .filter((s) => s.realizado_em)
-    .map((s) => ({ dia: s.realizado_em!.slice(0, 10), resultado: s.resultado }))
+    .map((s) => ({ dia: diaDoValor(s.realizado_em!), resultado: s.resultado }))
     .sort((a, b) => a.dia.localeCompare(b.dia));
 
   // Banca anterior a `banca_sessao`, ou escopo antigo entregue sem registro de
   // realização: cai na régua de sempre, com o rótulo genérico.
   if (realizadas.length === 0) {
-    const marco = escopo.banca?.realizado_em?.slice(0, 10) ?? escopo.data_entrega_real?.slice(0, 10);
+    // `realizado_em` é instante UTC (a hora da banca): o dia é o de Brasília.
+    const marco = (escopo.banca?.realizado_em ? diaDoValor(escopo.banca.realizado_em) : null) ?? escopo.data_entrega_real?.slice(0, 10);
     return marco ? [{ inicio: marco, fim: null, rotulo: "correção" }] : [];
   }
 
@@ -712,7 +711,7 @@ export function ProjetoCronograma() {
       if (e.banca?.data_hora) {
         const bancaId = e.banca.id;
         lista.push({
-          data: chaveData(paraDataUtc(e.banca.data_hora)),
+          data: diaDoValor(e.banca.data_hora),
           tipo: "banca",
           rotulo: ROTULOS_MARCO.banca,
           titulo: `Banca, ${e.nome}`,
@@ -1577,7 +1576,7 @@ export function ProjetoCronograma() {
     const anteriorIso = dados?.escopos.find((e) => e.id === remarcando.escopoId)?.banca?.data_hora ?? null;
     await marcarBancaDoEscopo(
       remarcando.escopoId,
-      new Date(`${remarcando.dia}T${horario}:00`).toISOString(),
+      instanteDeBrasilia(remarcando.dia, horario),
       token,
       justificativa || undefined,
       escopoIds,
@@ -2313,7 +2312,7 @@ export function ProjetoCronograma() {
           fimJanela={escopo.fim_janela}
           folgaAtual={
             escopo.banca?.data_hora
-              ? diasUteisEntre(hojeIso(), escopo.banca.data_hora.slice(0, 10))
+              ? diasUteisEntre(hojeIso(), diaDoValor(escopo.banca.data_hora))
               : null
           }
           ehDiretor={ehDiretor}

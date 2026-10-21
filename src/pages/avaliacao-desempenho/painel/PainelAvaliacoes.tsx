@@ -54,6 +54,7 @@ import {
   SubItemAcoes,
   SubLista,
 } from "./Painel.styled";
+import { FUSO } from "@/lib/fuso";
 
 type Modo = "avaliador" | "avaliado";
 
@@ -67,7 +68,7 @@ function corDaNota(nota: number): string {
 
 function formatarData(iso?: string): string {
   if (!iso) return "—";
-  return paraDataUtc(iso).toLocaleString("pt-BR", { dateStyle: "short", timeStyle: "short" });
+  return paraDataUtc(iso).toLocaleString("pt-BR", { timeZone: FUSO, dateStyle: "short", timeStyle: "short" });
 }
 
 /**

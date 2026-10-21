@@ -15,6 +15,7 @@ import {
   LinhaAprovacao,
   type NivelSeveridade,
 } from "./Monitoramento.styled";
+import { diaDoValor, diasEntre, ehDiaPuro, hojeEmBrasilia } from "@/lib/fuso";
 
 /**
  * O esqueleto de UM item da fila de Aprovações — as cinco filas usam este.
@@ -30,13 +31,14 @@ import {
  * fariam o amarelo significar coisas diferentes em dois cards vizinhos.
  */
 
-/** Dias corridos entre uma data e hoje. Nunca negativo. */
+/** Dias corridos entre uma data e hoje. Nunca negativo. Instante (UTC) e
+ *  data pura viram o dia de Brasília antes da conta: ler o instante sem o
+ *  "Z" atrasava a virada do contador em 3h. */
 export function diasEsperando(desde: string | null | undefined): number {
   if (!desde) return 0;
-  const quando = new Date(desde.length <= 10 ? `${desde}T00:00:00` : desde);
-  if (Number.isNaN(quando.getTime())) return 0;
-  const dif = Date.now() - quando.getTime();
-  return Math.max(0, Math.floor(dif / 86_400_000));
+  const dia = diaDoValor(desde);
+  if (!ehDiaPuro(dia)) return 0;
+  return Math.max(0, diasEntre(dia, hojeEmBrasilia()));
 }
 
 /** Os mesmos cortes de `nivel()` da AtrasosAba — de propósito. */

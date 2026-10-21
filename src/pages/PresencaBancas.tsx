@@ -26,6 +26,7 @@ import {
   Paginacao,
   usePaginacao,
 } from "@/pages/monitoramento/Paginacao";
+import { paraDataUtc } from "@/lib/fuso";
 
 interface Props {
   usuarios: UsuarioResumo[];
@@ -56,7 +57,7 @@ interface LinhaPresenca {
 const PRAZO_FALTA_DIAS = 7;
 
 function dentroDoPrazoDeGraca(realizadoEm: string): boolean {
-  const passados = (Date.now() - new Date(realizadoEm).getTime()) / (1000 * 60 * 60 * 24);
+  const passados = (Date.now() - paraDataUtc(realizadoEm).getTime()) / (1000 * 60 * 60 * 24);
   return passados < PRAZO_FALTA_DIAS;
 }
 
