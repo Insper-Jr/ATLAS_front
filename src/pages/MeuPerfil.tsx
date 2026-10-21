@@ -1,6 +1,8 @@
 import { useEffect, useState } from "react";
-import { Camera, ChevronDown, ChevronUp } from "lucide-react";
+import { Camera, ChevronDown, ChevronUp, Moon, Sun, SunMoon } from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
+import { useTema } from "@/context/TemaContext";
+import { proximaTroca, type PreferenciaTema } from "@/lib/tema";
 import { getFaixasDisponiveis, getMinhaGrade, salvarGrade } from "@/lib/grade-horaria";
 import { getFrentes } from "@/lib/bancas";
 import { getUsuariosFrentes } from "@/lib/usuarios-frentes";
@@ -30,6 +32,7 @@ import {
 } from "@/styles/page.styled";
 import { FormErrorText } from "./Bancas.styled";
 import {
+  AparenciaOpcoes,
   Avatar,
   DadosGrid,
   DadoItem,
@@ -118,6 +121,18 @@ const NOTIFICACOES_FIXAS: {
   { tipo: "rodada_health_track_pendente", titulo: "Rodada de Health Track parada", descricao: "Uma rodada está aberta há uma semana ou mais com projetos pendentes." },
 ];
 
+const OPCOES_TEMA: { valor: PreferenciaTema; rotulo: string; Icone: typeof Sun }[] = [
+  { valor: "automatico", rotulo: "Automático", Icone: SunMoon },
+  { valor: "claro", rotulo: "Claro", Icone: Sun },
+  { valor: "escuro", rotulo: "Escuro", Icone: Moon },
+];
+
+const HORA_BRASILIA = new Intl.DateTimeFormat("pt-BR", {
+  timeZone: "America/Sao_Paulo",
+  hour: "2-digit",
+  minute: "2-digit",
+});
+
 /** "Heloisa Nogueira" → "HN". Só entra em jogo quando a pessoa não tem foto
  *  (`FotoCircular`), é o que identifica ela de relance no topo do card. */
 function iniciais(nome: string): string {
@@ -136,6 +151,7 @@ function iniciais(nome: string): string {
  */
 export function MeuPerfil() {
   const { usuario, token, recarregarUsuario } = useAuth();
+  const { preferencia, setPreferencia, temaAtual } = useTema();
   const [faixasDisponiveis, setFaixasDisponiveis] = useState<FaixaDisponivel[]>([]);
   const [salvas, setSalvas] = useState<FaixaGrade[]>([]);
   const [frentes, setFrentes] = useState<Frente[]>([]);
@@ -350,6 +366,38 @@ export function MeuPerfil() {
             salvas={salvas}
             onSalvar={aoSalvar}
           />
+        </PageCardContent>
+      </PageCard>
+
+      <PageCard>
+        <PageCardHeader>
+          <PageCardTitle>Aparência</PageCardTitle>
+        </PageCardHeader>
+        <PageCardContent>
+          <Explicacao>
+            Automático segue o pôr e o nascer do sol em Brasília: o ATLAS escurece ao anoitecer e
+            clareia ao amanhecer. A escolha vale só neste navegador.
+          </Explicacao>
+          <AparenciaOpcoes role="radiogroup" aria-label="Tema">
+            {OPCOES_TEMA.map(({ valor, rotulo, Icone }) => (
+              <PageButtonSm
+                key={valor}
+                type="button"
+                role="radio"
+                aria-checked={preferencia === valor}
+                $variant={preferencia === valor ? "primary" : "outline"}
+                onClick={() => setPreferencia(valor)}
+              >
+                <Icone size={14} />
+                {rotulo}
+              </PageButtonSm>
+            ))}
+          </AparenciaOpcoes>
+          {preferencia === "automatico" && (
+            <Explicacao style={{ marginBottom: 0, marginTop: "0.75rem" }}>
+              Agora em modo {temaAtual}; muda às {HORA_BRASILIA.format(proximaTroca(new Date()))}.
+            </Explicacao>
+          )}
         </PageCardContent>
       </PageCard>
 

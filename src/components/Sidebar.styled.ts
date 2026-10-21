@@ -49,7 +49,7 @@ export const SidebarContainer = styled.aside<{ $aberta: boolean }>`
        não pisca ao sair. */
     visibility: ${({ $aberta }) => ($aberta ? "visible" : "hidden")};
     transition: transform 200ms ease, visibility 200ms ease;
-    box-shadow: 4px 0 16px -4px rgb(0 0 0 / 0.25);
+    box-shadow: var(--atlas-sombra-lg);
   }
 
   @media (max-width: ${DRAWER_ATE - 1}px) and (prefers-reduced-motion: reduce) {
@@ -351,7 +351,7 @@ export const NotificacoesPainel = styled.div`
   border: 1px solid var(--sidebar-border);
   border-radius: 0.75rem;
   background: var(--card);
-  box-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.15);
+  box-shadow: var(--atlas-sombra-lg);
   z-index: 20;
 `;
 

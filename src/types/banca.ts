@@ -377,6 +377,20 @@ export interface Configuracao {
    *  vinculada precisa ter na banca, separado do piso de membros comuns
    * , editável pela diretoria em Config. */
   lideranca_minima_por_frente: number;
+  /** Gestão de Pessoas (2026-10-21): limites por categoria, regra de alerta
+   *  e o modelo do aviso por e-mail. Editáveis em Configurações por quem
+   *  tem `pode_configurar_gestao_pessoas`. */
+  gp_limite_obrigacoes: number;
+  gp_limite_desempenho: number;
+  gp_alerta_restantes: number;
+  gp_alerta_percentual: number;
+  gp_alertas_ativos: boolean;
+  gp_copia_diretoria: boolean;
+  gp_aviso_assunto: string;
+  gp_aviso_corpo: string;
+  /** Ordem do menu lateral escolhida pela diretoria (2026-10-21); nulo =
+   *  ordem do código. Ver `lib/menu-ordem.ts`. */
+  menu_ordem?: { grupos: string[]; itens: Record<string, string[]> } | null;
 }
 
 export interface BancaFrente {

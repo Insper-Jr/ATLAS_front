@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Navigate } from "react-router-dom";
+import { Navigate, useSearchParams } from "react-router-dom";
 import { Plus, X } from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
 import {
@@ -18,6 +18,13 @@ import { HealthTrackPilaresCard } from "./config/HealthTrackPilaresCard";
 import { HealthTrackPersistenciaCard } from "./config/HealthTrackPersistenciaCard";
 import { ComposicaoBancaCard } from "./config/ComposicaoBancaCard";
 import { GestaoSemestralCard } from "./config/GestaoSemestralCard";
+import { OrdemMenuCard } from "./config/OrdemMenuCard";
+import { DIRETORIA } from "@/utils/permissoes";
+import { GpLimitesCard } from "./config/GpLimitesCard";
+import { GpTiposCard } from "./config/GpTiposCard";
+import { GpAutomaticosCard } from "./config/GpAutomaticosCard";
+import { GpAvisosCard } from "./config/GpAvisosCard";
+import { NucleosCard } from "./config/NucleosCard";
 import { ConfirmarModal } from "@/components/ConfirmarModal";
 import { AlertModal } from "@/components/AlertModal";
 import type { Escopo, Frente } from "@/types/banca";
@@ -69,10 +76,9 @@ import {
   PermissaoTitulo,
   PermissaoDesc,
   SecaoGrupo,
-  SecaoCabecalho,
-  SecaoTitulo,
-  SecaoDescricao,
   GrupoFrenteTitulo,
+  TabBar,
+  TabBotao,
 } from "./Config.styled";
 import { LIST_MAX_VISIVEIS, TableScrollWrap } from "@/styles/shared.styled";
 
@@ -280,6 +286,18 @@ const PERMISSOES = [
     descricao:
       "A página Health Track (Gestão): o mapa da carteira com a cor de cada pilar e o status geral de cada projeto, o painel de cada um, e a regra e os pilares nesta tela. Nasce só na diretoria de projetos; coordenador e consultor não veem. Preencher as cores continua restrito à diretoria de projetos e à gerência da frente, e editar regra e pilares, à diretoria de projetos.",
   },
+  {
+    campo: "pode_gerir_gestao_pessoas" as const,
+    titulo: "Gerir Gestão de Pessoas",
+    descricao:
+      "Abre a página Gestão de Pessoas (Gestão): pontos por obrigações e por desempenho de cada membro, histórico e relatórios. Lança, corrige e retira pontos e envia o aviso por e-mail. Nasce marcada só na diretoria de pessoas.",
+  },
+  {
+    campo: "pode_configurar_gestao_pessoas" as const,
+    titulo: "Configurar Gestão de Pessoas",
+    descricao:
+      "A seção Gestão de Pessoas em Configurações: limites e regra de alerta, tipos de ocorrência, pontuação automática, aviso por e-mail e núcleos. Abre a página de Configurações só com essa seção pra quem não administra o resto do catálogo. Nasce marcada só na diretoria de pessoas.",
+  },
 ];
 
 type CampoPermissao = (typeof PERMISSOES)[number]["campo"];
@@ -302,6 +320,7 @@ function permissoesDaPosicao(posicao: PosicaoPermissao) {
 
 export function Config() {
   const { usuario, token } = useAuth();
+  const [searchParams, setSearchParams] = useSearchParams();
   const [frentes, setFrentes] = useState<Frente[]>([]);
   const [escopos, setEscopos] = useState<Escopo[]>([]);
   const [posicoes, setPosicoes] = useState<PosicaoPermissao[]>([]);
@@ -331,6 +350,13 @@ export function Config() {
 
   async function buscar() {
     if (!token) return;
+    // Quem só configura a Gestão de Pessoas não tem acesso ao catálogo
+    // (frentes, escopos, permissões): os cards dela buscam o que precisam
+    // sozinhos, e pedir o catálogo aqui só renderia um 403 na tela.
+    if (!usuario?.permissoes.pode_administrar_configuracoes) {
+      setCarregando(false);
+      return;
+    }
     setCarregando(true);
     setErro("");
     try {
@@ -360,7 +386,59 @@ export function Config() {
   // a ação mais sensível daqui: quem tem a caixa concede a mesma caixa (ou
   // qualquer outra) a outra posição. Só quem já tem a permissão consegue
   // distribuí-la, então não dá pra se auto-conceder do zero.
-  if (!usuario?.permissoes.pode_administrar_configuracoes) {
+  // A seção "Gestão de Pessoas" (2026-10-21) tem caixa própria e abre a
+  // página sozinha; as seções antigas continuam só pra quem administra o
+  // catálogo.
+  const podeAdministrarCatalogo = !!usuario?.permissoes.pode_administrar_configuracoes;
+  const podeConfigurarGp = !!usuario?.permissoes.pode_configurar_gestao_pessoas;
+  const podeVerHealthTrack = !!usuario?.permissoes.pode_ver_health_track;
+  const ehDiretoria = !!usuario && DIRETORIA.includes(usuario.posicao);
+
+  // Uma aba por assunto, cada uma atrás da própria caixa. A primeira visível
+  // é a padrão; `?aba=` guarda a escolha na URL, pra link e pra recarregar.
+  const abas: { chave: string; rotulo: string; descricao: string; visivel: boolean }[] = [
+    {
+      chave: "geral",
+      rotulo: "Geral",
+      descricao: "O semestre em curso e os cadastros que o resto da plataforma referencia.",
+      visivel: podeAdministrarCatalogo,
+    },
+    {
+      chave: "bancas",
+      rotulo: "Bancas",
+      descricao: "Os números que a plataforma aplica sozinha ao montar bancas e ao ler a carga de cada pessoa.",
+      visivel: podeAdministrarCatalogo,
+    },
+    {
+      chave: "health",
+      rotulo: "Health Track",
+      descricao: "A regra do status geral, os pilares e a persistência do Health Track.",
+      visivel: podeVerHealthTrack,
+    },
+    {
+      chave: "gp",
+      rotulo: "Gestão de Pessoas",
+      descricao: "Limites, tipos de ocorrência, pontuação automática e aviso por e-mail.",
+      visivel: podeConfigurarGp,
+    },
+    {
+      chave: "nucleos",
+      rotulo: "Núcleos",
+      descricao: "Os núcleos da empresa; cada membro é ligado a um deles no cadastro.",
+      visivel: podeConfigurarGp || podeAdministrarCatalogo,
+    },
+    {
+      chave: "acesso",
+      rotulo: "Acesso",
+      descricao: "Quem pode fazer o quê na plataforma, por posição.",
+      visivel: podeAdministrarCatalogo,
+    },
+  ];
+  const abasVisiveis = abas.filter((a) => a.visivel);
+  const abaPedida = searchParams.get("aba");
+  const abaAtual = abasVisiveis.find((a) => a.chave === abaPedida) ?? abasVisiveis[0];
+
+  if (!usuario || abasVisiveis.length === 0) {
     return <Navigate to="/dashboard" replace />;
   }
 
@@ -386,26 +464,28 @@ export function Config() {
       <PageHeaderRow>
         <PageHeaderText>
           <PageHeading>Configurações</PageHeading>
-          <PageSubheading>
-            O semestre em curso, a estrutura de frentes e escopos, as regras que a plataforma
-            aplica sozinha e o acesso de cada posição.
-          </PageSubheading>
+          <PageSubheading>{abaAtual?.descricao}</PageSubheading>
         </PageHeaderText>
       </PageHeaderRow>
 
-      {/* Os cards estão agrupados por assunto, e não na ordem em que foram
-          sendo construídos. A ordem dos grupos segue a dependência: o semestre
-          e os cadastros vêm primeiro porque o resto os referencia (escopo
-          aponta pra frente, banca conta o piso da frente), as regras
-          automáticas depois, e o acesso por último, é o único grupo que não
-          fala de operação, e sim de quem entra onde. */}
-      <SecaoGrupo>
-        <SecaoCabecalho>
-          <SecaoTitulo>Ciclo e estrutura</SecaoTitulo>
-          <SecaoDescricao>
-            O semestre em curso e os cadastros que o resto da plataforma referencia.
-          </SecaoDescricao>
-        </SecaoCabecalho>
+      {/* Abas por assunto (2026-10-21, a pedido): cada uma aparece só para
+          quem tem a caixa dela, então quem só configura a Gestão de Pessoas
+          vê duas abas e quem só vê o Health Track vê uma. */}
+      <TabBar aria-label="Seções de configuração">
+        {abasVisiveis.map((aba) => (
+          <TabBotao
+            key={aba.chave}
+            type="button"
+            className={aba.chave === abaAtual?.chave ? "active" : undefined}
+            onClick={() => setSearchParams({ aba: aba.chave })}
+          >
+            {aba.rotulo}
+          </TabBotao>
+        ))}
+      </TabBar>
+
+      {abaAtual?.chave === "geral" && (
+        <SecaoGrupo>
 
         <GestaoSemestralCard />
 
@@ -484,16 +564,14 @@ export function Config() {
             )}
           </PageCardContent>
         </PageCard>
-      </SecaoGrupo>
 
-      <SecaoGrupo>
-        <SecaoCabecalho>
-          <SecaoTitulo>Regras de operação</SecaoTitulo>
-          <SecaoDescricao>
-            Os números que a plataforma aplica sozinha ao montar bancas e ao ler a carga de cada
-            pessoa.
-          </SecaoDescricao>
-        </SecaoCabecalho>
+        {/* Última coisa da aba Geral, só diretoria (2026-10-21, a pedido). */}
+        {ehDiretoria && <OrdemMenuCard />}
+        </SecaoGrupo>
+      )}
+
+      {abaAtual?.chave === "bancas" && (
+        <SecaoGrupo>
 
         {/* ⚠ O card "Configurações de banca" saiu daqui em 2026-09-01. Ele
             editava `vagas_por_banca` e `lideranca_minima_por_frente`, e com a
@@ -505,23 +583,36 @@ export function Config() {
         <ComposicaoBancaCard />
 
         <SituacoesCargaCard />
+        </SecaoGrupo>
+      )}
 
-        {usuario.permissoes.pode_ver_health_track && (
-          <>
-            <HealthTrackRegraCard />
+      {abaAtual?.chave === "health" && (
+        <SecaoGrupo>
+          <HealthTrackRegraCard />
 
-            <HealthTrackPilaresCard />
+          <HealthTrackPilaresCard />
 
-            <HealthTrackPersistenciaCard />
-          </>
-        )}
-      </SecaoGrupo>
+          <HealthTrackPersistenciaCard />
+        </SecaoGrupo>
+      )}
 
-      <SecaoGrupo>
-        <SecaoCabecalho>
-          <SecaoTitulo>Acesso</SecaoTitulo>
-          <SecaoDescricao>Quem pode fazer o quê na plataforma, por posição.</SecaoDescricao>
-        </SecaoCabecalho>
+      {abaAtual?.chave === "gp" && (
+        <SecaoGrupo>
+          <GpLimitesCard />
+          <GpTiposCard />
+          <GpAutomaticosCard />
+          <GpAvisosCard />
+        </SecaoGrupo>
+      )}
+
+      {abaAtual?.chave === "nucleos" && (
+        <SecaoGrupo>
+          <NucleosCard />
+        </SecaoGrupo>
+      )}
+
+      {abaAtual?.chave === "acesso" && (
+        <SecaoGrupo>
 
         <PageCard>
           <PageCardHeader>
@@ -577,7 +668,8 @@ export function Config() {
             </TableScrollWrap>
           </PageCardContent>
         </PageCard>
-      </SecaoGrupo>
+        </SecaoGrupo>
+      )}
 
       {modalFrente && (
         <ModalFrente

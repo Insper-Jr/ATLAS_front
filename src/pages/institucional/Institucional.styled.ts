@@ -92,7 +92,7 @@ export const Circulo = styled.span<{ $tamanho: number }>`
   width: ${({ $tamanho }) => $tamanho}px;
   height: ${({ $tamanho }) => $tamanho}px;
   border-radius: ${theme.borderRadius.full};
-  background: color-mix(in srgb, ${theme.colors.primary} 12%, white);
+  background: color-mix(in srgb, ${theme.colors.primary} 12%, var(--atlas-card));
   color: ${theme.colors.primary};
   font-size: ${({ $tamanho }) => Math.round($tamanho * 0.34)}px;
   font-weight: ${theme.fontWeight.semibold};

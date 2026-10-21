@@ -11,7 +11,7 @@ const OverlayBase = styled.div`
   align-items: center;
   justify-content: center;
   padding: ${theme.spacing.md};
-  background: rgb(0 0 0 / 45%);
+  background: ${theme.colors.veu};
 `;
 
 /**

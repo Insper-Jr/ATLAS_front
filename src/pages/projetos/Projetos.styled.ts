@@ -454,7 +454,7 @@ export const AvisoBanner = styled.div`
   padding: ${theme.spacing.sm} ${theme.spacing.md};
   border-radius: ${theme.borderRadius.lg};
   border: 1px solid color-mix(in srgb, ${theme.colors.warning} 45%, transparent);
-  background: color-mix(in srgb, ${theme.colors.warning} 12%, white);
+  background: color-mix(in srgb, ${theme.colors.warning} 12%, var(--atlas-card));
   font-size: ${theme.fontSize.sm};
   color: ${theme.colors.warningForeground};
 `;
@@ -691,7 +691,7 @@ export const PipelineEtapa = styled.button<{
   border: none;
   border-radius: ${theme.borderRadius.full};
   background: ${({ $estado, $cor }) =>
-    $estado === "atual" ? `color-mix(in srgb, ${$cor} 14%, white)` : "transparent"};
+    $estado === "atual" ? `color-mix(in srgb, ${$cor} 14%, var(--atlas-card))` : "transparent"};
   font-size: ${theme.fontSize.xs};
   font-weight: ${({ $estado }) =>
     $estado === "atual" ? theme.fontWeight.semibold : theme.fontWeight.medium};
@@ -705,7 +705,7 @@ export const PipelineEtapa = styled.button<{
     $clicavel &&
     css`
       &:hover:not(:disabled) {
-        background: color-mix(in srgb, ${$cor} 10%, white);
+        background: color-mix(in srgb, ${$cor} 10%, var(--atlas-card));
         color: ${theme.colors.foreground};
       }
     `}
@@ -758,8 +758,8 @@ export const PausadoAviso = styled.div`
   gap: ${theme.spacing.sm};
   padding: 0.3rem 0.625rem;
   border-radius: ${theme.borderRadius.full};
-  border: 1px solid color-mix(in srgb, ${theme.colors.warning} 45%, white);
-  background: color-mix(in srgb, ${theme.colors.warning} 12%, white);
+  border: 1px solid color-mix(in srgb, ${theme.colors.warning} 45%, var(--atlas-card));
+  background: color-mix(in srgb, ${theme.colors.warning} 12%, var(--atlas-card));
   font-size: ${theme.fontSize.xs};
   font-weight: ${theme.fontWeight.semibold};
   color: ${theme.colors.warningForeground};
@@ -844,7 +844,7 @@ export const AcoesItem = styled.button<{ $perigo?: boolean }>`
 
   &:hover:not(:disabled) {
     background: ${({ $perigo }) =>
-      $perigo ? `color-mix(in srgb, ${theme.colors.destructive} 8%, white)` : theme.colors.muted};
+      $perigo ? `color-mix(in srgb, ${theme.colors.destructive} 8%, var(--atlas-card))` : theme.colors.muted};
   }
 
   &:disabled {
@@ -1065,7 +1065,7 @@ export const PapelTag = styled.span<{ $coordenador?: boolean }>`
   font-size: ${theme.fontSize.xs};
   font-weight: ${theme.fontWeight.medium};
   background: ${({ $coordenador }) =>
-    $coordenador ? `color-mix(in srgb, ${theme.colors.primary} 10%, white)` : theme.colors.muted};
+    $coordenador ? `color-mix(in srgb, ${theme.colors.primary} 10%, var(--atlas-card))` : theme.colors.muted};
   color: ${({ $coordenador }) => ($coordenador ? theme.colors.primary : theme.colors.mutedForeground)};
 `;
 
@@ -1532,7 +1532,7 @@ export const HistoricoFiltroPill = styled.button<{ $ativo: boolean; $cor: string
   border-radius: ${theme.borderRadius.full};
   border: 1px solid ${({ $ativo, $cor }) => ($ativo ? $cor : theme.colors.border)};
   background: ${({ $ativo, $cor }) =>
-    $ativo ? "color-mix(in srgb, " + $cor + " 16%, white)" : theme.colors.background};
+    $ativo ? "color-mix(in srgb, " + $cor + " 16%, var(--atlas-card))" : theme.colors.background};
   color: ${({ $ativo }) => ($ativo ? theme.colors.foreground : theme.colors.mutedForeground)};
   font-size: ${theme.fontSize.xs};
   font-weight: ${theme.fontWeight.medium};
@@ -1570,7 +1570,7 @@ export const EscopoFiltroBotao = styled.button<{ $ativo: boolean }>`
     $ativo
       ? css`
           border: 1px solid ${theme.colors.primary};
-          background: color-mix(in srgb, ${theme.colors.primary} 10%, white);
+          background: color-mix(in srgb, ${theme.colors.primary} 10%, var(--atlas-card));
           color: ${theme.colors.primary};
         `
       : css`
@@ -1841,7 +1841,7 @@ export const HistoricoReguaPopup = styled.div<{ $x: number; $seta: number; $cor:
   border-left: 3px solid ${({ $cor }) => $cor};
   border-radius: ${theme.borderRadius.md};
   background: ${theme.colors.popover};
-  box-shadow: 0 8px 24px rgb(0 0 0 / 0.12);
+  box-shadow: ${theme.shadows.lg};
   pointer-events: none;
 
   /* A setinha que liga o cartão ao ponto de onde ele saiu. Sem ela, num dia
@@ -2250,7 +2250,7 @@ export const HistoricoTipoTag = styled.span<{ $cor: string }>`
      status, que usam OUTRA paleta (a das etapas). A cor continua fazendo a
      leitura rápida que APARENCIA_EVENTO justifica, sem mais um retângulo
      pintado por linha. */
-  color: ${({ $cor }) => $cor};
+  color: ${({ $cor }) => theme.clarear($cor)};
   font-size: ${theme.fontSize.xs};
   font-weight: ${theme.fontWeight.semibold};
   text-transform: uppercase;

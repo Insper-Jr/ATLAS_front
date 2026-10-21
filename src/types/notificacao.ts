@@ -56,7 +56,11 @@ export type TipoNotificacao =
   | "documento_contratual_assinado"
   | "projeto_criado_em_contrato"
   | "projeto_vendido"
-  | "vagas_abertas";
+  | "vagas_abertas"
+  // Gestão de Pessoas (2026-10-21): pontos lançados/corrigidos/retirados
+  // pra pessoa, e o aviso ao subir de faixa (próximo do limite, no limite)
+  | "gp_pontos_recebidos"
+  | "gp_faixa";
 
 export interface Notificacao {
   /** Só o evento tem linha no banco. Condição vem com `null` e é

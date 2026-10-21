@@ -141,7 +141,7 @@ export const LoginFormPanel = styled.div`
   padding: ${theme.spacing.md};
   overflow: hidden;
   background: ${theme.colors.background};
-  box-shadow: -6px 0 18px -8px rgba(0, 0, 0, 0.35);
+  box-shadow: ${theme.shadows.lg};
 
   @media (min-width: ${theme.breakpoints.sm}px) {
     padding: ${theme.spacing.xl};

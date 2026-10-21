@@ -234,7 +234,7 @@ function Participacao({
               dataKey="faltam"
               name="Faltam"
               stackId="p"
-              fill="#D1D5DB"
+              fill={`color-mix(in srgb, ${theme.colors.mutedForeground} 40%, ${theme.colors.card})`}
               radius={[0, 4, 4, 0]}
               isAnimationActive={false}
             />

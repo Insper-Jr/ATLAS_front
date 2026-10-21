@@ -3,7 +3,7 @@
 @import "shadcn/tailwind.css";
 @import "@fontsource-variable/inter";
 
-@custom-variant dark (&:is(.dark *));
+@custom-variant dark (&:is(.dark *, [data-theme="dark"] *));
 
 @theme inline {
     --font-heading: var(--font-sans);
@@ -48,7 +48,8 @@
     --radius-4xl: calc(var(--radius) * 2.6);
 }
 
-:root {
+:root,
+[data-theme="light"] {
     --background: oklch(1 0 0);
     --foreground: oklch(0.145 0 0);
     --card: oklch(1 0 0);
@@ -83,37 +84,45 @@
     --sidebar-ring: oklch(0.708 0 0);
 }
 
-.dark {
-    --background: oklch(0.145 0 0);
-    --foreground: oklch(0.985 0 0);
-    --card: oklch(0.205 0 0);
-    --card-foreground: oklch(0.985 0 0);
-    --popover: oklch(0.205 0 0);
-    --popover-foreground: oklch(0.985 0 0);
+/* As variáveis do shadcn no escuro apontam para os tokens do ATLAS
+   (`styles/tema.css`), para os componentes de `components/ui` e a sidebar
+   ficarem na mesma paleta dos styled-components. O `data-theme` no `<html>`
+   é quem liga o modo (`context/TemaContext.tsx`); a classe `.dark` fica por
+   compatibilidade. */
+.dark,
+:root[data-theme="dark"] {
+    --background: var(--atlas-card);
+    --foreground: var(--atlas-foreground);
+    --card: var(--atlas-card);
+    --card-foreground: var(--atlas-card-foreground);
+    --popover: var(--atlas-popover);
+    --popover-foreground: var(--atlas-popover-foreground);
     --primary: oklch(0.922 0 0);
     --primary-foreground: oklch(0.205 0 0);
-    --secondary: oklch(0.269 0 0);
-    --secondary-foreground: oklch(0.985 0 0);
-    --muted: oklch(0.269 0 0);
-    --muted-foreground: oklch(0.708 0 0);
-    --accent: oklch(0.269 0 0);
-    --accent-foreground: oklch(0.985 0 0);
-    --destructive: oklch(0.704 0.191 22.216);
-    --border: oklch(1 0 0 / 10%);
-    --input: oklch(1 0 0 / 15%);
+    --secondary: var(--atlas-secondary);
+    --secondary-foreground: var(--atlas-secondary-foreground);
+    --muted: var(--atlas-muted);
+    --muted-foreground: var(--atlas-muted-foreground);
+    --accent: var(--atlas-muted);
+    --accent-foreground: var(--atlas-foreground);
+    --destructive: var(--atlas-destructive);
+    --border: var(--atlas-border);
+    --input: var(--atlas-input);
     --ring: oklch(0.556 0 0);
     --chart-1: oklch(0.87 0 0);
     --chart-2: oklch(0.556 0 0);
     --chart-3: oklch(0.439 0 0);
     --chart-4: oklch(0.371 0 0);
     --chart-5: oklch(0.269 0 0);
-    --sidebar: oklch(0.205 0 0);
-    --sidebar-foreground: oklch(0.985 0 0);
-    --sidebar-primary: oklch(0.488 0.243 264.376);
-    --sidebar-primary-foreground: oklch(0.985 0 0);
-    --sidebar-accent: oklch(0.269 0 0);
-    --sidebar-accent-foreground: oklch(0.985 0 0);
-    --sidebar-border: oklch(1 0 0 / 10%);
+    /* `--sidebar` é o fundo do `Main`, o plano mais fundo da tela; o `aside`
+       usa `--background`, que no escuro é a cor de card, um degrau acima. */
+    --sidebar: var(--atlas-background);
+    --sidebar-foreground: var(--atlas-sidebar-foreground);
+    --sidebar-primary: var(--atlas-sidebar-primary);
+    --sidebar-primary-foreground: var(--atlas-primary-foreground);
+    --sidebar-accent: var(--atlas-sidebar-accent);
+    --sidebar-accent-foreground: var(--atlas-foreground);
+    --sidebar-border: var(--atlas-sidebar-border);
     --sidebar-ring: oklch(0.556 0 0);
 }
 

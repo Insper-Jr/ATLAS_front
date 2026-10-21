@@ -7,15 +7,15 @@ import type { CorHealthTrack } from "@/lib/health-track";
    passam 4.5:1 sobre o próprio fundo claro, e aqui a cor carrega o
    diagnóstico do projeto, não um detalhe decorativo. */
 export const FUNDO_COR: Record<CorHealthTrack, string> = {
-  verde: `color-mix(in srgb, ${theme.colors.success} 14%, white)`,
-  amarelo: `color-mix(in srgb, ${theme.colors.warning} 20%, white)`,
-  vermelho: `color-mix(in srgb, ${theme.colors.destructive} 14%, white)`,
+  verde: `color-mix(in srgb, ${theme.colors.success} 14%, var(--atlas-card))`,
+  amarelo: `color-mix(in srgb, ${theme.colors.warning} 20%, var(--atlas-card))`,
+  vermelho: `color-mix(in srgb, ${theme.colors.destructive} 14%, var(--atlas-card))`,
 };
 
 export const TEXTO_COR: Record<CorHealthTrack, string> = {
-  verde: `color-mix(in srgb, ${theme.colors.success} 55%, black)`,
-  amarelo: `color-mix(in srgb, ${theme.colors.warning} 60%, black)`,
-  vermelho: `color-mix(in srgb, ${theme.colors.destructive} 80%, black)`,
+  verde: `color-mix(in srgb, ${theme.colors.success} 55%, var(--atlas-tinta))`,
+  amarelo: `color-mix(in srgb, ${theme.colors.warning} 60%, var(--atlas-tinta))`,
+  vermelho: `color-mix(in srgb, ${theme.colors.destructive} 80%, var(--atlas-tinta))`,
 };
 
 /** A cor cheia, para o ponto e a borda do item escolhido. */

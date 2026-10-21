@@ -14,6 +14,10 @@ export function createLote(
     projeto_ids: number[];
     /** Só na finalização — o backend ignora na periódica. Omitido = `true`. */
     inclui_avaliacao_de_escopo?: boolean;
+    /** Gestão de Pessoas: quem ficar pendente no prazo toma ponto. */
+    gp_pontua?: boolean;
+    gp_tipo_id?: number | null;
+    gp_pontos?: number | null;
   },
   token: string,
 ) {
@@ -26,7 +30,16 @@ export function createLote(
 
 export function updateLote(
   loteId: number,
-  payload: Partial<{ nome: string; data_inicio: string; data_fim: string; projeto_ids: number[] }>,
+  payload: Partial<{
+    nome: string;
+    data_inicio: string;
+    data_fim: string;
+    projeto_ids: number[];
+    /** Aceitos enquanto `gp_aplicado_em` for nulo. */
+    gp_pontua: boolean;
+    gp_tipo_id: number | null;
+    gp_pontos: number | null;
+  }>,
   token: string,
 ) {
   return apiFetch<DesempenhoLote>(`/desempenho/lotes/${loteId}`, {

@@ -31,7 +31,7 @@ export const SecaoCabecalho = styled.header`
   gap: ${theme.spacing.md};
   padding: ${theme.spacing.md} ${theme.spacing.lg};
   border-bottom: 1px solid ${theme.colors.border};
-  background: color-mix(in srgb, ${theme.colors.muted} 45%, white);
+  background: color-mix(in srgb, ${theme.colors.muted} 45%, var(--atlas-card));
 `;
 
 /**
@@ -149,7 +149,7 @@ export const FrenteToggle = styled.label<{ $marcada: boolean }>`
     $marcada
       ? css`
           border: 1px solid ${theme.colors.primary};
-          background: color-mix(in srgb, ${theme.colors.primary} 10%, white);
+          background: color-mix(in srgb, ${theme.colors.primary} 10%, var(--atlas-card));
           color: ${theme.colors.primary};
         `
       : css`
@@ -302,7 +302,7 @@ export const ArquivoRemover = styled.button`
   transition: background ${theme.transitions.fast}, color ${theme.transitions.fast};
 
   &:hover {
-    background: color-mix(in srgb, ${theme.colors.destructive} 10%, white);
+    background: color-mix(in srgb, ${theme.colors.destructive} 10%, var(--atlas-card));
     color: ${theme.colors.destructive};
   }
 

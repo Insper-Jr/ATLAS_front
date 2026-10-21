@@ -11,10 +11,10 @@ export const SinalLinha = styled.p<{ $cor: string }>`
   padding: 0.375rem 0.625rem;
   border-radius: ${theme.borderRadius.md};
   border: 1px solid ${({ $cor }) => `color-mix(in srgb, ${$cor} 35%, transparent)`};
-  background: ${({ $cor }) => `color-mix(in srgb, ${$cor} 10%, white)`};
+  background: ${({ $cor }) => `color-mix(in srgb, ${$cor} 10%, var(--atlas-card))`};
   font-size: ${theme.fontSize.sm};
   font-weight: ${theme.fontWeight.medium};
-  color: ${({ $cor }) => $cor};
+  color: ${({ $cor }) => theme.clarear($cor)};
 `;
 
 export const DetalheGrid = styled.dl`

@@ -287,7 +287,7 @@ export const SinalUrgencia = styled.span<{ $cor: string }>`
   flex-shrink: 0;
   font-size: 0.8rem;
   line-height: 1;
-  color: ${({ $cor }) => $cor};
+  color: ${({ $cor }) => theme.clarear($cor)};
   cursor: help;
 `;
 
@@ -341,7 +341,7 @@ export const DiaSemana = styled.button<{ $registrado?: boolean; $padrao?: boolea
           ? theme.colors.ring
           : theme.colors.border};
   background: ${({ $registrado }) =>
-    $registrado ? `color-mix(in srgb, ${theme.colors.success} 12%, white)` : theme.colors.background};
+    $registrado ? `color-mix(in srgb, ${theme.colors.success} 12%, var(--atlas-card))` : theme.colors.background};
   cursor: pointer;
   transition: background ${theme.transitions.fast}, border-color ${theme.transitions.fast};
 

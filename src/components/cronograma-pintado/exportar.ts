@@ -50,6 +50,11 @@ function nomeArquivo(projeto: string, extensao: string, prefixo = "cronograma"):
  */
 async function comLayoutDeExport<T>(alvo: HTMLElement, acao: () => Promise<T>): Promise<T> {
   alvo.classList.add("exportando");
+  // O arquivo sai sempre em cores de impressão, mesmo com o site no modo
+  // noturno: `data-theme="light"` no alvo redefine os tokens só nesta
+  // subárvore (`styles/tema.css`), e o `toPng` copia os estilos computados.
+  const temaAntes = alvo.getAttribute("data-theme");
+  alvo.setAttribute("data-theme", "light");
   try {
     // As fontes precisam estar prontas antes de rasterizar: com elas ainda
     // carregando, o texto sai deslocado ou simplesmente não sai.
@@ -57,6 +62,8 @@ async function comLayoutDeExport<T>(alvo: HTMLElement, acao: () => Promise<T>): 
     return await acao();
   } finally {
     alvo.classList.remove("exportando");
+    if (temaAntes === null) alvo.removeAttribute("data-theme");
+    else alvo.setAttribute("data-theme", temaAntes);
   }
 }
 

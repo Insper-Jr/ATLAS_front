@@ -159,7 +159,7 @@ export const PermissaoBadge = styled.span`
   border-radius: ${theme.borderRadius.full};
   font-size: 0.65rem;
   font-weight: ${theme.fontWeight.medium};
-  background: color-mix(in srgb, ${theme.colors.primary} 10%, white);
+  background: color-mix(in srgb, ${theme.colors.primary} 10%, var(--atlas-card));
   color: ${theme.colors.primary};
 `;
 
@@ -191,5 +191,36 @@ export const ResumoCombinacao = styled.p`
   span {
     font-size: ${theme.fontSize.xs};
     color: ${theme.colors.mutedForeground};
+  }
+`;
+
+/* Abas da página (2026-10-21). Mesmo desenho do `TabLink` do painel de
+   desempenho, só que botão: a aba vive em `?aba=`, não numa rota. */
+export const TabBar = styled.nav`
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.25rem;
+  border-bottom: 1px solid ${theme.colors.border};
+`;
+
+export const TabBotao = styled.button`
+  padding: 0.5rem 0.875rem;
+  border: none;
+  border-bottom: 2px solid transparent;
+  margin-bottom: -1px;
+  background: none;
+  font: inherit;
+  font-size: ${theme.fontSize.sm};
+  font-weight: ${theme.fontWeight.medium};
+  color: ${theme.colors.mutedForeground};
+  cursor: pointer;
+
+  &:hover {
+    color: ${theme.colors.foreground};
+  }
+
+  &.active {
+    color: ${theme.colors.primary};
+    border-bottom-color: ${theme.colors.primary};
   }
 `;

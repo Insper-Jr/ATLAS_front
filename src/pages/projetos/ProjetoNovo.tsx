@@ -378,7 +378,7 @@ export function ProjetoNovo() {
           style={{
             padding: "0.75rem 1rem",
             borderRadius: theme.borderRadius.md,
-            background: `color-mix(in srgb, ${theme.colors.warning} 20%, white)`,
+            background: `color-mix(in srgb, ${theme.colors.warning} 20%, var(--atlas-card))`,
             color: theme.colors.warningForeground,
             fontSize: theme.fontSize.sm,
           }}

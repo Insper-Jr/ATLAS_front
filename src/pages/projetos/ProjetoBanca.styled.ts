@@ -165,7 +165,7 @@ export const AvisoReprovada = styled.div`
   border: 1px solid ${theme.colors.destructive};
   border-left: 4px solid ${theme.colors.destructive};
   border-radius: ${theme.borderRadius.md};
-  background: color-mix(in srgb, ${theme.colors.destructive} 8%, white);
+  background: color-mix(in srgb, ${theme.colors.destructive} 8%, var(--atlas-card));
   font-size: ${theme.fontSize.sm};
   color: ${theme.colors.foreground};
   line-height: 1.5;

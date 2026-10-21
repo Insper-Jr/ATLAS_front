@@ -148,7 +148,7 @@ export const EscopoChip = styled.button<{ $outro?: boolean }>`
   &:hover:not(:disabled) {
     border-color: ${theme.colors.primary};
     color: ${theme.colors.primary};
-    background: color-mix(in srgb, ${theme.colors.primary} 6%, white);
+    background: color-mix(in srgb, ${theme.colors.primary} 6%, var(--atlas-card));
   }
 
   &:focus-visible {

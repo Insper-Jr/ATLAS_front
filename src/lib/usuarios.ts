@@ -35,6 +35,9 @@ export interface UpdateUsuarioPayload {
   cargo_extra?: string | null;
   /** 1º a 8º semestre da graduação, ou `null` pra limpar. */
   semestre_graduacao?: number | null;
+  /** Núcleos da Gestão de Pessoas. Quando vem, substitui o conjunto
+   *  inteiro; `[]` tira a pessoa de todos. */
+  nucleo_ids?: number[];
 }
 
 export function updateUsuario(usuarioId: number, dados: UpdateUsuarioPayload, token: string) {
@@ -87,6 +90,7 @@ export interface RegistrarUsuarioPayload {
   /** Ver `UpdateUsuarioPayload.cargo_extra`. */
   cargo_extra?: string | null;
   semestre_graduacao?: number | null;
+  nucleo_ids?: number[];
 }
 
 /**

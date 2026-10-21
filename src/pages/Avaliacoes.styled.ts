@@ -142,7 +142,7 @@ export const RemoveButton = styled.button`
   cursor: pointer;
 
   &:hover {
-    background: color-mix(in srgb, ${theme.colors.destructive} 8%, white);
+    background: color-mix(in srgb, ${theme.colors.destructive} 8%, var(--atlas-card));
   }
 `;
 

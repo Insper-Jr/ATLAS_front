@@ -155,6 +155,10 @@ const APARENCIA: Record<TipoNotificacao, { icone: LucideIcon; rotulo: string; al
   projeto_criado_em_contrato: { icone: FileSignature, rotulo: "Projeto em contrato", alerta: false },
   projeto_vendido: { icone: CheckCircle2, rotulo: "Projeto vendido", alerta: false },
   vagas_abertas: { icone: UserPlus, rotulo: "Vagas abertas", alerta: false },
+  // Gestão de Pessoas: tomar ponto é notícia (não exige ação); subir de
+  // faixa é o aviso formal, pintado como alerta.
+  gp_pontos_recebidos: { icone: Flag, rotulo: "Pontos", alerta: false },
+  gp_faixa: { icone: AlertTriangle, rotulo: "Aviso de pontuação", alerta: true },
 };
 
 /**

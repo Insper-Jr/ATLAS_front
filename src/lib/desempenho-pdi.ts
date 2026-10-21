@@ -15,8 +15,16 @@ export function getPastasPdi(token: string) {
   return apiFetch<DesempenhoPdiPasta[]>("/desempenho/pdi/pastas", { token });
 }
 
+/** Gestão de Pessoas: quem não enviar até o prazo toma ponto, e quem toma. */
+export interface PastaPdiPontuacaoPayload {
+  gp_pontua?: boolean;
+  gp_tipo_id?: number | null;
+  gp_pontos?: number | null;
+  gp_alvo?: "mentorado" | "mentor" | "ambos" | null;
+}
+
 export function createPastaPdi(
-  payload: { nome: string; tipo: DesempenhoPdiPastaTipo; prazo: string },
+  payload: { nome: string; tipo: DesempenhoPdiPastaTipo; prazo: string } & PastaPdiPontuacaoPayload,
   token: string,
 ) {
   return apiFetch<DesempenhoPdiPasta>("/desempenho/pdi/pastas", {
@@ -28,7 +36,7 @@ export function createPastaPdi(
 
 export function updatePastaPdi(
   pastaId: number,
-  payload: { nome?: string; prazo?: string },
+  payload: { nome?: string; prazo?: string } & PastaPdiPontuacaoPayload,
   token: string,
 ) {
   return apiFetch<DesempenhoPdiPasta>(`/desempenho/pdi/pastas/${pastaId}`, {

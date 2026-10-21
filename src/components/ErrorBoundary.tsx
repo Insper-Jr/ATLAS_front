@@ -48,7 +48,7 @@ export class ErrorBoundary extends Component<Props, State> {
     if (this.state.erro && eErroDeChunkDesatualizado(this.state.erro)) {
       return (
         <div style={{ padding: "2rem", fontFamily: "system-ui, sans-serif", maxWidth: "40rem" }}>
-          <p style={{ color: "#666" }}>Atualizando o ATLAS para a versão mais recente...</p>
+          <p style={{ color: "var(--atlas-muted-foreground)" }}>Atualizando o ATLAS para a versão mais recente...</p>
         </div>
       );
     }
@@ -57,13 +57,13 @@ export class ErrorBoundary extends Component<Props, State> {
       return (
         <div style={{ padding: "2rem", fontFamily: "system-ui, sans-serif", maxWidth: "40rem" }}>
           <h1 style={{ fontSize: "1.25rem", marginBottom: "0.5rem" }}>Algo deu errado</h1>
-          <p style={{ color: "#666", marginBottom: "1rem" }}>
+          <p style={{ color: "var(--atlas-muted-foreground)", marginBottom: "1rem" }}>
             A aplicação encontrou um erro. Tente recarregar a página.
           </p>
           <pre
             style={{
               padding: "1rem",
-              background: "#f5f5f5",
+              background: "var(--atlas-muted)",
               borderRadius: "8px",
               overflow: "auto",
               fontSize: "0.875rem",

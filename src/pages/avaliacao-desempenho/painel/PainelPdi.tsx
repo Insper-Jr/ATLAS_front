@@ -21,6 +21,11 @@ import {
   updatePastaPdi,
 } from "@/lib/desempenho-pdi";
 import { formatarData, formatarDataHora } from "@/lib/projetos";
+import { getGpRegras, getGpTipos, type GpRegras, type GpTipo } from "@/lib/gestao-pessoas";
+import {
+  BlocoPontuacaoAutomatica,
+  type PontuacaoAutomaticaValor,
+} from "@/pages/gestao-pessoas/BlocoPontuacaoAutomatica";
 import { FotoCircular } from "@/components/Avatar";
 import type {
   DesempenhoMentoria,
@@ -381,6 +386,23 @@ function PastasPdiCard() {
   const [salvando, setSalvando] = useState(false);
   const [erroForm, setErroForm] = useState("");
 
+  // Gestão de Pessoas: quem não enviar até o prazo toma ponto? O padrão
+  // (tipo, pontos, quem toma) vem de Configurações; as regras só carregam
+  // pra quem pode configurar GP, e sem elas o bloco começa desligado.
+  const [gpTipos, setGpTipos] = useState<GpTipo[]>([]);
+  const [gpRegras, setGpRegras] = useState<GpRegras | null>(null);
+  const [gpNovo, setGpNovo] = useState<PontuacaoAutomaticaValor>({ pontua: false, tipoId: null, pontos: 1, alvo: "mentorado" });
+  const [editGp, setEditGp] = useState<PontuacaoAutomaticaValor>({ pontua: false, tipoId: null, pontos: 1, alvo: "mentorado" });
+
+  function gpPadrao(regras: GpRegras | null): PontuacaoAutomaticaValor {
+    return {
+      pontua: false,
+      tipoId: regras?.pdi_padrao.tipo_id ?? null,
+      pontos: regras?.pdi_padrao.pontos ?? 1,
+      alvo: regras?.pdi_padrao.alvo ?? "mentorado",
+    };
+  }
+
   // Checklist sendo montada junto com a pasta nova, os itens só são
   // criados de fato depois que a pasta existe (o backend exige pasta_id),
   // então ficam aqui como rascunho até o submit.
@@ -473,6 +495,13 @@ function PastasPdiCard() {
     try {
       const listaPastas = await getPastasPdi(token);
       setPastas(listaPastas);
+      getGpTipos(token).then(setGpTipos).catch(() => setGpTipos([]));
+      getGpRegras(token)
+        .then((r) => {
+          setGpRegras(r);
+          setGpNovo(gpPadrao(r));
+        })
+        .catch(() => setGpRegras(null));
       const listasItens = await Promise.all(listaPastas.map((p) => getItensPdi(p.id, token)));
       const mapa: Record<number, DesempenhoPdiItem[]> = {};
       listaPastas.forEach((p, i) => {
@@ -498,6 +527,7 @@ function PastasPdiCard() {
     setTipo("encontro");
     setPrazo("");
     setItensNovaPasta([]);
+    setGpNovo(gpPadrao(gpRegras));
     setErroForm("");
   }
 
@@ -519,10 +549,25 @@ function PastasPdiCard() {
       setErroForm("Preencha nome e prazo.");
       return;
     }
+    if (gpNovo.pontua && (!gpNovo.tipoId || gpNovo.pontos < 1)) {
+      setErroForm("Escolha o tipo de ocorrência e os pontos de quem não enviar.");
+      return;
+    }
     setSalvando(true);
     setErroForm("");
     try {
-      const nova = await createPastaPdi({ nome: nome.trim(), tipo, prazo }, token);
+      const nova = await createPastaPdi(
+        {
+          nome: nome.trim(),
+          tipo,
+          prazo,
+          gp_pontua: gpNovo.pontua,
+          gp_tipo_id: gpNovo.pontua ? gpNovo.tipoId : null,
+          gp_pontos: gpNovo.pontua ? gpNovo.pontos : null,
+          gp_alvo: gpNovo.pontua ? gpNovo.alvo : null,
+        },
+        token,
+      );
       const itensCriados = await Promise.all(
         itensNovaPasta.map((item) => createItemPdi(nova.id, item, token)),
       );
@@ -540,6 +585,12 @@ function PastasPdiCard() {
     setEditandoId(pasta.id);
     setEditNome(pasta.nome);
     setEditPrazo(pasta.prazo);
+    setEditGp({
+      pontua: pasta.gp_pontua,
+      tipoId: pasta.gp_tipo_id,
+      pontos: pasta.gp_pontos ?? gpRegras?.pdi_padrao.pontos ?? 1,
+      alvo: pasta.gp_alvo ?? gpRegras?.pdi_padrao.alvo ?? "mentorado",
+    });
     setEditErro("");
   }
 
@@ -556,10 +607,32 @@ function PastasPdiCard() {
       setEditErro("Preencha nome e prazo.");
       return;
     }
+    const pastaAtual = pastas.find((p) => p.id === pastaId);
+    const gpTravado = !!pastaAtual?.gp_aplicado_em;
+    if (!gpTravado && editGp.pontua && (!editGp.tipoId || editGp.pontos < 1)) {
+      setEditErro("Escolha o tipo de ocorrência e os pontos de quem não enviar.");
+      return;
+    }
     setEditSalvando(true);
     setEditErro("");
     try {
-      const atualizada = await updatePastaPdi(pastaId, { nome: editNome.trim(), prazo: editPrazo }, token);
+      const atualizada = await updatePastaPdi(
+        pastaId,
+        {
+          nome: editNome.trim(),
+          prazo: editPrazo,
+          // Depois de aplicados, os pontos não mudam mais (o backend recusa).
+          ...(gpTravado
+            ? {}
+            : {
+                gp_pontua: editGp.pontua,
+                gp_tipo_id: editGp.pontua ? editGp.tipoId : null,
+                gp_pontos: editGp.pontua ? editGp.pontos : null,
+                gp_alvo: editGp.pontua ? editGp.alvo : null,
+              }),
+        },
+        token,
+      );
       setPastas((atual) => atual.map((p) => (p.id === pastaId ? atualizada : p)));
     } catch (err) {
       setEditErro(err instanceof Error ? err.message : "Erro ao salvar a pasta");
@@ -903,6 +976,15 @@ function PastasPdiCard() {
                         required
                       />
                     </FieldGroup>
+                    <BlocoPontuacaoAutomatica
+                      idPrefixo={`pdi-${pasta.id}`}
+                      pergunta="Quem não enviar até o prazo toma ponto?"
+                      tipos={gpTipos}
+                      valor={editGp}
+                      onChange={setEditGp}
+                      comAlvo
+                      aplicadoEm={pasta.gp_aplicado_em}
+                    />
                     {editErro && <ErrorText>{editErro}</ErrorText>}
                     <PageButtonSm type="submit" disabled={editSalvando}>
                       {editSalvando ? "Salvando..." : "Salvar"}
@@ -1115,6 +1197,14 @@ function PastasPdiCard() {
                   <FieldLabel htmlFor="pdi-prazo">Prazo</FieldLabel>
                   <FieldInput id="pdi-prazo" type="date" value={prazo} onChange={(e) => setPrazo(e.target.value)} required />
                 </FieldGroup>
+                <BlocoPontuacaoAutomatica
+                  idPrefixo="pdi-nova"
+                  pergunta="Quem não enviar até o prazo toma ponto?"
+                  tipos={gpTipos}
+                  valor={gpNovo}
+                  onChange={setGpNovo}
+                  comAlvo
+                />
 
                 <FieldGroup>
                   <FieldLabel>Documentos exigidos nesta pasta</FieldLabel>

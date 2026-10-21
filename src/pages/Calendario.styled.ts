@@ -1,9 +1,9 @@
 import styled, { css } from "styled-components";
 import { theme } from "@/styles/theme";
 
-const bancaPink = "#fdf2f2";
-const bancaPinkBorder = "#f5c6c6";
-const bancaRed = "#c0392b";
+const bancaPink = `color-mix(in srgb, ${theme.colors.destructive} 7%, ${theme.colors.card})`;
+const bancaPinkBorder = `color-mix(in srgb, ${theme.colors.destructive} 28%, ${theme.colors.card})`;
+const bancaRed = theme.colors.destructive;
 
 export const PageStack = styled.div`
   display: flex;
@@ -363,7 +363,7 @@ export const StatusBadge = styled.span<{ $tone?: "success" | "warning" | "muted"
   ${({ $tone = "success" }) =>
     $tone === "warning"
       ? css`
-          background: color-mix(in srgb, ${theme.colors.primary} 12%, white);
+          background: color-mix(in srgb, ${theme.colors.primary} 12%, var(--atlas-card));
           color: ${theme.colors.primary};
         `
       : $tone === "muted"
@@ -372,7 +372,7 @@ export const StatusBadge = styled.span<{ $tone?: "success" | "warning" | "muted"
             color: ${theme.colors.mutedForeground};
           `
         : css`
-            background: color-mix(in srgb, ${theme.colors.success} 14%, white);
+            background: color-mix(in srgb, ${theme.colors.success} 14%, var(--atlas-card));
             color: ${theme.colors.success};
           `}
 `;

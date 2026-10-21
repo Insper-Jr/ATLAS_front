@@ -1,0 +1,167 @@
+/*
+ * Os valores reais das cores do tema. `theme.colors` em `theme.ts` só aponta
+ * para estas variáveis, e é isso que deixa o modo noturno trocar a paleta
+ * inteira sem encostar nos ~100 arquivos de styled-components.
+ *
+ * `[data-theme="light"]` ao lado de `:root`: um nó com o atributo volta a ser
+ * claro mesmo dentro de uma página escura. É o que a exportação do cronograma
+ * usa para fotografar sempre em cores de impressão (`exportar.ts`).
+ *
+ * Os valores claros são exatamente os que o `theme.ts` tinha como literais,
+ * para o modo claro continuar idêntico ao que era.
+ */
+
+:root,
+[data-theme="light"] {
+  color-scheme: light;
+
+  --atlas-background: hsl(0, 0%, 100%);
+  --atlas-foreground: hsl(0, 0%, 10%);
+  --atlas-card: hsl(0, 0%, 100%);
+  --atlas-card-foreground: hsl(0, 0%, 10%);
+  --atlas-popover: hsl(0, 0%, 100%);
+  --atlas-popover-foreground: hsl(0, 0%, 10%);
+  --atlas-primary: hsl(0, 72%, 51%);
+  --atlas-primary-foreground: hsl(0, 0%, 100%);
+  --atlas-secondary: hsl(0, 0%, 96%);
+  --atlas-secondary-foreground: hsl(0, 0%, 10%);
+  --atlas-muted: hsl(0, 0%, 96%);
+  --atlas-muted-foreground: hsl(0, 0%, 45%);
+  --atlas-accent: hsl(0, 72%, 51%);
+  --atlas-accent-foreground: hsl(0, 0%, 100%);
+  --atlas-destructive: hsl(0, 72%, 51%);
+  --atlas-destructive-foreground: hsl(0, 0%, 100%);
+  --atlas-success: hsl(142, 71%, 45%);
+  --atlas-success-foreground: hsl(0, 0%, 100%);
+  --atlas-warning: hsl(38, 92%, 50%);
+  --atlas-warning-foreground: hsl(0, 0%, 10%);
+  --atlas-info: hsl(199, 89%, 48%);
+  --atlas-info-foreground: hsl(0, 0%, 100%);
+  --atlas-border: hsl(0, 0%, 90%);
+  --atlas-input: hsl(0, 0%, 90%);
+  --atlas-ring: hsl(0, 72%, 51%);
+  --atlas-sidebar-background: hsl(0, 0%, 100%);
+  --atlas-sidebar-foreground: hsl(0, 0%, 10%);
+  --atlas-sidebar-primary: hsl(0, 72%, 51%);
+  --atlas-sidebar-accent: hsl(0, 0%, 96%);
+  --atlas-sidebar-border: hsl(0, 0%, 90%);
+
+  /* A "tinta" com que um texto colorido é escurecido para ler sobre fundo
+     tingido (`color-mix(success 55%, var(--atlas-tinta))`). No escuro vira
+     branco: o mesmo mix clareia o texto em vez de escurecer. */
+  --atlas-tinta: black;
+  /* Quanto de branco `theme.clarear` mistura num texto de cor de paleta. */
+  --atlas-clareio: 0%;
+
+  --atlas-sombra-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+  --atlas-sombra-md: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+  --atlas-sombra-lg: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
+  --atlas-veu: rgb(0 0 0 / 0.45);
+
+  /* Cronograma pintado: os cinzas reservados e os fundos de período, que
+     são superfície e não cor de etapa (ver `cronograma-pintado/cores.ts`). */
+  --atlas-cal-ambientacao: #DCE0E5;
+  --atlas-cal-pausa: #E9EAED;
+  --atlas-cal-nao-util: #F0F0F0;
+  --atlas-cal-marco-fundo: #FEF9F9;
+  --atlas-cal-marco-texto: #631D1D;
+  --atlas-cal-periodo-0: #DEE9F7;
+  --atlas-cal-periodo-1: #E9DEF7;
+  --atlas-cal-periodo-2: #DEF3F7;
+  --atlas-cal-periodo-3: #F7DEEB;
+  --atlas-cal-periodo-4: #F7E8DE;
+  --atlas-cal-periodo-5: #DEF7EF;
+  --atlas-cal-periodo-6: #F1DEF7;
+  --atlas-cal-periodo-7: #F7F1DE;
+}
+
+:root[data-theme="dark"] {
+  color-scheme: dark;
+
+  --atlas-background: hsl(0, 0%, 7%);
+  --atlas-foreground: hsl(0, 0%, 92%);
+  --atlas-card: hsl(0, 0%, 11%);
+  --atlas-card-foreground: hsl(0, 0%, 92%);
+  --atlas-popover: hsl(0, 0%, 13%);
+  --atlas-popover-foreground: hsl(0, 0%, 92%);
+  --atlas-primary: hsl(0, 72%, 58%);
+  --atlas-primary-foreground: hsl(0, 0%, 100%);
+  --atlas-secondary: hsl(0, 0%, 16%);
+  --atlas-secondary-foreground: hsl(0, 0%, 92%);
+  --atlas-muted: hsl(0, 0%, 16%);
+  --atlas-muted-foreground: hsl(0, 0%, 64%);
+  --atlas-accent: hsl(0, 72%, 58%);
+  --atlas-accent-foreground: hsl(0, 0%, 100%);
+  --atlas-destructive: hsl(0, 72%, 58%);
+  --atlas-destructive-foreground: hsl(0, 0%, 100%);
+  --atlas-success: hsl(142, 60%, 52%);
+  --atlas-success-foreground: hsl(0, 0%, 100%);
+  --atlas-warning: hsl(38, 92%, 58%);
+  /* Texto sobre fundo tingido de âmbar, que no escuro é quase preto: a
+     cor precisa ser clara. O único selo sólido de warning fixa o próprio
+     texto (`Painel.styled.ts`). */
+  --atlas-warning-foreground: hsl(38, 90%, 84%);
+  --atlas-info: hsl(199, 85%, 60%);
+  --atlas-info-foreground: hsl(0, 0%, 100%);
+  --atlas-border: hsl(0, 0%, 18%);
+  --atlas-input: hsl(0, 0%, 22%);
+  --atlas-ring: hsl(0, 72%, 58%);
+  --atlas-sidebar-background: hsl(0, 0%, 11%);
+  --atlas-sidebar-foreground: hsl(0, 0%, 92%);
+  --atlas-sidebar-primary: hsl(0, 72%, 58%);
+  --atlas-sidebar-accent: hsl(0, 0%, 16%);
+  --atlas-sidebar-border: hsl(0, 0%, 18%);
+
+  --atlas-tinta: white;
+  --atlas-clareio: 30%;
+
+  --atlas-sombra-sm: 0 1px 2px 0 rgb(0 0 0 / 0.4);
+  --atlas-sombra-md: 0 4px 6px -1px rgb(0 0 0 / 0.5), 0 2px 4px -2px rgb(0 0 0 / 0.5);
+  --atlas-sombra-lg: 0 10px 15px -3px rgb(0 0 0 / 0.6), 0 4px 6px -4px rgb(0 0 0 / 0.6);
+  --atlas-veu: rgb(0 0 0 / 0.65);
+
+  --atlas-cal-ambientacao: hsl(215, 10%, 24%);
+  --atlas-cal-pausa: hsl(0, 0%, 21%);
+  --atlas-cal-nao-util: hsl(0, 0%, 14%);
+  --atlas-cal-marco-fundo: hsl(0, 35%, 14%);
+  --atlas-cal-marco-texto: hsl(0, 80%, 82%);
+  --atlas-cal-periodo-0: hsl(214, 30%, 17%);
+  --atlas-cal-periodo-1: hsl(265, 30%, 17%);
+  --atlas-cal-periodo-2: hsl(190, 30%, 16%);
+  --atlas-cal-periodo-3: hsl(330, 30%, 17%);
+  --atlas-cal-periodo-4: hsl(24, 30%, 17%);
+  --atlas-cal-periodo-5: hsl(160, 30%, 16%);
+  --atlas-cal-periodo-6: hsl(285, 30%, 17%);
+  --atlas-cal-periodo-7: hsl(45, 30%, 16%);
+}
+
+html {
+  background: var(--atlas-background);
+}
+
+/* Recharts: o balão padrão vem com fundo branco e borda cinza em estilo
+   inline, e os eixos/grade sem cor explícita caem no cinza fixo da
+   biblioteca. Aqui todos seguem o tema; os gráficos que já passam os tokens
+   por prop apontam para os mesmos valores. */
+.recharts-default-tooltip {
+  background-color: var(--atlas-card) !important;
+  border-color: var(--atlas-border) !important;
+  border-radius: 0.5rem;
+  color: var(--atlas-foreground);
+  box-shadow: var(--atlas-sombra-md);
+}
+
+.recharts-tooltip-label {
+  color: var(--atlas-foreground);
+}
+
+.recharts-cartesian-grid-horizontal line,
+.recharts-cartesian-grid-vertical line,
+.recharts-cartesian-axis-line,
+.recharts-cartesian-axis-tick-line {
+  stroke: var(--atlas-border);
+}
+
+.recharts-cartesian-axis-tick-value {
+  fill: var(--atlas-muted-foreground);
+}

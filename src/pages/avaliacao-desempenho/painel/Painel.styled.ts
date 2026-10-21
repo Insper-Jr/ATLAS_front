@@ -169,7 +169,9 @@ export const PendenciaAtrasoRotulo = styled.span`
   padding: 0 0.4rem;
   border-radius: ${theme.borderRadius.full};
   background: ${theme.colors.warning};
-  color: ${theme.colors.warningForeground};
+  /* Fixo e escuro: sobre o âmbar sólido o texto precisa ser escuro nos dois
+     modos, e warningForeground clareia no escuro para ler sobre tinta. */
+  color: hsl(0, 0%, 10%);
   font-size: ${theme.fontSize.xs};
   font-weight: ${theme.fontWeight.medium};
 `;
@@ -263,7 +265,7 @@ export const DetalheNotaGeralRotulo = styled.span`
 export const DetalheNotaGeralNumero = styled.span<{ $cor: string }>`
   font-size: ${theme.fontSize.lg};
   font-weight: ${theme.fontWeight.bold};
-  color: ${({ $cor }) => $cor};
+  color: ${({ $cor }) => theme.clarear($cor)};
 `;
 
 export const DetalheCriteriosLista = styled.div`
@@ -306,7 +308,7 @@ export const DetalheCriterioNumero = styled.span<{ $cor: string }>`
   text-align: right;
   font-size: ${theme.fontSize.xs};
   font-weight: ${theme.fontWeight.semibold};
-  color: ${({ $cor }) => $cor};
+  color: ${({ $cor }) => theme.clarear($cor)};
 `;
 
 export const DetalheCriterioTexto = styled.p`
@@ -431,7 +433,7 @@ export const PastaNumero = styled.span`
   width: 1.75rem;
   height: 1.75rem;
   border-radius: ${theme.borderRadius.full};
-  background: color-mix(in srgb, ${theme.colors.primary} 12%, white);
+  background: color-mix(in srgb, ${theme.colors.primary} 12%, var(--atlas-card));
   color: ${theme.colors.primary};
   font-size: ${theme.fontSize.xs};
   font-weight: ${theme.fontWeight.semibold};
@@ -594,7 +596,7 @@ export const Iniciais = styled.span<{ $mentor?: boolean }>`
   background: ${({ $mentor }) =>
     $mentor
       ? theme.colors.primary
-      : `color-mix(in srgb, ${theme.colors.primary} 12%, white)`};
+      : `color-mix(in srgb, ${theme.colors.primary} 12%, var(--atlas-card))`};
   color: ${({ $mentor }) => ($mentor ? theme.colors.primaryForeground : theme.colors.primary)};
 `;
 

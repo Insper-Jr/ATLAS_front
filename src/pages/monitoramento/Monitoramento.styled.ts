@@ -316,7 +316,7 @@ export const FiltroToggle = styled.button<{ $ativo?: boolean }>`
   border: 1px solid ${({ $ativo }) => ($ativo ? theme.colors.ring : theme.colors.border)};
   background: ${({ $ativo }) =>
     $ativo
-      ? `color-mix(in srgb, ${theme.colors.destructive} 14%, white)`
+      ? `color-mix(in srgb, ${theme.colors.destructive} 14%, var(--atlas-card))`
       : theme.colors.card};
   color: ${({ $ativo }) => ($ativo ? theme.colors.destructive : theme.colors.foreground)};
   font-size: ${theme.fontSize.sm};
@@ -950,9 +950,9 @@ export type TomPilula = "ok" | "alerta" | "atencao" | "neutro";
    12% e 18% aqui, sem motivo, duas famílias de pílula quase iguais na mesma
    tela é o tipo de diferença que ninguém nota e todo mundo sente. */
 const FUNDO_PILULA: Record<TomPilula, string> = {
-  ok: `color-mix(in srgb, ${theme.colors.success} 14%, white)`,
-  alerta: `color-mix(in srgb, ${theme.colors.destructive} 14%, white)`,
-  atencao: `color-mix(in srgb, ${theme.colors.warning} 20%, white)`,
+  ok: `color-mix(in srgb, ${theme.colors.success} 14%, var(--atlas-card))`,
+  alerta: `color-mix(in srgb, ${theme.colors.destructive} 14%, var(--atlas-card))`,
+  atencao: `color-mix(in srgb, ${theme.colors.warning} 20%, var(--atlas-card))`,
   neutro: theme.colors.muted,
 };
 
@@ -961,7 +961,7 @@ const TEXTO_PILULA: Record<TomPilula, string> = {
   alerta: theme.colors.destructive,
   // O warning puro não passa contraste sobre fundo claro; escurecer só o
   // texto mantém a leitura acessível sem perder o âmbar do fundo.
-  atencao: `color-mix(in srgb, ${theme.colors.warning} 70%, black)`,
+  atencao: `color-mix(in srgb, ${theme.colors.warning} 70%, var(--atlas-tinta))`,
   neutro: theme.colors.mutedForeground,
 };
 
@@ -1189,7 +1189,7 @@ export const AtrasoTitulo = styled.div`
 export const AtrasoFlagIcone = styled.span`
   display: inline-flex;
   align-items: center;
-  color: color-mix(in srgb, ${theme.colors.warning} 70%, black);
+  color: color-mix(in srgb, ${theme.colors.warning} 70%, var(--atlas-tinta));
   cursor: help;
 `;
 

@@ -24,7 +24,7 @@ export const PainelOverlay = styled.div`
   position: fixed;
   inset: 0;
   z-index: 40;
-  background: rgb(0 0 0 / 0.4);
+  background: ${theme.colors.veu};
 `;
 
 export const PainelLateral = styled.aside`

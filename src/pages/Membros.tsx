@@ -14,6 +14,7 @@ import {
   type SenhaProvisoriaEmitida,
 } from "@/lib/usuarios";
 import { getUsuariosFrentes, syncFrentesUsuario } from "@/lib/usuarios-frentes";
+import { getNucleos, type Nucleo } from "@/lib/nucleos";
 import { getPosicoesPermissoes } from "@/lib/posicoes-permissoes";
 import { getLotes, getPendencias } from "@/lib/desempenho-lotes";
 import { getFaixasDisponiveis, getGradeDeUsuario, getGradesPreenchidas } from "@/lib/grade-horaria";
@@ -116,6 +117,7 @@ function colunasDeMembro(
       inicial: "asc",
     },
     semestre: { valor: (m) => m.semestre_graduacao, inicial: "asc" },
+    nucleo: { valor: (m) => m.nucleo_nomes.join(", "), inicial: "asc" },
     status: { valor: (m) => ROTULO_STATUS_USUARIO[m.status] ?? m.status, inicial: "asc" },
   };
 }
@@ -189,6 +191,8 @@ interface Contexto {
   frentes: Frente[];
   usuariosFrentes: UsuarioFrente[];
   posicoes: PosicaoPermissao[];
+  /** Núcleos da Gestão de Pessoas (só os ativos entram no select). */
+  nucleos: Nucleo[];
 }
 
 /** Quantas avaliações da rodada aberta cada pessoa já respondeu, como
@@ -253,7 +257,7 @@ export function Membros() {
     if (mostrarCarregando) setCarregando(true);
     setErro("");
     try {
-      const [usuariosResp, frentes, usuariosFrentes, posicoes, grades] = await Promise.all([
+      const [usuariosResp, frentes, usuariosFrentes, posicoes, grades, nucleos] = await Promise.all([
         getUsuarios(token),
         getFrentes(token),
         getUsuariosFrentes(token),
@@ -261,9 +265,11 @@ export function Membros() {
         // Sem gestão ativa a rota devolve 422. O pino é acessório, então uma
         // falha aqui só o deixa de fora, não derruba a lista.
         getGradesPreenchidas(token).catch(() => ({ semestre_id: 0, usuario_ids: [] as number[] })),
+        // Núcleos são acessórios da mesma forma: sem eles o select some.
+        getNucleos(token).catch(() => [] as Nucleo[]),
       ]);
       setMembros(usuariosResp.sort((a, b) => a.nome.localeCompare(b.nome, "pt-BR")));
-      setContexto({ frentes, usuariosFrentes, posicoes });
+      setContexto({ frentes, usuariosFrentes, posicoes, nucleos });
       setGradesPreenchidas(new Set(grades.usuario_ids));
     } catch (err) {
       setErro(err instanceof Error ? err.message : "Erro ao carregar membros");
@@ -436,6 +442,9 @@ export function Membros() {
                   <Th coluna="semestre" ordem={ordem} onOrdenar={ordenarPor}>
                     Semestre
                   </Th>
+                  <Th coluna="nucleo" ordem={ordem} onOrdenar={ordenarPor}>
+                    Núcleo
+                  </Th>
                   <Th coluna="status" ordem={ordem} onOrdenar={ordenarPor}>
                     Status
                   </Th>
@@ -455,6 +464,7 @@ export function Membros() {
                       <TableCell>{rotulosDeCargo(posicoesCadastradas, membro)}</TableCell>
                       <TableCell>{frentes.length > 0 ? frentes.join(", ") : "—"}</TableCell>
                       <TableCell>{membro.semestre_graduacao ? `${membro.semestre_graduacao}º` : "—"}</TableCell>
+                      <TableCell>{membro.nucleo_nomes.length > 0 ? membro.nucleo_nomes.join(", ") : "—"}</TableCell>
                       <TableCell>
                         {/* Os 3 estados, não um booleano: ex-membro e
                             desligado são situações diferentes. */}
@@ -928,6 +938,7 @@ function NovoMembroModal({
   const [cargoExtra, setCargoExtra] = useState<string | null>(null);
   const [frenteIds, setFrenteIds] = useState<number[]>([]);
   const [semestreGraduacao, setSemestreGraduacao] = useState("");
+  const [nucleoIds, setNucleoIds] = useState<number[]>([]);
   const [salvando, setSalvando] = useState(false);
   const [erro, setErro] = useState("");
   /** Preenchido depois do cadastro: a senha de primeiro acesso e se o e-mail saiu. */
@@ -959,6 +970,10 @@ function NovoMembroModal({
     setFrenteIds((lista) => (lista.includes(id) ? lista.filter((x) => x !== id) : [...lista, id]));
   }
 
+  function toggleNucleo(id: number) {
+    setNucleoIds((lista) => (lista.includes(id) ? lista.filter((x) => x !== id) : [...lista, id]));
+  }
+
   async function handleCriar(e: React.FormEvent) {
     e.preventDefault();
     if (frenteObrigatoria && frenteIds.length === 0) {
@@ -975,6 +990,7 @@ function NovoMembroModal({
           posicao,
           cargo_extra: cargoExtra,
           semestre_graduacao: semestreGraduacao ? Number(semestreGraduacao) : null,
+          nucleo_ids: nucleoIds,
         },
         token,
       );
@@ -1080,6 +1096,23 @@ function NovoMembroModal({
                 </FieldSelect>
               </FieldGroup>
 
+              <FieldGroup>
+                <FieldLabel>Núcleos</FieldLabel>
+                <CheckboxGrid>
+                  {contexto.nucleos.filter((n) => n.ativo).length === 0 && (
+                    <EmptyText>Nenhum núcleo ativo cadastrado.</EmptyText>
+                  )}
+                  {contexto.nucleos
+                    .filter((n) => n.ativo)
+                    .map((n) => (
+                      <CheckboxLabel key={n.id}>
+                        <input type="checkbox" checked={nucleoIds.includes(n.id)} onChange={() => toggleNucleo(n.id)} />
+                        {n.nome}
+                      </CheckboxLabel>
+                    ))}
+                </CheckboxGrid>
+              </FieldGroup>
+
               {/* Logo abaixo da posição: para o gerente, escolher a frente é
                   parte de definir a posição, não um detalhe solto. */}
               <FieldGroup>
@@ -1148,6 +1181,7 @@ function MembroModal({
     membro.semestre_graduacao ? String(membro.semestre_graduacao) : "",
   );
   const [cargoExtra, setCargoExtra] = useState<string | null>(membro.cargo_extra);
+  const [nucleoIds, setNucleoIds] = useState<number[]>(membro.nucleo_ids);
   const [salvando, setSalvando] = useState(false);
   const [erro, setErro] = useState("");
 
@@ -1173,6 +1207,10 @@ function MembroModal({
     setFrenteIds((lista) => (lista.includes(id) ? lista.filter((x) => x !== id) : [...lista, id]));
   }
 
+  function toggleNucleo(id: number) {
+    setNucleoIds((lista) => (lista.includes(id) ? lista.filter((x) => x !== id) : [...lista, id]));
+  }
+
   async function handleSalvar(e: React.FormEvent) {
     e.preventDefault();
     if (frenteObrigatoria && frenteIds.length === 0) {
@@ -1196,6 +1234,7 @@ function MembroModal({
           // posição principal selecionada — manda como está.
           cargo_extra: cargoExtra,
           semestre_graduacao: semestreGraduacao ? Number(semestreGraduacao) : null,
+          nucleo_ids: nucleoIds,
         },
         token,
       );
@@ -1253,6 +1292,10 @@ function MembroModal({
                   <DetailValue>
                     {membro.semestre_graduacao ? `${membro.semestre_graduacao}º semestre` : "—"}
                   </DetailValue>
+                </DetailRow>
+                <DetailRow>
+                  <DetailTerm>Núcleos</DetailTerm>
+                  <DetailValue>{membro.nucleo_nomes.length > 0 ? membro.nucleo_nomes.join(", ") : "Sem núcleo"}</DetailValue>
                 </DetailRow>
                 <DetailRow>
                   <DetailTerm>Status</DetailTerm>
@@ -1360,6 +1403,24 @@ function MembroModal({
                       </option>
                     ))}
                   </FieldSelect>
+                </FieldGroup>
+
+                <FieldGroup>
+                  <FieldLabel>Núcleos</FieldLabel>
+                  <CheckboxGrid>
+                    {contexto.nucleos.length === 0 && <EmptyText>Nenhum núcleo cadastrado.</EmptyText>}
+                    {/* Núcleo inativo só aparece se a pessoa já está nele,
+                        pra dar pra tirar; o backend recusa marcar inativo. */}
+                    {contexto.nucleos
+                      .filter((n) => n.ativo || membro.nucleo_ids.includes(n.id))
+                      .map((n) => (
+                        <CheckboxLabel key={n.id}>
+                          <input type="checkbox" checked={nucleoIds.includes(n.id)} onChange={() => toggleNucleo(n.id)} />
+                          {n.nome}
+                          {!n.ativo && " (inativo)"}
+                        </CheckboxLabel>
+                      ))}
+                  </CheckboxGrid>
                 </FieldGroup>
 
                 <FieldGroup>

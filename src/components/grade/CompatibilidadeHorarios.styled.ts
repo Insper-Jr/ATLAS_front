@@ -57,7 +57,7 @@ export const Selo = styled.span<{ $teor: Teor }>`
   ${({ $teor }) => {
     const cor = corDoTeor($teor);
     return css`
-      background: color-mix(in srgb, ${cor} 14%, white);
+      background: color-mix(in srgb, ${cor} 14%, var(--atlas-card));
       color: ${cor};
       border: 1px solid color-mix(in srgb, ${cor} 32%, transparent);
     `;
@@ -74,7 +74,7 @@ export const Aviso = styled.p`
   margin: 0;
   font-size: ${theme.fontSize.xs};
   color: ${theme.colors.warningForeground};
-  background: color-mix(in srgb, ${theme.colors.warning} 16%, white);
+  background: color-mix(in srgb, ${theme.colors.warning} 16%, var(--atlas-card));
   border-radius: ${theme.borderRadius.md};
   padding: ${theme.spacing.sm};
 `;
@@ -114,6 +114,6 @@ export const MiniCelula = styled.td<{ $livre: boolean }>`
   border-radius: 2px;
   background: ${({ $livre }) =>
     $livre
-      ? `color-mix(in srgb, ${theme.colors.success} 55%, white)`
+      ? `color-mix(in srgb, ${theme.colors.success} 55%, var(--atlas-card))`
       : theme.colors.muted};
 `;

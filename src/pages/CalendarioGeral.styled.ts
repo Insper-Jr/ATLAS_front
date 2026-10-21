@@ -122,7 +122,7 @@ export const Chip = styled.button<{ $ativo: boolean; $cor: string }>`
   border-radius: ${theme.borderRadius.full};
   border: 1px solid ${({ $ativo, $cor }) => ($ativo ? $cor : theme.colors.border)};
   background: ${({ $ativo, $cor }) =>
-    $ativo ? `color-mix(in srgb, ${$cor} 14%, white)` : theme.colors.background};
+    $ativo ? `color-mix(in srgb, ${$cor} 14%, var(--atlas-card))` : theme.colors.background};
   color: ${({ $ativo, $cor }) => ($ativo ? $cor : theme.colors.mutedForeground)};
   font-size: ${theme.fontSize.xs};
   font-weight: ${theme.fontWeight.medium};
@@ -268,9 +268,9 @@ export const Pilula = styled.button<{ $cor: string }>`
   background: linear-gradient(
     to right,
     ${({ $cor }) => $cor} 3px,
-    color-mix(in srgb, ${({ $cor }) => $cor} 16%, white) 3px
+    color-mix(in srgb, ${({ $cor }) => $cor} 16%, var(--atlas-card)) 3px
   );
-  color: color-mix(in srgb, ${({ $cor }) => $cor} 85%, black);
+  color: color-mix(in srgb, ${({ $cor }) => $cor} 85%, var(--atlas-tinta));
   font-size: 0.68rem;
   font-weight: ${theme.fontWeight.medium};
   text-align: left;
@@ -309,7 +309,7 @@ export const Pilula = styled.button<{ $cor: string }>`
     background: linear-gradient(
       to right,
       ${({ $cor }) => $cor} 3px,
-      color-mix(in srgb, ${({ $cor }) => $cor} 26%, white) 3px
+      color-mix(in srgb, ${({ $cor }) => $cor} 26%, var(--atlas-card)) 3px
     );
   }
 `;

@@ -1,5 +1,6 @@
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { AuthProvider } from "@/context/AuthContext";
+import { TemaProvider } from "@/context/TemaContext";
 import { Toasts } from "@/components/Toasts";
 import { PrivateRoute } from "@/routes/PrivateRoute";
 import { AdminRoute } from "@/routes/AdminRoute";
@@ -56,6 +57,10 @@ import { PainelRelatorio } from "@/pages/avaliacao-desempenho/painel/PainelRelat
 import { PainelLotes } from "@/pages/avaliacao-desempenho/painel/PainelLotes";
 import { PainelPdi } from "@/pages/avaliacao-desempenho/painel/PainelPdi";
 import { PainelFormularios } from "@/pages/avaliacao-desempenho/painel/PainelFormularios";
+import { GestaoPessoas } from "@/pages/gestao-pessoas/GestaoPessoas";
+import { PontosCategoria } from "@/pages/gestao-pessoas/PontosCategoria";
+import { HistoricoRelatorios } from "@/pages/gestao-pessoas/HistoricoRelatorios";
+import { MeusPontos } from "@/pages/MeusPontos";
 import { TarefasGeraisAba } from "@/pages/monitoramento/TarefasGeraisAba";
 import { CronogramasGeraisAba } from "@/pages/monitoramento/CronogramasGeraisAba";
 import { MENTORES_ELEGIVEIS } from "@/utils/permissoes";
@@ -63,6 +68,7 @@ import { MENTORES_ELEGIVEIS } from "@/utils/permissoes";
 export default function App() {
   return (
     <BrowserRouter>
+      <TemaProvider>
       <AuthProvider>
         <Routes>
           {/* A home é /projetos: é o que a pessoa abre todo dia. */}
@@ -229,7 +235,26 @@ export default function App() {
                   esta mesma caixa, então é a mais sensível das 4
                   estendidas. Calendários base entrou junto por já viver na
                   mesma trava antes. */}
-              <Route element={<AdminRoute permissao="pode_administrar_configuracoes" />}>
+              {/* Gestão de Pessoas (2026-10-21): pontos por obrigações e por
+                  desempenho, histórico e relatórios. A gaveta do membro abre
+                  dentro da própria página, sem rota. */}
+              <Route element={<AdminRoute permissao="pode_gerir_gestao_pessoas" />}>
+                <Route path="/gestao-pessoas" element={<GestaoPessoas />}>
+                  <Route index element={<Navigate to="obrigacoes" replace />} />
+                  <Route path="obrigacoes" element={<PontosCategoria categoria="obrigacoes" />} />
+                  <Route path="desempenho" element={<PontosCategoria categoria="desempenho" />} />
+                  <Route path="historico" element={<HistoricoRelatorios />} />
+                </Route>
+              </Route>
+              {/* Sem guard: todo mundo vê os próprios pontos. */}
+              <Route path="/meus-pontos" element={<MeusPontos />} />
+              {/* Abre pra quem administra o catálogo OU pra quem só configura
+                  a Gestão de Pessoas; a página recorta as seções por caixa. */}
+              <Route
+                element={
+                  <AdminRoute permissao={["pode_administrar_configuracoes", "pode_configurar_gestao_pessoas"]} />
+                }
+              >
                 <Route path="/config" element={<Config />} />
               </Route>
               {/* Calendários base saiu da caixa de Configurações em
@@ -272,6 +297,7 @@ export default function App() {
         </Routes>
         <Toasts />
       </AuthProvider>
+      </TemaProvider>
     </BrowserRouter>
   );
 }

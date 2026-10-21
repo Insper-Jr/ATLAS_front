@@ -15,6 +15,11 @@ import {
 } from "@/lib/desempenho-lotes";
 import { getProjetos, paraDataUtc } from "@/lib/projetos";
 import { getFrentes } from "@/lib/frentes";
+import { getGpRegras, getGpTipos, type GpRegras, type GpTipo } from "@/lib/gestao-pessoas";
+import {
+  BlocoPontuacaoAutomatica,
+  type PontuacaoAutomaticaValor,
+} from "@/pages/gestao-pessoas/BlocoPontuacaoAutomatica";
 import type { Frente } from "@/types/banca";
 import { ConfirmarModal } from "@/components/ConfirmarModal";
 import type { DesempenhoLote, DesempenhoPendencia, DesempenhoPendenciaFechada, DesempenhoTipo } from "@/types/desempenho";
@@ -207,6 +212,23 @@ export function PainelLotes() {
   const [salvando, setSalvando] = useState(false);
   const [erroForm, setErroForm] = useState("");
 
+  // Gestão de Pessoas: quem ficar pendente no prazo toma ponto? O padrão vem
+  // de Configurações (`lote_padrao`); as regras só carregam pra quem pode
+  // configurar GP, e sem elas o bloco começa desligado.
+  const [gpTipos, setGpTipos] = useState<GpTipo[]>([]);
+  const [gpRegras, setGpRegras] = useState<GpRegras | null>(null);
+  const [gpNovo, setGpNovo] = useState<PontuacaoAutomaticaValor>({ pontua: false, tipoId: null, pontos: 1, alvo: "ambos" });
+  const [editGp, setEditGp] = useState<PontuacaoAutomaticaValor>({ pontua: false, tipoId: null, pontos: 1, alvo: "ambos" });
+
+  function gpPadrao(regras: GpRegras | null): PontuacaoAutomaticaValor {
+    return {
+      pontua: false,
+      tipoId: regras?.lote_padrao.tipo_id ?? null,
+      pontos: regras?.lote_padrao.pontos ?? 1,
+      alvo: "ambos",
+    };
+  }
+
   async function buscar() {
     if (!token) return;
     setCarregando(true);
@@ -216,6 +238,13 @@ export function PainelLotes() {
       setFrentes(f);
       setLotes(l);
       setProjetos(p);
+      getGpTipos(token).then(setGpTipos).catch(() => setGpTipos([]));
+      getGpRegras(token)
+        .then((r) => {
+          setGpRegras(r);
+          setGpNovo(gpPadrao(r));
+        })
+        .catch(() => setGpRegras(null));
     } catch (err) {
       setErro(err instanceof Error ? err.message : "Erro ao carregar formulários");
     } finally {
@@ -294,6 +323,10 @@ export function PainelLotes() {
       setErroForm("Preencha nome e as duas datas.");
       return;
     }
+    if (gpNovo.pontua && (!gpNovo.tipoId || gpNovo.pontos < 1)) {
+      setErroForm("Escolha o tipo de ocorrência e os pontos de quem ficar pendente.");
+      return;
+    }
     setSalvando(true);
     setErroForm("");
     try {
@@ -305,6 +338,9 @@ export function PainelLotes() {
           data_fim: deDatetimeLocal(dataFim),
           projeto_ids: projetoIds,
           inclui_avaliacao_de_escopo: incluiEscopo,
+          gp_pontua: gpNovo.pontua,
+          gp_tipo_id: gpNovo.pontua ? gpNovo.tipoId : null,
+          gp_pontos: gpNovo.pontua ? gpNovo.pontos : null,
         },
         token,
       );
@@ -314,6 +350,7 @@ export function PainelLotes() {
       setDataFim("");
       setProjetoIds([]);
       setIncluiEscopo(true);
+      setGpNovo(gpPadrao(gpRegras));
     } catch (err) {
       setErroForm(err instanceof Error ? err.message : "Erro ao criar formulário");
     } finally {
@@ -352,6 +389,12 @@ export function PainelLotes() {
     setEditDataInicio(paraDatetimeLocal(lote.data_inicio));
     setEditDataFim(paraDatetimeLocal(lote.data_fim));
     setEditProjetoIds(lote.projeto_ids);
+    setEditGp({
+      pontua: lote.gp_pontua,
+      tipoId: lote.gp_tipo_id,
+      pontos: lote.gp_pontos ?? gpRegras?.lote_padrao.pontos ?? 1,
+      alvo: "ambos",
+    });
     setEditErro("");
   }
 
@@ -359,6 +402,12 @@ export function PainelLotes() {
     if (!token) return;
     if (!editNome.trim() || !editDataInicio || !editDataFim) {
       setEditErro("Preencha nome e as duas datas.");
+      return;
+    }
+    const loteAtual = lotes.find((l) => l.id === loteId);
+    const gpTravado = !!loteAtual?.gp_aplicado_em;
+    if (!gpTravado && editGp.pontua && (!editGp.tipoId || editGp.pontos < 1)) {
+      setEditErro("Escolha o tipo de ocorrência e os pontos de quem ficar pendente.");
       return;
     }
     setEditSalvando(true);
@@ -371,6 +420,14 @@ export function PainelLotes() {
           data_inicio: deDatetimeLocal(editDataInicio),
           data_fim: deDatetimeLocal(editDataFim),
           projeto_ids: editProjetoIds,
+          // Depois de aplicados, os pontos não mudam mais (o backend recusa).
+          ...(gpTravado
+            ? {}
+            : {
+                gp_pontua: editGp.pontua,
+                gp_tipo_id: editGp.pontua ? editGp.tipoId : null,
+                gp_pontos: editGp.pontua ? editGp.pontos : null,
+              }),
         },
         token,
       );
@@ -473,6 +530,13 @@ export function PainelLotes() {
                   : "Incluir a Avaliação do Escopo (cada participante avalia o escopo em andamento, ainda sem banca)"}
               </label>
             </FieldGroup>
+            <BlocoPontuacaoAutomatica
+              idPrefixo="lote-novo"
+              pergunta="Quem ficar pendente no prazo toma ponto?"
+              tipos={gpTipos}
+              valor={gpNovo}
+              onChange={setGpNovo}
+            />
             <FieldGroup>
               <FieldLabel htmlFor="lote-inicio">Início</FieldLabel>
               <CampoInlineRow>
@@ -778,6 +842,14 @@ export function PainelLotes() {
                           ))}
                         </ProjetoChipsRow>
                       </FieldGroup>
+                      <BlocoPontuacaoAutomatica
+                        idPrefixo={`lote-${lote.id}`}
+                        pergunta="Quem ficar pendente no prazo toma ponto?"
+                        tipos={gpTipos}
+                        valor={editGp}
+                        onChange={setEditGp}
+                        aplicadoEm={lote.gp_aplicado_em}
+                      />
                       {editErro && <ErrorText>{editErro}</ErrorText>}
                       <PageButtonSm type="submit" disabled={editSalvando}>
                         {editSalvando ? "Salvando..." : "Salvar"}

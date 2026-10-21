@@ -148,7 +148,7 @@ export const FrentePill = styled.button<{ $ativo: boolean }>`
   border-radius: ${theme.borderRadius.full};
   border: 1px solid ${({ $ativo }) => ($ativo ? theme.colors.primary : theme.colors.border)};
   background: ${({ $ativo }) =>
-    $ativo ? "color-mix(in srgb, " + theme.colors.primary + " 12%, white)" : theme.colors.background};
+    $ativo ? "color-mix(in srgb, " + theme.colors.primary + " 12%, var(--atlas-card))" : theme.colors.background};
   color: ${({ $ativo }) => ($ativo ? theme.colors.primary : theme.colors.mutedForeground)};
   font-size: ${theme.fontSize.xs};
   font-weight: ${theme.fontWeight.medium};

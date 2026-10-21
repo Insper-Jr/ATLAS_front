@@ -23,6 +23,13 @@ export interface DesempenhoLote {
   /** A Avaliação do Escopo entra junto? Escolhido ao abrir o lote à mão;
    *  `true` na finalização automática e nos lotes antigos. */
   inclui_avaliacao_de_escopo: boolean;
+  /** Gestão de Pessoas: quem ficar pendente no prazo toma ponto? Escolhido
+   *  na criação; `gp_aplicado_em` carimba quando os pontos já saíram (e a
+   *  escolha trava). */
+  gp_pontua: boolean;
+  gp_tipo_id: number | null;
+  gp_pontos: number | null;
+  gp_aplicado_em: string | null;
 }
 
 export interface DesempenhoCriterio {
@@ -192,6 +199,13 @@ export interface DesempenhoPdiPasta {
    *  não é um campo próprio da pasta. `null` se o prazo cair fora de
    *  qualquer semestre cadastrado. */
   semestre: string | null;
+  /** Gestão de Pessoas: quem não enviar até o prazo toma ponto? E quem toma
+   *  (`mentorado`, `mentor` ou `ambos`). `gp_aplicado_em` carimba a aplicação. */
+  gp_pontua: boolean;
+  gp_tipo_id: number | null;
+  gp_pontos: number | null;
+  gp_alvo: "mentorado" | "mentor" | "ambos" | null;
+  gp_aplicado_em: string | null;
 }
 
 export type DesempenhoPdiItemTipoArquivo = "documento" | "foto" | "planilha" | "qualquer";

@@ -91,7 +91,7 @@ export const BotaoCelula = styled.button<{ $marcada: boolean }>`
     background: ${({ $marcada }) =>
       $marcada
         ? `color-mix(in srgb, ${theme.colors.primary} 85%, black)`
-        : `color-mix(in srgb, ${theme.colors.primary} 12%, white)`};
+        : `color-mix(in srgb, ${theme.colors.primary} 12%, var(--atlas-card))`};
   }
 
   &:focus-visible {

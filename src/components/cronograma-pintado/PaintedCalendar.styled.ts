@@ -148,8 +148,8 @@ export const PaintedDayCell = styled(DayCell)<{
         45deg,
         transparent,
         transparent 3px,
-        rgba(0, 0, 0, 0.05) 3px,
-        rgba(0, 0, 0, 0.05) 6px
+        color-mix(in srgb, var(--atlas-tinta) 5%, transparent) 3px,
+        color-mix(in srgb, var(--atlas-tinta) 5%, transparent) 6px
       );
       cursor: not-allowed;
     `}
@@ -361,9 +361,9 @@ export const FaixaEstado = styled.div<{ $cor?: string }>`
   padding: 0.5rem 0.75rem;
   border-radius: ${theme.borderRadius.md};
   border: 1px solid
-    ${({ $cor }) => ($cor ? `color-mix(in srgb, ${$cor} 45%, white)` : theme.colors.border)};
+    ${({ $cor }) => ($cor ? `color-mix(in srgb, ${$cor} 45%, var(--atlas-card))` : theme.colors.border)};
   background: ${({ $cor }) =>
-    $cor ? `color-mix(in srgb, ${$cor} 10%, white)` : theme.colors.muted};
+    $cor ? `color-mix(in srgb, ${$cor} 10%, var(--atlas-card))` : theme.colors.muted};
   font-size: ${theme.fontSize.sm};
   color: ${theme.colors.foreground};
 
@@ -545,7 +545,7 @@ export const PincelAtivo = styled.span<{ $cor: string }>`
   padding: 0.25rem 0.625rem;
   border-radius: ${theme.borderRadius.full};
   border: 1px solid ${({ $cor }) => $cor};
-  background: color-mix(in srgb, ${({ $cor }) => $cor} 12%, white);
+  background: color-mix(in srgb, ${({ $cor }) => $cor} 12%, var(--atlas-card));
   font-size: ${theme.fontSize.xs};
   font-weight: ${theme.fontWeight.medium};
   color: ${theme.colors.foreground};
@@ -572,7 +572,7 @@ export const BotaoAjuda = styled.button`
   padding: 0.3rem 0.7rem;
   border-radius: ${theme.borderRadius.md};
   border: 1px solid color-mix(in srgb, ${theme.colors.primary} 35%, transparent);
-  background: color-mix(in srgb, ${theme.colors.primary} 10%, white);
+  background: color-mix(in srgb, ${theme.colors.primary} 10%, var(--atlas-card));
   color: ${theme.colors.primary};
   font-size: ${theme.fontSize.xs};
   font-weight: ${theme.fontWeight.medium};
@@ -580,7 +580,7 @@ export const BotaoAjuda = styled.button`
   cursor: pointer;
 
   &:hover {
-    background: color-mix(in srgb, ${theme.colors.primary} 18%, white);
+    background: color-mix(in srgb, ${theme.colors.primary} 18%, var(--atlas-card));
   }
 
   &:focus-visible {
@@ -867,8 +867,8 @@ export const AmostraHachurada = styled.span`
     45deg,
     transparent,
     transparent 2px,
-    rgba(0, 0, 0, 0.12) 2px,
-    rgba(0, 0, 0, 0.12) 4px
+    color-mix(in srgb, var(--atlas-tinta) 12%, transparent) 2px,
+    color-mix(in srgb, var(--atlas-tinta) 12%, transparent) 4px
   );
 `;
 

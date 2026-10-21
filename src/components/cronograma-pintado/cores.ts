@@ -87,16 +87,19 @@ export function fundoDiagonal(cores: string[]): string {
  *  nenhuma cor da paleta serve para todas. Cinza-escuro neutro passa em todas. */
 export const TEXTO_SOBRE_DIVIDIDA = "#1F2937";
 
-/** Reservados e fora da rampa, para nunca disputarem matiz com as etapas. */
-export const COR_AMBIENTACAO = "#DCE0E5";
-export const COR_PAUSA = "#E9EAED";
-export const COR_NAO_UTIL = "#F0F0F0";
+/** Reservados e fora da rampa, para nunca disputarem matiz com as etapas.
+ *  São superfície, não cor de etapa, por isso seguem o modo noturno: os
+ *  valores (claro e escuro) ficam em `styles/tema.css`. */
+export const COR_AMBIENTACAO = "var(--atlas-cal-ambientacao)";
+export const COR_PAUSA = "var(--atlas-cal-pausa)";
+export const COR_NAO_UTIL = "var(--atlas-cal-nao-util)";
 
 /**
  * O período de cada escopo, da reunião inicial até a banca.
  *
  * Mesmas 8 matizes da paleta, na MESMA ordem, mas a 92% de luminosidade
- * (contra os 80% do fundo de etapa). A faixa é o pano de fundo do escopo e as
+ * (contra os 80% do fundo de etapa; os valores moram em `styles/tema.css`,
+ * com a versão escura do modo noturno). A faixa é o pano de fundo do escopo e as
  * etapas são pintadas dentro dela: mesma família de cor amarra as duas, e a
  * diferença de luminosidade deixa claro quem é fundo e quem é conteúdo.
  *
@@ -105,14 +108,14 @@ export const COR_NAO_UTIL = "#F0F0F0";
  * o período é do escopo inteiro.
  */
 export const CORES_PERIODO_ESCOPO = [
-  "#DEE9F7", // azul
-  "#E9DEF7", // roxo
-  "#DEF3F7", // ciano
-  "#F7DEEB", // magenta
-  "#F7E8DE", // laranja
-  "#DEF7EF", // verde-água
-  "#F1DEF7", // violeta
-  "#F7F1DE", // mostarda
+  "var(--atlas-cal-periodo-0)", // azul
+  "var(--atlas-cal-periodo-1)", // roxo
+  "var(--atlas-cal-periodo-2)", // ciano
+  "var(--atlas-cal-periodo-3)", // magenta
+  "var(--atlas-cal-periodo-4)", // laranja
+  "var(--atlas-cal-periodo-5)", // verde-água
+  "var(--atlas-cal-periodo-6)", // violeta
+  "var(--atlas-cal-periodo-7)", // mostarda
 ];
 
 export function corPeriodoEscopo(indice: number): string {
@@ -154,8 +157,9 @@ export type TipoMarco =
  */
 export const COR_MARCO = {
   borda: "#D03939",
-  fundo: "#FEF9F9",
-  texto: "#631D1D",
+  // Fundo e texto seguem o modo noturno (`styles/tema.css`); a borda não.
+  fundo: "var(--atlas-cal-marco-fundo)",
+  texto: "var(--atlas-cal-marco-texto)",
 };
 
 /** O rótulo curto do box na visão de mês, onde não cabe o título inteiro. */

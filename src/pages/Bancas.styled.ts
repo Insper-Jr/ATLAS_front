@@ -1028,7 +1028,7 @@ export const EscoposCarregando = styled.div`
   background: linear-gradient(
     90deg,
     ${theme.colors.muted} 0%,
-    color-mix(in srgb, ${theme.colors.muted} 55%, white) 50%,
+    color-mix(in srgb, ${theme.colors.muted} 55%, var(--atlas-card)) 50%,
     ${theme.colors.muted} 100%
   );
   background-size: 200% 100%;

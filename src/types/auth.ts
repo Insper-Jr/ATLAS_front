@@ -130,6 +130,13 @@ export interface Permissoes {
    *  (0 bancas, pendentes de um lote, inscritos de uma banca, por posição,
    *  todo mundo, escolhidos à mão). Nasce marcada só pra diretoria. */
   pode_enviar_comunicados: boolean;
+  /** Gestão de Pessoas (2026-10-21): o painel de pontos (lançar, corrigir,
+   *  retirar, histórico, relatórios, enviar aviso). Nasce marcada só no
+   *  diretor de pessoas. */
+  pode_gerir_gestao_pessoas: boolean;
+  /** A seção "Gestão de Pessoas" em Configurações: limites e alerta, tipos
+   *  de ocorrência, pontuação automática, aviso por e-mail e núcleos. */
+  pode_configurar_gestao_pessoas: boolean;
 }
 
 /**
@@ -192,6 +199,9 @@ export interface Usuario {
   nome: string;
   email_insper: string;
   permissoes: Permissoes;
+  /** Ordem do menu lateral escolhida pela diretoria (2026-10-21); nulo =
+   *  ordem do código. Ver `lib/menu-ordem.ts`. */
+  menu_ordem?: { grupos: string[]; itens: Record<string, string[]> } | null;
   posicao: Posicao;
   /** Cargo extra opcional — suas permissões já vêm somadas (OU lógico) em
    *  `permissoes` acima, ver `mesclarPermissoes` em `lib/posicoes-permissoes.ts`.
@@ -213,6 +223,10 @@ export interface Usuario {
    *  = tudo ligado. Só os tipos opcionais podem entrar aqui — ver
    *  TIPOS_NOTIFICACAO_OPCIONAIS no backend. */
   notificacoes_email_desativadas: string[];
+  /** Núcleos da Gestão de Pessoas (cadastro em Configurações). Uma pessoa
+   *  pode estar em vários; as duas listas andam juntas, por nome. */
+  nucleo_ids: number[];
+  nucleo_nomes: string[];
 }
 
 export interface UsuarioFrente {
@@ -248,4 +262,7 @@ export interface UsuarioResumo {
    */
   projetos_alocados: number;
   foto: string | null;
+  /** Núcleos da Gestão de Pessoas, ver `Usuario.nucleo_ids`. */
+  nucleo_ids: number[];
+  nucleo_nomes: string[];
 }

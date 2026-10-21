@@ -23,6 +23,9 @@ interface UsuarioResponse {
   senha_provisoria: boolean;
   foto: string | null;
   notificacoes_email_desativadas: string[];
+  /** Núcleos da Gestão de Pessoas, ver `Usuario.nucleo_ids`. */
+  nucleo_ids: number[];
+  nucleo_nomes: string[];
 }
 
 interface AuthContextType {
@@ -79,6 +82,8 @@ const PERMISSOES_PLACEHOLDER: Permissoes = {
   pode_acessar_arquivo_contratos: false,
   pode_acessar_institucional: false,
   pode_enviar_comunicados: false,
+  pode_gerir_gestao_pessoas: false,
+  pode_configurar_gestao_pessoas: false,
 };
 
 /**

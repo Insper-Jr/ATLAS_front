@@ -19,12 +19,12 @@ export const ChartWrapper = styled.div`
     gap: 1rem;
   }
   /* Cor por FRENTE, fixa (ver CORES_POR_FRENTE em DesempenhoChart.tsx):
-     Business = preto, Direito = vermelho claro (fixo), Tech = azul,
+     Business = preto (foreground, branco no escuro), Direito = vermelho claro (fixo), Tech = azul,
      Engenharia de Processos = verde. Nenhuma delas em cinza de propósito:
      "Outros" (frente fora deste mapa, ou banca "Sem frente") já usa
      --muted-foreground, um cinza — uma frente real em cinza também ficava
      visualmente idêntica a "Outros" no donut. */
-  --chart-series-1: #000000;
+  --chart-series-1: ${theme.colors.foreground};
   --chart-series-2: ${theme.colors.primary};
   --chart-series-3: #2a78d6;
   --chart-series-4: ${theme.colors.success};

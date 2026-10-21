@@ -21,6 +21,19 @@
     />
     <meta name="theme-color" content="#ffffff" />
     <!--
+      Modo noturno antes da primeira pintura: o React só aplica o tema depois
+      de montar, e à noite a tela piscaria branca. O cálculo do sol fica em
+      `lib/tema.ts`; aqui só se relê o que ele gravou da última vez
+      (`atlas-tema` é a preferência, `atlas-tema-atual` o resultado).
+    -->
+    <script>
+      try {
+        var p = localStorage.getItem("atlas-tema");
+        var t = p === "escuro" || p === "claro" ? p : localStorage.getItem("atlas-tema-atual");
+        if (t === "escuro") document.documentElement.setAttribute("data-theme", "dark");
+      } catch (e) {}
+    </script>
+    <!--
       App instalável (PWA): o manifest diz nome, ícones e "standalone" (abre
       sem a barra do navegador). O iOS não lê os ícones do manifest pra tela
       de início, daí o apple-touch-icon; e só trata como app (inclusive pra

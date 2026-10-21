@@ -140,7 +140,7 @@ export const Overlay = styled.div`
   position: fixed;
   inset: 0;
   z-index: 50;
-  background: rgb(0 0 0 / 45%);
+  background: ${theme.colors.veu};
 
   @media (min-width: ${DRAWER_ATE}px) {
     display: none;

@@ -86,7 +86,7 @@ export const PessoaIniciais = styled.span`
   width: 1.75rem;
   height: 1.75rem;
   border-radius: ${theme.borderRadius.full};
-  background: color-mix(in srgb, ${theme.colors.primary} 12%, white);
+  background: color-mix(in srgb, ${theme.colors.primary} 12%, var(--atlas-card));
   color: ${theme.colors.primary};
   font-size: ${theme.fontSize.xs};
   font-weight: ${theme.fontWeight.semibold};
@@ -133,7 +133,7 @@ export const PessoaRemover = styled.button`
   transition: background ${theme.transitions.fast}, color ${theme.transitions.fast};
 
   &:hover:not(:disabled) {
-    background: color-mix(in srgb, ${theme.colors.destructive} 10%, white);
+    background: color-mix(in srgb, ${theme.colors.destructive} 10%, var(--atlas-card));
     color: ${theme.colors.destructive};
   }
 
@@ -181,7 +181,7 @@ export const AbrirPainel = styled.button<{ $vazio?: boolean }>`
           &:hover:not(:disabled) {
             border-color: ${theme.colors.primary};
             color: ${theme.colors.primary};
-            background: color-mix(in srgb, ${theme.colors.primary} 5%, white);
+            background: color-mix(in srgb, ${theme.colors.primary} 5%, var(--atlas-card));
           }
         `
       : css`

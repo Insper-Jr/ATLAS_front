@@ -1,5 +1,6 @@
 import { apiFetch } from "@/lib/api";
 import type { Configuracao } from "@/types/banca";
+import type { MenuOrdem } from "@/lib/menu-ordem";
 
 /**
  * ⚠ Sem uso na interface desde 2026-09-02: o teto de vagas, único campo que a
@@ -19,6 +20,15 @@ export function updateConfiguracao(
     lideranca_minima_por_frente?: number;
     health_track_persistencia_amarelo?: number;
     health_track_persistencia_vermelho?: number;
+    gp_limite_obrigacoes?: number;
+    gp_limite_desempenho?: number;
+    gp_alerta_restantes?: number;
+    gp_alerta_percentual?: number;
+    gp_alertas_ativos?: boolean;
+    gp_copia_diretoria?: boolean;
+    gp_aviso_assunto?: string;
+    gp_aviso_corpo?: string;
+    menu_ordem?: MenuOrdem | null;
   },
   token: string,
 ) {

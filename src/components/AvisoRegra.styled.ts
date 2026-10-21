@@ -8,7 +8,7 @@ export const AvisoBox = styled.div`
   padding: ${theme.spacing.sm} ${theme.spacing.md};
   border-radius: ${theme.borderRadius.md};
   border: 1px solid color-mix(in srgb, ${theme.colors.destructive} 35%, transparent);
-  background: color-mix(in srgb, ${theme.colors.destructive} 8%, white);
+  background: color-mix(in srgb, ${theme.colors.destructive} 8%, var(--atlas-card));
   color: ${theme.colors.destructive};
 
   svg {

@@ -6,78 +6,92 @@ export const breakpoints = {
   xl: 1280,
 } as const;
 
+/**
+ * Cada cor é uma variável CSS; os valores (claro e escuro) moram em
+ * `tema.css`, e o `<html data-theme>` decide qual vale (`context/TemaContext`).
+ * Por isso nada aqui pode ser lido como número: quem precisar de opacidade usa
+ * `alpha`, quem precisar misturar usa `color-mix`.
+ */
 export const theme = {
   breakpoints,
   colors: {
     // Base colors
-    background: 'hsl(0, 0%, 100%)',
-    foreground: 'hsl(0, 0%, 10%)',
+    background: 'var(--atlas-background)',
+    foreground: 'var(--atlas-foreground)',
 
     // Card
-    card: 'hsl(0, 0%, 100%)',
-    cardForeground: 'hsl(0, 0%, 10%)',
+    card: 'var(--atlas-card)',
+    cardForeground: 'var(--atlas-card-foreground)',
 
     // Popover (dropdowns, selects)
-    popover: 'hsl(0, 0%, 100%)',
-    popoverForeground: 'hsl(0, 0%, 10%)',
+    popover: 'var(--atlas-popover)',
+    popoverForeground: 'var(--atlas-popover-foreground)',
 
     // Primary - Red accent
-    primary: 'hsl(0, 72%, 51%)',
-    primaryForeground: 'hsl(0, 0%, 100%)',
+    primary: 'var(--atlas-primary)',
+    primaryForeground: 'var(--atlas-primary-foreground)',
 
     // Secondary - Light gray
-    secondary: 'hsl(0, 0%, 96%)',
-    secondaryForeground: 'hsl(0, 0%, 10%)',
+    secondary: 'var(--atlas-secondary)',
+    secondaryForeground: 'var(--atlas-secondary-foreground)',
 
     // Muted
-    muted: 'hsl(0, 0%, 96%)',
-    mutedForeground: 'hsl(0, 0%, 45%)',
+    muted: 'var(--atlas-muted)',
+    mutedForeground: 'var(--atlas-muted-foreground)',
 
     // Accent - Same as primary (red)
-    accent: 'hsl(0, 72%, 51%)',
-    accentForeground: 'hsl(0, 0%, 100%)',
+    accent: 'var(--atlas-accent)',
+    accentForeground: 'var(--atlas-accent-foreground)',
 
     // Destructive
-    destructive: 'hsl(0, 72%, 51%)',
-    destructiveForeground: 'hsl(0, 0%, 100%)',
+    destructive: 'var(--atlas-destructive)',
+    destructiveForeground: 'var(--atlas-destructive-foreground)',
 
     // Success
-    success: 'hsl(142, 71%, 45%)',
-    successForeground: 'hsl(0, 0%, 100%)',
+    success: 'var(--atlas-success)',
+    successForeground: 'var(--atlas-success-foreground)',
 
     // Warning, atenção: o texto sobre warning é ESCURO, não branco
-    warning: 'hsl(38, 92%, 50%)',
-    warningForeground: 'hsl(0, 0%, 10%)',
+    warning: 'var(--atlas-warning)',
+    warningForeground: 'var(--atlas-warning-foreground)',
 
     // Info
-    info: 'hsl(199, 89%, 48%)',
-    infoForeground: 'hsl(0, 0%, 100%)',
+    info: 'var(--atlas-info)',
+    infoForeground: 'var(--atlas-info-foreground)',
 
     // Borders
-    border: 'hsl(0, 0%, 90%)',
-    input: 'hsl(0, 0%, 90%)',
-    ring: 'hsl(0, 72%, 51%)',
+    border: 'var(--atlas-border)',
+    input: 'var(--atlas-input)',
+    ring: 'var(--atlas-ring)',
 
     // Sidebar
-    sidebarBackground: 'hsl(0, 0%, 100%)',
-    sidebarForeground: 'hsl(0, 0%, 10%)',
-    sidebarPrimary: 'hsl(0, 72%, 51%)',
-    sidebarAccent: 'hsl(0, 0%, 96%)',
-    sidebarBorder: 'hsl(0, 0%, 90%)',
+    sidebarBackground: 'var(--atlas-sidebar-background)',
+    sidebarForeground: 'var(--atlas-sidebar-foreground)',
+    sidebarPrimary: 'var(--atlas-sidebar-primary)',
+    sidebarAccent: 'var(--atlas-sidebar-accent)',
+    sidebarBorder: 'var(--atlas-sidebar-border)',
+
+    // O véu atrás de modal, drawer e painel lateral; mais fechado no escuro.
+    veu: 'var(--atlas-veu)',
   },
 
   /**
    * Opacidade sobre uma cor do tema.
    *
-   * NÃO concatene sufixo hex numa string `hsl(...)` (`${primary}1A`): isso gera
-   * `hsl(0, 72%, 51%)1A`, que não é cor CSS válida e pode ser ignorada em
-   * silêncio pelo navegador. `alpha(theme.colors.primary, 0.1)` resolve certo.
+   * NÃO concatene sufixo hex numa string de cor (`${primary}1A`): as cores são
+   * `var(--atlas-…)` e o resultado nem é cor CSS. `alpha(theme.colors.primary, 0.1)`
+   * resolve via `color-mix`, que aceita a variável e segue o modo noturno.
    */
   alpha: (cor: string, opacidade: number) =>
-    cor.replace(
-      /^hsl\((\d+),\s*([\d.]+)%,\s*([\d.]+)%\)$/,
-      (_, h, s, l) => `hsl(${h} ${s}% ${l}% / ${opacidade})`,
-    ),
+    `color-mix(in srgb, ${cor} ${+(opacidade * 100).toFixed(2)}%, transparent)`,
+
+  /**
+   * Texto numa cor de paleta (status de projeto, tipo de evento, urgência)
+   * sobre fundo escuro. Essas cores foram escolhidas para fundo branco e as
+   * mais fechadas somem no modo noturno. No claro devolve a própria cor
+   * (`--atlas-clareio` é 0%); no escuro mistura um tanto de branco.
+   */
+  clarear: (cor: string) => `color-mix(in srgb, white var(--atlas-clareio), ${cor})`,
 
   spacing: {
     xs: '0.25rem',
@@ -114,10 +128,11 @@ export const theme = {
     bold: 700,
   },
 
+  // Mais fortes no escuro (ver `tema.css`): sombra preta sobre fundo preto some.
   shadows: {
-    sm: '0 1px 2px 0 rgb(0 0 0 / 0.05)',
-    md: '0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1)',
-    lg: '0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1)',
+    sm: 'var(--atlas-sombra-sm)',
+    md: 'var(--atlas-sombra-md)',
+    lg: 'var(--atlas-sombra-lg)',
   },
 
   transitions: {

@@ -14,14 +14,17 @@ type PermissaoCampo = keyof Permissoes;
  * guard, digitar /membros na barra de endereço abre a tela. E o backend
  * revalida tudo, porque o front só esconde.
  */
-export function AdminRoute({ permissao }: { permissao: PermissaoCampo }) {
+export function AdminRoute({ permissao }: { permissao: PermissaoCampo | PermissaoCampo[] }) {
   const { usuario, carregando } = useAuth();
   // Repassa o contexto do pai: aninhada em `/projetos/:id`, sem isto a aba
   // perde o `useProjeto()`, porque o contexto de outlet não atravessa sozinho.
   const contexto = useOutletContext();
 
   if (carregando) return <PageLoadingBlock />;
-  if (!usuario?.permissoes[permissao]) return <Navigate to="/dashboard" replace />;
+  // Lista = basta UMA das caixas (Configurações abre pra quem administra o
+  // catálogo OU pra quem só configura a Gestão de Pessoas).
+  const caixas = Array.isArray(permissao) ? permissao : [permissao];
+  if (!caixas.some((caixa) => usuario?.permissoes[caixa])) return <Navigate to="/dashboard" replace />;
 
   return <Outlet context={contexto} />;
 }

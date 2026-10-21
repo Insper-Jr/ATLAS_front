@@ -43,7 +43,7 @@ export const StatusBadge = styled.span<{ $ativo?: boolean }>`
   font-size: ${theme.fontSize.xs};
   font-weight: ${theme.fontWeight.medium};
   background: ${({ $ativo }) =>
-    $ativo ? "color-mix(in srgb, #1baf7a 14%, white)" : theme.colors.muted};
+    $ativo ? "color-mix(in srgb, #1baf7a 14%, var(--atlas-card))" : theme.colors.muted};
   color: ${({ $ativo }) => ($ativo ? "#1baf7a" : theme.colors.mutedForeground)};
 `;
 

@@ -214,7 +214,7 @@ export const PageBadge = styled.span<{
   ${({ $tone = "default" }) =>
     $tone === "success"
       ? css`
-          background: color-mix(in srgb, ${theme.colors.success} 14%, white);
+          background: color-mix(in srgb, ${theme.colors.success} 14%, var(--atlas-card));
           color: ${theme.colors.success};
         `
       : /* `danger` é reservado para o que precisa gritar: banca atrasada e
@@ -222,13 +222,13 @@ export const PageBadge = styled.span<{
            confundir com o `default`, que também é avermelhado. */
         $tone === "danger"
         ? css`
-            background: color-mix(in srgb, ${theme.colors.destructive} 14%, white);
+            background: color-mix(in srgb, ${theme.colors.destructive} 14%, var(--atlas-card));
             color: ${theme.colors.destructive};
             border: 1px solid color-mix(in srgb, ${theme.colors.destructive} 35%, transparent);
           `
         : $tone === "warning"
           ? css`
-              background: color-mix(in srgb, ${theme.colors.warning} 20%, white);
+              background: color-mix(in srgb, ${theme.colors.warning} 20%, var(--atlas-card));
               color: ${theme.colors.warningForeground};
             `
           : $tone === "muted"
@@ -237,7 +237,7 @@ export const PageBadge = styled.span<{
                 color: ${theme.colors.mutedForeground};
               `
             : css`
-                background: color-mix(in srgb, ${theme.colors.primary} 10%, white);
+                background: color-mix(in srgb, ${theme.colors.primary} 10%, var(--atlas-card));
                 color: ${theme.colors.primary};
               `}
 `;
@@ -259,7 +259,7 @@ export const PageLoadingBlock = styled.div`
   background: linear-gradient(
     90deg,
     ${theme.colors.muted} 0%,
-    color-mix(in srgb, ${theme.colors.muted} 60%, white) 50%,
+    color-mix(in srgb, ${theme.colors.muted} 60%, var(--atlas-card)) 50%,
     ${theme.colors.muted} 100%
   );
   background-size: 200% 100%;

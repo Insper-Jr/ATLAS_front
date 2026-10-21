@@ -33,7 +33,7 @@ export const NotaRegra = styled.p`
 export const Sucesso = styled.p`
   margin: ${theme.spacing.md} 0 0;
   font-size: ${theme.fontSize.sm};
-  color: color-mix(in srgb, ${theme.colors.success} 55%, black);
+  color: color-mix(in srgb, ${theme.colors.success} 55%, var(--atlas-tinta));
 `;
 
 /* ------------------------------------------------------------------ */
@@ -197,9 +197,9 @@ export const PendenteNaRodada = styled.p`
   padding: ${theme.spacing.sm} ${theme.spacing.md};
   border-radius: ${theme.borderRadius.md};
   border: 1px solid ${theme.colors.destructive};
-  background: color-mix(in srgb, ${theme.colors.destructive} 10%, white);
+  background: color-mix(in srgb, ${theme.colors.destructive} 10%, var(--atlas-card));
   font-size: ${theme.fontSize.sm};
-  color: color-mix(in srgb, ${theme.colors.destructive} 80%, black);
+  color: color-mix(in srgb, ${theme.colors.destructive} 80%, var(--atlas-tinta));
 `;
 
 export const CicloCabecalho = styled.div`

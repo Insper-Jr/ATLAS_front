@@ -114,3 +114,10 @@ export const Explicacao = styled.p`
   font-size: ${theme.fontSize.sm};
   color: ${theme.colors.mutedForeground};
 `;
+
+/** As três opções de tema, lado a lado; quebram linha no celular. */
+export const AparenciaOpcoes = styled.div`
+  display: flex;
+  flex-wrap: wrap;
+  gap: ${theme.spacing.sm};
+`;

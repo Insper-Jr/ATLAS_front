@@ -120,7 +120,7 @@ export const BotaoCitarFlutuante = styled.button`
   font-size: ${theme.fontSize.xs};
   font-weight: ${theme.fontWeight.medium};
   cursor: pointer;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.25);
+  box-shadow: ${theme.shadows.md};
 
   &:hover {
     opacity: 0.9;

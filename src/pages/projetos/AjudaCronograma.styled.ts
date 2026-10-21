@@ -64,7 +64,7 @@ export const Regra = styled.p`
   padding: ${theme.spacing.sm} ${theme.spacing.md};
   border-left: 3px solid ${theme.colors.warning};
   border-radius: ${theme.borderRadius.sm};
-  background: color-mix(in srgb, ${theme.colors.warning} 10%, white);
+  background: color-mix(in srgb, ${theme.colors.warning} 10%, var(--atlas-card));
   font-size: ${theme.fontSize.sm};
   color: ${theme.colors.foreground};
   line-height: 1.55;

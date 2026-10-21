@@ -9,17 +9,17 @@ const CORES_NOTA: Record<TomNota, { texto: string; barra: string; fundo: string 
   danger: {
     texto: theme.colors.destructive,
     barra: theme.colors.destructive,
-    fundo: `color-mix(in srgb, ${theme.colors.destructive} 14%, white)`,
+    fundo: `color-mix(in srgb, ${theme.colors.destructive} 14%, var(--atlas-card))`,
   },
   warning: {
-    texto: `color-mix(in srgb, ${theme.colors.warning} 78%, black)`,
+    texto: `color-mix(in srgb, ${theme.colors.warning} 78%, var(--atlas-tinta))`,
     barra: theme.colors.warning,
-    fundo: `color-mix(in srgb, ${theme.colors.warning} 18%, white)`,
+    fundo: `color-mix(in srgb, ${theme.colors.warning} 18%, var(--atlas-card))`,
   },
   success: {
-    texto: `color-mix(in srgb, ${theme.colors.success} 82%, black)`,
+    texto: `color-mix(in srgb, ${theme.colors.success} 82%, var(--atlas-tinta))`,
     barra: theme.colors.success,
-    fundo: `color-mix(in srgb, ${theme.colors.success} 14%, white)`,
+    fundo: `color-mix(in srgb, ${theme.colors.success} 14%, var(--atlas-card))`,
   },
   muted: {
     texto: theme.colors.mutedForeground,
