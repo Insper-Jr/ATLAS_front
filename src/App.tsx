@@ -19,7 +19,6 @@ import { ArquivoContratos } from "@/pages/arquivo-contratos/ArquivoContratos";
 import { Institucional } from "@/pages/institucional/Institucional";
 import { Comunicados } from "@/pages/comunicados/Comunicados";
 import { DefinirSenha } from "@/pages/DefinirSenha";
-import { Desempenho } from "@/pages/Desempenho";
 import { Bancas } from "@/pages/Bancas";
 import { MeuPerfil } from "@/pages/MeuPerfil";
 import { Vagas } from "@/pages/Vagas";
@@ -94,7 +93,6 @@ export default function App() {
               <Route path="/arquivo-contratos" element={<ArquivoContratos />} />
             </Route>
             <Route element={<Layout />}>
-              <Route path="/dashboard" element={<Desempenho />} />
               <Route path="/bancas" element={<Bancas />} />
               {/* A cédula da sabatina: qualquer pessoa logada; o backend só aceita
                   voto de quem estava entre os eleitores na abertura. */}
@@ -180,7 +178,7 @@ export default function App() {
 
               {/* Avaliação de Desempenho (periódica/finalização), não
                   confundir com /avaliacoes (feedback de banca) nem com
-                  /dashboard (Desempenho.tsx, % de bancas atendidas).
+                  a aba Desempenho de Bancas (% de bancas atendidas).
                   Sem guard por posição (2026-10-06, corrigido): quem
                   responde é quem está em `projeto_membro` como
                   coordenador/consultor, e isso independe da posição (um

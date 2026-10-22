@@ -80,9 +80,10 @@ function formatRespostaTexto(nota: AvaliacaoNota, pergunta?: Pergunta): string {
 
 /** `embutido`: renderizado como aba dentro de Bancas, não como página cheia
  *  — some o `PageStack`/saudação próprios (Bancas já tem os dela) e sobra só
- *  o conteúdo (gráfico + histórico). A rota solta `/dashboard` continua
- *  existindo por baixo (é destino de fallback de várias guards de permissão
- *  — `AdminRoute`, `FormularioRoute` etc.), só não aparece mais no menu. */
+ *  o conteúdo (gráfico + histórico). A rota solta `/dashboard` foi removida
+ *  em 2026-10-21 (a pedido): só existia como fallback das guards de
+ *  permissão, que agora mandam para `/projetos`. Hoje isto só vive como
+ *  aba de Bancas. */
 export function Desempenho({ embutido = false }: { embutido?: boolean } = {}) {
   const { usuario, token } = useAuth();
   const [dados, setDados] = useState<DesempenhoDados | null>(null);

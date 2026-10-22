@@ -439,7 +439,7 @@ export function Config() {
   const abaAtual = abasVisiveis.find((a) => a.chave === abaPedida) ?? abasVisiveis[0];
 
   if (!usuario || abasVisiveis.length === 0) {
-    return <Navigate to="/dashboard" replace />;
+    return <Navigate to="/projetos" replace />;
   }
 
   // Caixa própria desde 2026-09-02: quem administra o catálogo desta tela não

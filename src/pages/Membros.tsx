@@ -332,7 +332,7 @@ export function Membros() {
   const { itens: membrosOrdenados, ordem, ordenarPor } = useOrdenacao(membrosFiltrados, colunas);
 
   if (!usuario?.permissoes.pode_gerir_membros) {
-    return <Navigate to="/dashboard" replace />;
+    return <Navigate to="/projetos" replace />;
   }
 
   if (erro) {

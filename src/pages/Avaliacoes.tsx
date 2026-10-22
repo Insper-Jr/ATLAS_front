@@ -322,7 +322,7 @@ export function Avaliacoes() {
   const { itens: bancasOrdenadas, ordem, ordenarPor } = useOrdenacao(historicoFiltrado, colunas);
 
   if (!usuario?.permissoes.pode_ver_dashboard_bancas) {
-    return <Navigate to="/dashboard" replace />;
+    return <Navigate to="/projetos" replace />;
   }
 
   if (erro) {

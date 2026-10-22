@@ -10,7 +10,7 @@ export function FormularioRoute() {
   // Mesma caixa do Dashboard Bancas: o formulário é o que aquela tela
   // edita, e separar as duas daria a caixa a quem não vê a tela.
   if (!usuario?.permissoes.pode_ver_dashboard_bancas) {
-    return <Navigate to="/dashboard" replace />;
+    return <Navigate to="/projetos" replace />;
   }
 
   return <Outlet />;

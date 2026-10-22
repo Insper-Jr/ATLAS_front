@@ -24,7 +24,7 @@ export function AdminRoute({ permissao }: { permissao: PermissaoCampo | Permissa
   // Lista = basta UMA das caixas (Configurações abre pra quem administra o
   // catálogo OU pra quem só configura a Gestão de Pessoas).
   const caixas = Array.isArray(permissao) ? permissao : [permissao];
-  if (!caixas.some((caixa) => usuario?.permissoes[caixa])) return <Navigate to="/dashboard" replace />;
+  if (!caixas.some((caixa) => usuario?.permissoes[caixa])) return <Navigate to="/projetos" replace />;
 
   return <Outlet context={contexto} />;
 }
