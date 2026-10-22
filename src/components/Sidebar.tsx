@@ -1,7 +1,6 @@
 import { Fragment, useEffect, useRef, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { useAuth } from "@/context/AuthContext";
-import { useTema } from "@/context/TemaContext";
 import { useNotificacoes } from "@/context/NotificacoesContext";
 import { rotuloProjetos } from "@/utils/permissoes";
 import { ordenarPor } from "@/lib/menu-ordem";
@@ -11,7 +10,7 @@ import { getMinhasEleicoes } from "@/lib/sabatina";
 import { getMinhaFila } from "@/lib/desempenho-avaliacoes";
 import type { Notificacao } from "@/types/notificacao";
 import { useLogoInsperJr } from "@/lib/logo-insper-jr";
-import { Bell, Moon, Sun, LogOut } from "lucide-react";
+import { Bell, LogOut } from "lucide-react";
 import { FotoCircular } from "@/components/Avatar";
 import { ID_MENU_LATERAL } from "./Layout.styled";
 import {
@@ -58,7 +57,6 @@ interface SidebarProps {
 export function Sidebar({ aberta = false }: SidebarProps) {
   const insperJrLogo = useLogoInsperJr("simbolo");
   const { usuario, token, logout } = useAuth();
-  const { temaAtual, setPreferencia } = useTema();
   // O contador vem do contexto, não desta lista: ele é atualizado a cada ~60s
   // e também pela página /notificacoes. Contar `notificacoes.filter(...)` aqui
   // deixaria o badge congelado no que foi carregado quando o painel abriu.
@@ -227,17 +225,9 @@ export function Sidebar({ aberta = false }: SidebarProps) {
             </UserRow>
           )}
           <FooterAcoes>
-            {/* Atalho do modo noturno. Clicar fixa o modo oposto ao de agora,
-                o que desliga o automático (pôr/nascer do sol); ele volta em
-                Meu perfil, no card Aparência. */}
-            <BotaoIconeRodape
-              type="button"
-              onClick={() => setPreferencia(temaAtual === "escuro" ? "claro" : "escuro")}
-              aria-label={temaAtual === "escuro" ? "Modo claro" : "Modo escuro"}
-              title={temaAtual === "escuro" ? "Modo claro" : "Modo escuro"}
-            >
-              {temaAtual === "escuro" ? <Sun size={18} /> : <Moon size={18} />}
-            </BotaoIconeRodape>
+            {/* O modo noturno não tem atalho aqui de propósito (2026-10-22, a
+                pedido): um clique fixava o tema e desligava o automático sem a
+                pessoa perceber. A escolha fica em Meu perfil, card Aparência. */}
         <NotificacoesWrap ref={notificacoesRef}>
           <SinoButton
             type="button"
