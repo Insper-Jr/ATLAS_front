@@ -53,6 +53,15 @@ const InputPontos = styled(FieldInput)`
   text-align: center;
 `;
 
+/* Nome editável na própria linha (2026-10-22, a pedido): o mesmo padrão
+   dos pontos, salva ao sair do campo. Renomear vale para os registros
+   antigos também, porque eles apontam para o tipo pelo id. */
+const InputNome = styled(FieldInput)`
+  min-width: 14rem;
+  height: 1.75rem;
+  padding: 0 0.5rem;
+`;
+
 const NovoForm = styled.form`
   display: flex;
   flex-wrap: wrap;
@@ -117,6 +126,23 @@ export function GpTiposCard() {
     }
   }
 
+  async function salvarNome(tipo: GpTipo, nome: string, campo: HTMLInputElement) {
+    const limpo = nome.trim();
+    if (!token || limpo === tipo.nome) return;
+    if (!limpo) {
+      campo.value = tipo.nome;
+      return;
+    }
+    setErro("");
+    try {
+      const atualizado = await updateGpTipo(tipo.id, { nome: limpo }, token);
+      setTipos((atual) => (atual ?? []).map((t) => (t.id === tipo.id ? atualizado : t)));
+    } catch (err) {
+      campo.value = tipo.nome;
+      setErro(err instanceof Error ? err.message : "Não foi possível salvar");
+    }
+  }
+
   async function alternarAtivo(tipo: GpTipo) {
     if (!token) return;
     setErro("");
@@ -153,8 +179,9 @@ export function GpTiposCard() {
       </PageCardHeader>
       <PageCardContent>
         <Descricao>
-          Altere a pontuação sugerida ou desative um tipo. Tipos desativados continuam nos registros
-          antigos. Mudar os pontos sugeridos não altera o que já foi lançado.
+          Renomeie uma ocorrência, altere a pontuação sugerida ou desative um tipo. O nome novo vale
+          também para os registros antigos; tipos desativados continuam neles. Mudar os pontos
+          sugeridos não altera o que já foi lançado.
         </Descricao>
         {erro && <ErrorText>{erro}</ErrorText>}
         {!tipos ? (
@@ -185,7 +212,19 @@ export function GpTiposCard() {
                       )}
                       {lista.map((tipo) => (
                         <TableRow key={tipo.id} style={{ opacity: tipo.ativo ? 1 : 0.6 }}>
-                          <TableCell>{tipo.nome}</TableCell>
+                          <TableCell>
+                            <InputNome
+                              type="text"
+                              key={tipo.nome}
+                              defaultValue={tipo.nome}
+                              maxLength={120}
+                              aria-label={`Nome da ocorrência ${tipo.nome}`}
+                              onBlur={(e) => salvarNome(tipo, e.target.value, e.target)}
+                              onKeyDown={(e) => {
+                                if (e.key === "Enter") e.currentTarget.blur();
+                              }}
+                            />
+                          </TableCell>
                           <TableCell>
                             <InputPontos
                               type="number"
