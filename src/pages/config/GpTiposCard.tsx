@@ -5,6 +5,7 @@ import { theme } from "@/styles/theme";
 import { useAuth } from "@/context/AuthContext";
 import { createGpTipo, getGpTipos, updateGpTipo, type GpCategoria, type GpTipo } from "@/lib/gestao-pessoas";
 import { ROTULO_CATEGORIA } from "@/lib/gp-rotulos";
+import { ModalUsoTipo } from "./ModalUsoTipo";
 import {
   EmptyText,
   ErrorText,
@@ -103,6 +104,7 @@ export function GpTiposCard() {
     desempenho: { nome: "", pontos: 1 },
   });
   const [salvandoNovo, setSalvandoNovo] = useState<GpCategoria | null>(null);
+  const [usoDe, setUsoDe] = useState<GpTipo | null>(null);
 
   useEffect(() => {
     if (!token) return;
@@ -235,7 +237,20 @@ export function GpTiposCard() {
                               onBlur={(e) => salvarPontos(tipo, Number(e.target.value))}
                             />
                           </TableCell>
-                          <TableCell>{tipo.uso_no_semestre}</TableCell>
+                          <TableCell>
+                            {tipo.uso_no_semestre > 0 ? (
+                              <PageButtonSm
+                                type="button"
+                                $variant="ghost"
+                                onClick={() => setUsoDe(tipo)}
+                                title="Ver quem e quais registros"
+                              >
+                                {tipo.uso_no_semestre}
+                              </PageButtonSm>
+                            ) : (
+                              0
+                            )}
+                          </TableCell>
                           <TableCell>
                             <Ativo>
                               <input type="checkbox" checked={tipo.ativo} onChange={() => alternarAtivo(tipo)} />
@@ -280,6 +295,7 @@ export function GpTiposCard() {
           })
         )}
       </PageCardContent>
+      {usoDe && <ModalUsoTipo tipo={usoDe} onFechar={() => setUsoDe(null)} />}
     </PageCard>
   );
 }

@@ -9,6 +9,18 @@ export interface Nucleo {
   ativo: boolean;
   /** Quantos usuários ativos estão nele (quem está em dois conta nos dois). */
   membros: number;
+  /** Os mesmos usuários ativos, em ordem de nome (2026-10-22). */
+  membro_ids: number[];
+}
+
+/** Deixa o núcleo exatamente com estes usuários ativos; quem está desligado
+ *  e ainda aponta para ele não aparece na tela e fica como está. */
+export function setMembrosNucleo(nucleoId: number, usuarioIds: number[], token: string) {
+  return apiFetch<Nucleo>(`/nucleos/${nucleoId}/membros`, {
+    aviso: "Membros do núcleo salvos", method: "PUT",
+    token,
+    body: JSON.stringify({ usuario_ids: usuarioIds }),
+  });
 }
 
 export function getNucleos(token: string) {

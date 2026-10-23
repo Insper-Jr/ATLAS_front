@@ -1,10 +1,11 @@
 import { useEffect, useState, type FormEvent } from "react";
 import styled from "styled-components";
-import { Plus } from "lucide-react";
+import { Plus, Users } from "lucide-react";
 import { theme } from "@/styles/theme";
 import { useAuth } from "@/context/AuthContext";
 import { createNucleo, deleteNucleo, getNucleos, updateNucleo, type Nucleo } from "@/lib/nucleos";
 import { ConfirmarModal } from "@/components/ConfirmarModal";
+import { ModalMembrosNucleo } from "./ModalMembrosNucleo";
 import {
   EmptyText,
   ErrorText,
@@ -66,6 +67,7 @@ export function NucleosCard() {
   const [renomeandoId, setRenomeandoId] = useState<number | null>(null);
   const [nomeEdicao, setNomeEdicao] = useState("");
   const [paraExcluir, setParaExcluir] = useState<Nucleo | null>(null);
+  const [paraMembros, setParaMembros] = useState<Nucleo | null>(null);
 
   useEffect(() => {
     if (!token) return;
@@ -138,8 +140,8 @@ export function NucleosCard() {
       </PageCardHeader>
       <PageCardContent>
         <Descricao>
-          Os núcleos agrupam os membros nas listas e nas análises da Gestão de Pessoas. Cada pessoa
-          recebe o núcleo dela no cadastro de Membros.
+          Os núcleos agrupam os membros nas listas e nas análises da Gestão de Pessoas. Marque
+          várias pessoas de uma vez em "Membros", ou uma a uma no cadastro de Membros.
         </Descricao>
         {erro && <ErrorText>{erro}</ErrorText>}
         {!nucleos ? (
@@ -184,6 +186,10 @@ export function NucleosCard() {
                       </PageBadge>
                     </TableCell>
                     <ActionsCell>
+                      <PageButtonSm type="button" $variant="outline" onClick={() => setParaMembros(nucleo)}>
+                        <Users size={14} />
+                        Membros
+                      </PageButtonSm>
                       <PageButtonSm
                         type="button"
                         $variant="ghost"
@@ -220,6 +226,16 @@ export function NucleosCard() {
           </PageButtonSm>
         </NovoForm>
       </PageCardContent>
+      {paraMembros && (
+        <ModalMembrosNucleo
+          nucleo={paraMembros}
+          onSalvo={(atualizado) => {
+            substituir(atualizado);
+            setParaMembros(null);
+          }}
+          onFechar={() => setParaMembros(null)}
+        />
+      )}
       {paraExcluir && (
         <ConfirmarModal
           titulo="Excluir núcleo"

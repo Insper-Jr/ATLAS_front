@@ -1,6 +1,8 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { CartesianGrid, Legend, Line, LineChart, ReferenceLine, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
+import { Navigate } from "react-router-dom";
 import { useAuth } from "@/context/AuthContext";
+import { DIRETORIA } from "@/utils/permissoes";
 import { formatarDataHora } from "@/lib/projetos";
 import { getMeusPontos, type GpCategoria, type GpMeusPontos, type GpSituacao } from "@/lib/gestao-pessoas";
 import {
@@ -86,6 +88,9 @@ function ScoreCardMeu({ categoria, situacao }: { categoria: GpCategoria; situaca
  */
 export function MeusPontos() {
   const { token, usuario } = useAuth();
+  // Diretoria não pontua e não tem o item no menu; a URL digitada (ou
+  // lembrada de outra conta, 2026-10-22) cai na home em vez de num erro.
+  const ehDiretoria = !!usuario && DIRETORIA.includes(usuario.posicao);
   const [dados, setDados] = useState<GpMeusPontos | null>(null);
   const [erro, setErro] = useState("");
   const [categoria, setCategoria] = useState<GpCategoria | "">("");
@@ -95,14 +100,14 @@ export function MeusPontos() {
 
   // Sem setState síncrono no efeito: o estado só muda quando a resposta chega.
   const carregar = useCallback(() => {
-    if (!token) return;
+    if (!token || ehDiretoria) return;
     getMeusPontos(token)
       .then((d) => {
         setDados(d);
         setErro("");
       })
       .catch((err) => setErro(err instanceof Error ? err.message : "Erro ao carregar os seus pontos"));
-  }, [token]);
+  }, [token, ehDiretoria]);
 
   useEffect(() => {
     carregar();
@@ -140,6 +145,8 @@ export function MeusPontos() {
   const primeiroNome = usuario?.nome.trim().split(/\s+/)[0] ?? "";
   const tetoGrafico = Math.max(dados.limites.obrigacoes, dados.limites.desempenho) + 1;
   const evolucao = dados.evolucao.map((s) => ({ ...s, rotulo: formatarDia(s.semana).slice(0, 5) }));
+
+  if (ehDiretoria) return <Navigate to="/projetos" replace />;
 
   return (
     <PageStack>

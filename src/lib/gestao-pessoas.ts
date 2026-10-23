@@ -288,6 +288,12 @@ export function getGpTipos(token: string) {
   return apiFetch<GpTipo[]>("/gestao-pessoas/tipos", { token });
 }
 
+/** Os registros ativos do tipo no semestre ativo: quem e quais estão por
+ *  trás do "uso no semestre" (2026-10-22). */
+export function getGpUsoTipo(tipoId: number, token: string) {
+  return apiFetch<GpRegistro[]>(`/gestao-pessoas/tipos/${tipoId}/uso`, { token });
+}
+
 export function createGpTipo(payload: { categoria: GpCategoria; nome: string; pontos: number }, token: string) {
   return apiFetch<GpTipo>("/gestao-pessoas/tipos", {
     aviso: "Tipo adicionado", method: "POST",

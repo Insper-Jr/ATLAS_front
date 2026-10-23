@@ -1,4 +1,5 @@
 import { createContext, useCallback, useContext, useEffect, useState, ReactNode } from "react";
+import { useNavigate } from "react-router-dom";
 import { apiFetch } from "@/lib/api";
 import { getPosicoesPermissoes, mesclarPermissoes } from "@/lib/posicoes-permissoes";
 import { desativarPush, sincronizarPush } from "@/lib/push";
@@ -137,6 +138,7 @@ function lerUsuarioCache(): Usuario | null {
 }
 
 export function AuthProvider({ children }: { children: ReactNode }) {
+  const navigate = useNavigate();
   const [token, setToken] = useState<string | null>(() => localStorage.getItem("token"));
   const [usuario, setUsuario] = useState<Usuario | null>(() =>
     token ? lerUsuarioCache() : null,
@@ -209,6 +211,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     void desativarPush(token);
     localStorage.removeItem("token");
     localStorage.removeItem(USUARIO_CACHE_KEY);
+    // Vai pro login ANTES de derrubar a sessão: se a tela protegida ainda
+    // estivesse montada quando o token sumisse, o PrivateRoute mandaria pro
+    // login com `?volta=` da página de onde a pessoa saiu, e quem entrasse
+    // em seguida (outra conta, 2026-10-22) cairia numa tela que não é dela.
+    navigate("/login", { replace: true });
     setToken(null);
     setUsuario(null);
   }
