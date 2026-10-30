@@ -19,6 +19,7 @@ import {
   EmptyText,
   ErrorText,
 } from "@/styles/page.styled";
+import { FieldInput } from "@/pages/Bancas.styled";
 
 /**
  * A gestão semestral, de onde vem o semestre que Calendários base,
@@ -33,6 +34,8 @@ export function GestaoSemestralCard() {
   const [carregando, setCarregando] = useState(true);
   const [erro, setErro] = useState("");
   const [criando, setCriando] = useState(false);
+  const [editandoNumero, setEditandoNumero] = useState(false);
+  const [numero, setNumero] = useState("");
   const [confirmandoArquivamento, setConfirmandoArquivamento] = useState(false);
 
   async function buscar() {
@@ -53,6 +56,20 @@ export function GestaoSemestralCard() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [token]);
 
+  // O número da gestão (2026-10-29): 2026.2 é a 51ª, e a próxima nasce com
+  // o maior + 1. Aqui dá pra corrigir o da gestão atual.
+  async function salvarNumero() {
+    if (!token || !semestre) return;
+    const valor = numero.trim() ? Number(numero) : null;
+    if (valor !== null && (!Number.isInteger(valor) || valor < 1)) {
+      setErro("O número da gestão precisa ser inteiro e positivo.");
+      return;
+    }
+    await updateSemestre(semestre.id, { numero_gestao: valor }, token);
+    setEditandoNumero(false);
+    await buscar();
+  }
+
   async function arquivar() {
     if (!token || !semestre) return;
     await updateSemestre(semestre.id, { status: "arquivada" }, token);
@@ -62,7 +79,7 @@ export function GestaoSemestralCard() {
 
   // Abrir uma gestão nova arquiva a anterior sozinho (regra do backend, ver
   // `CreateSemestreUseCase`), aqui só cria e recarrega.
-  async function criar(dados: { nome: string; inicio: string; fim: string }) {
+  async function criar(dados: { nome: string; inicio: string; fim: string; numero_gestao: number | null }) {
     if (!token) return;
     await createSemestre(dados, token);
     setCriando(false);
@@ -96,10 +113,44 @@ export function GestaoSemestralCard() {
         {carregando ? (
           <EmptyText>Carregando...</EmptyText>
         ) : semestre ? (
-          <EmptyText>
-            <strong>{semestre.nome}</strong> · {semestre.inicio} a {semestre.fim}. É o semestre que
-            Calendários base, Bancas e Avaliação de Desempenho usam por padrão.
-          </EmptyText>
+          <>
+            <EmptyText>
+              <strong>{semestre.nome}</strong>
+              {semestre.numero_gestao ? ` · ${semestre.numero_gestao}ª gestão` : " · gestão sem número"} ·{" "}
+              {semestre.inicio} a {semestre.fim}. É o semestre que Calendários base, Bancas e Avaliação de Desempenho
+              usam por padrão.
+            </EmptyText>
+            {editandoNumero ? (
+              <div style={{ display: "flex", gap: "0.5rem", alignItems: "center", marginTop: "0.5rem" }}>
+                <FieldInput
+                  type="number"
+                  min={1}
+                  aria-label="Número da gestão"
+                  value={numero}
+                  onChange={(e) => setNumero(e.target.value)}
+                  style={{ width: "6rem" }}
+                />
+                <PageButtonSm type="button" onClick={salvarNumero}>
+                  Salvar número
+                </PageButtonSm>
+                <PageButtonSm type="button" $variant="ghost" onClick={() => setEditandoNumero(false)}>
+                  Cancelar
+                </PageButtonSm>
+              </div>
+            ) : (
+              <PageButtonSm
+                type="button"
+                $variant="ghost"
+                style={{ marginTop: "0.5rem" }}
+                onClick={() => {
+                  setNumero(semestre.numero_gestao ? String(semestre.numero_gestao) : "");
+                  setEditandoNumero(true);
+                }}
+              >
+                {semestre.numero_gestao ? "Corrigir o número da gestão" : "Informar o número da gestão"}
+              </PageButtonSm>
+            )}
+          </>
         ) : (
           <EmptyText>Nenhum semestre cadastrado ainda, crie um para liberar o resto da plataforma.</EmptyText>
         )}
@@ -115,7 +166,13 @@ export function GestaoSemestralCard() {
         />
       )}
 
-      {criando && <NovoSemestreModal onCancelar={() => setCriando(false)} onSalvar={criar} />}
+      {criando && (
+        <NovoSemestreModal
+          onCancelar={() => setCriando(false)}
+          onSalvar={criar}
+          numeroSugerido={semestre?.numero_gestao ? semestre.numero_gestao + 1 : null}
+        />
+      )}
     </PageCard>
   );
 }

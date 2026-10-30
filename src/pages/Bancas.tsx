@@ -4,6 +4,8 @@ import { AlocarPessoasModal } from "./AlocarPessoasModal";
 import { Desempenho } from "./Desempenho";
 import { Clock, Plus, ShieldCheck, User, Users, X } from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
+import { PreIndicacaoBanca } from "@/pages/central/PreIndicacaoBanca";
+import { PRE_INDICACAO_VAZIA, enviarPreIndicacao, type PreIndicacao } from "@/pages/central/pre-indicacao";
 import { useLockBodyScroll } from "@/hooks/useLockBodyScroll";
 import { ehDiretoriaDeProjetos } from "@/utils/permissoes";
 import {
@@ -2589,6 +2591,9 @@ function AvaliarModal({
   // aparece como "sem critérios" e a avaliação vai incompleta — foi o que
   // aconteceu na BLEND I (2026-09-10). Rebusca a versão atual ao abrir.
   const [formularioAtual, setFormularioAtual] = useState(formulario);
+  // Central de Conhecimento (2026-10-29): o avaliador pode indicar um ativo
+  // do projeto. Vai DEPOIS da avaliação e nunca a derruba.
+  const [preIndicacao, setPreIndicacao] = useState<PreIndicacao>(PRE_INDICACAO_VAZIA);
   useEffect(() => {
     let vivo = true;
     getFormularioAtivo(token)
@@ -2755,6 +2760,7 @@ function AvaliarModal({
           // Sem localStorage: nada a limpar.
         }
       }
+      await enviarPreIndicacao(banca.id, preIndicacao, token);
       onEnviada();
     } catch (err) {
       setErro(err instanceof Error ? err.message : "Erro ao enviar avaliação");
@@ -2921,6 +2927,9 @@ function AvaliarModal({
                   required
                 />
               </FieldGroup>
+              {usuario?.permissoes.pode_ver_central_conhecimento && (
+                <PreIndicacaoBanca valor={preIndicacao} onChange={setPreIndicacao} idPrefixo={`pre-${banca.id}`} />
+              )}
               {erro && <FormErrorText>{erro}</FormErrorText>}
             </AvaliarModalBody>
             <ModalFooterSplit>

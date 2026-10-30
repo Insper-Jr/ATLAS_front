@@ -60,7 +60,11 @@ export type TipoNotificacao =
   // Gestão de Pessoas (2026-10-21): pontos lançados/corrigidos/retirados
   // pra pessoa, e o aviso ao subir de faixa (próximo do limite, no limite)
   | "gp_pontos_recebidos"
-  | "gp_faixa";
+  | "gp_faixa"
+  // Central de Conhecimento (2026-10-29): algo espera a pessoa (decidir,
+  // escrever, revisar) e a notícia de que a ficha andou
+  | "central_pendencia"
+  | "central_andamento";
 
 export interface Notificacao {
   /** Só o evento tem linha no banco. Condição vem com `null` e é

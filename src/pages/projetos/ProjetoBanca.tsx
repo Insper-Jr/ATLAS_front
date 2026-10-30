@@ -2,6 +2,8 @@ import { Fragment, useCallback, useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { AlertTriangle, Trash2 } from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
+import { PreIndicacaoBanca } from "@/pages/central/PreIndicacaoBanca";
+import { PRE_INDICACAO_VAZIA, enviarPreIndicacao, type PreIndicacao } from "@/pages/central/pre-indicacao";
 import {
   aceitaInscricao,
   cancelarBanca,
@@ -657,6 +659,7 @@ function MeuVotoBloco({
   // embora sem nunca ter sido enviado. Espelha no localStorage, mesma ideia
   // do rascunho de `AvaliacaoDesempenho.tsx`.
   const chaveRascunho = usuario ? chaveRascunhoComentario(banca.id, usuario.id) : null;
+  const [preIndicacao, setPreIndicacao] = useState<PreIndicacao>(PRE_INDICACAO_VAZIA);
   const [comentario, setComentario] = useState(() => {
     if (!chaveRascunho) return "";
     try {
@@ -737,6 +740,9 @@ function MeuVotoBloco({
           // Sem localStorage: nada a limpar.
         }
       }
+      // Central de Conhecimento (2026-10-29): a pré-indicação vai depois e
+      // nunca derruba a avaliação.
+      await enviarPreIndicacao(banca.id, preIndicacao, token);
       await onEnviou();
     } catch (err) {
       setErro(err instanceof Error ? err.message : "Não foi possível enviar a avaliação");
@@ -759,6 +765,9 @@ function MeuVotoBloco({
           required
         />
       </FieldGroup>
+      {usuario?.permissoes.pode_ver_central_conhecimento && (
+                <PreIndicacaoBanca valor={preIndicacao} onChange={setPreIndicacao} idPrefixo={`pre-${banca.id}`} />
+              )}
       {erro && <FormErrorText>{erro}</FormErrorText>}
       <AcoesLinha>
         <PageButton type="button" disabled={enviando} onClick={enviar}>

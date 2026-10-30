@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { Link, useSearchParams } from "react-router-dom";
+import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import {
   Archive,
   AlertTriangle,
@@ -28,6 +28,8 @@ import { getProjetosComVaga, getSolicitacoesRecebidas } from "@/lib/vagas";
 import { ProjetoKanbanBoard } from "@/components/kanban/ProjetoKanbanBoard";
 import { Ponto } from "@/components/kanban/Kanban.styled";
 import { ConfirmarModal } from "@/components/ConfirmarModal";
+import { codigoDoErro } from "@/lib/api";
+import { CODIGO_ARQUIVAMENTO_PENDENTE, rotaArquivamento } from "@/lib/central";
 import { tonsDaColuna } from "@/lib/colunas-tarefa";
 import type { UsuarioResumo } from "@/types/auth";
 import type { Frente } from "@/types/banca";
@@ -79,6 +81,7 @@ type ModoVisualizacao = "lista" | "kanban" | "arquivados";
 export function ProjetosList() {
   const { usuario, token } = useAuth();
   const [searchParams, setSearchParams] = useSearchParams();
+  const navigate = useNavigate();
   const [projetos, setProjetos] = useState<ProjetoResumo[]>([]);
   const [frentes, setFrentes] = useState<Frente[]>([]);
   const [usuarios, setUsuarios] = useState<UsuarioResumo[]>([]);
@@ -273,6 +276,10 @@ export function ProjetosList() {
    * resposta do PATCH. A fonte da verdade nunca é o arrasto local — o status
    * final vem da resposta, e uma recusa recarrega a lista do servidor.
    */
+  // Finalizado sem o arquivamento na Central (2026-10-29): em vez da
+  // mensagem solta, um modal que leva ao formulário.
+  const [arquivamentoPendente, setArquivamentoPendente] = useState<number | null>(null);
+
   async function moverStatus(projetoId: number, statusNovo: StatusProjeto) {
     if (!token) return;
     const anterior = projetos;
@@ -293,7 +300,8 @@ export function ProjetosList() {
         );
       }
     } catch (err) {
-      setAvisoKanban(err instanceof Error ? err.message : "Erro ao mudar o status do projeto");
+      if (codigoDoErro(err) === CODIGO_ARQUIVAMENTO_PENDENTE) setArquivamentoPendente(projetoId);
+      else setAvisoKanban(err instanceof Error ? err.message : "Erro ao mudar o status do projeto");
       // Volta pro retrato anterior NA HORA (o card não pode ficar na coluna
       // errada enquanto a rede responde) e, logo depois, recarrega do
       // servidor.
@@ -688,6 +696,19 @@ export function ProjetosList() {
             );
           })}
         </CardGrid>
+      )}
+
+      {arquivamentoPendente !== null && (
+        <ConfirmarModal
+          titulo="Antes de finalizar, o arquivamento na Central"
+          mensagem="O projeto só vai para Finalizado depois que o coordenador arquivar na Central de Conhecimento o que se destacou, garantir o acervo e dizer o que usou. Leva poucos minutos."
+          rotuloConfirmar="Preencher o arquivamento"
+          rotuloProcessando="Abrindo…"
+          onCancelar={() => setArquivamentoPendente(null)}
+          onConfirmar={async () => {
+            navigate(rotaArquivamento(arquivamentoPendente), { state: { de: "/projetos" } });
+          }}
+        />
       )}
 
       {confirmandoExclusaoMassa && (

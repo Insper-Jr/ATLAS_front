@@ -298,6 +298,18 @@ const PERMISSOES = [
     descricao:
       "A seção Gestão de Pessoas em Configurações: limites e regra de alerta, tipos de ocorrência, pontuação automática, aviso por e-mail e núcleos. Abre a página de Configurações só com essa seção pra quem não administra o resto do catálogo. Nasce marcada só na diretoria de pessoas.",
   },
+  {
+    campo: "pode_ver_central_conhecimento" as const,
+    titulo: "Ver a Central de Conhecimento",
+    descricao:
+      "Abre a Central (Trabalho): Tool Box, projetos de referência, Método, Capacitação e Recursos externos. Quem vê também indica fichas, marca \"usei no meu projeto\" e, se avalia bancas, pré-indica. Nasce marcada em todas as posições.",
+  },
+  {
+    campo: "pode_gerir_central_conhecimento" as const,
+    titulo: "Gerir a Central de Conhecimento",
+    descricao:
+      "A revisão final e a publicação das fichas da Tool Box, os projetos de referência, o painel e o conteúdo de Método, Capacitação e Recursos externos. Ler a Central e indicar é de todo membro; decidir se uma indicação vale uma ficha é do gerente da frente. Nasce marcada só na diretoria de projetos.",
+  },
 ];
 
 type CampoPermissao = (typeof PERMISSOES)[number]["campo"];

@@ -137,6 +137,13 @@ export interface Permissoes {
   /** A seção "Gestão de Pessoas" em Configurações: limites e alerta, tipos
    *  de ocorrência, pontuação automática, aviso por e-mail e núcleos. */
   pode_configurar_gestao_pessoas: boolean;
+  /** Central de Conhecimento (2026-10-29): revisão final e publicação das
+   *  fichas, projetos de referência, painel e conteúdo das vitrines. Nasce
+   *  marcada só no diretor de projetos. */
+  pode_gerir_central_conhecimento: boolean;
+  /** Ver a Central de Conhecimento (Tool Box, referências, vitrines),
+   *  indicar e marcar uso. Nasce marcada em todas as posições. */
+  pode_ver_central_conhecimento: boolean;
 }
 
 /**

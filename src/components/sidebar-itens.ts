@@ -1,6 +1,6 @@
 // O catálogo do menu lateral, fora do componente para a tela de
 // Configurações (ordem do menu) poder importar sem carregar o Sidebar.
-import { BarChart3, FolderKanban, ClipboardList, Calendar, CalendarCog, Users, ClipboardCheck, Settings, Star, GraduationCap, UserPlus, Landmark, FileSignature, Vote, ListChecks, HeartPulse, Globe, Megaphone, Flag, Gauge } from "lucide-react";
+import { BarChart3, BookMarked, FolderKanban, ClipboardList, Calendar, CalendarCog, Users, ClipboardCheck, Settings, Star, GraduationCap, UserPlus, Landmark, FileSignature, Vote, ListChecks, HeartPulse, Globe, Megaphone, Flag, Gauge } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 import type { Usuario } from "@/types/auth";
 
@@ -90,6 +90,18 @@ export const navItems: NavItemConfig[] = [
   // flags que o back manda, consultor pede para entrar, quem coordena ou
   // monta equipe responde aos pedidos.
   { icon: UserPlus, label: "Vagas em projetos", path: "/vagas", grupo: "trabalho" },
+  // Central de Conhecimento (2026-10-29): fichas da Tool Box, projetos de
+  // referência, método, capacitação. Leitura e indicação são de todo
+  // membro, por isso sem trava.
+  {
+    icon: BookMarked,
+    label: "Central de Conhecimento",
+    path: "/central",
+    grupo: "trabalho",
+    prefixo: true,
+    // Espelha `require_pode_ver_central_conhecimento` no backend.
+    visible: (c) => c.pode_ver_central_conhecimento,
+  },
   { icon: Calendar, label: "Calendário", path: "/calendario", grupo: "trabalho" },
   // A cédula da sabatina (2026-10-05): aparece só enquanto houver eleição
   // aberta pra pessoa votar. Em "Gestão", a pedido; a configuração fica em

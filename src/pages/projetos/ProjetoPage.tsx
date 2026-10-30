@@ -4,6 +4,7 @@ import {
   Archive,
   ArchiveRestore,
   ArrowLeft,
+  BookMarked,
   Download,
   ExternalLink,
   MoreHorizontal,
@@ -37,6 +38,8 @@ import { FotoCircular } from "@/components/Avatar";
 import { corDaPessoa, iniciais } from "@/lib/avatar";
 import { pode } from "@/utils/permissoes";
 import { ConfirmarModal } from "@/components/ConfirmarModal";
+import { codigoDoErro } from "@/lib/api";
+import { CODIGO_ARQUIVAMENTO_PENDENTE, rotaArquivamento } from "@/lib/central";
 import { EditarProjetoModal } from "./EditarProjetoModal";
 import {
   PageButtonSm,
@@ -231,6 +234,10 @@ export function ProjetoPage() {
     }
   }, [projeto, location.pathname, navigate]);
 
+  // Finalizado sem o arquivamento na Central (2026-10-29): modal que leva
+  // ao formulário, em vez da mensagem solta.
+  const [arquivamentoPendente, setArquivamentoPendente] = useState(false);
+
   async function aplicarStatus(statusNovo: string) {
     if (!token || !projeto) return;
     setMudandoStatus(true);
@@ -239,7 +246,8 @@ export function ProjetoPage() {
       await mudarStatus(projeto.id, statusNovo, token);
       await carregar();
     } catch (err) {
-      setErroStatus(err instanceof Error ? err.message : "Erro ao mudar o status");
+      if (codigoDoErro(err) === CODIGO_ARQUIVAMENTO_PENDENTE) setArquivamentoPendente(true);
+      else setErroStatus(err instanceof Error ? err.message : "Erro ao mudar o status");
     } finally {
       setMudandoStatus(false);
     }
@@ -426,6 +434,11 @@ export function ProjetoPage() {
               podeExcluir={podeExcluir}
               arquivado={!!projeto.arquivado_em}
               ocupado={arquivando || excluindo}
+              onArquivamento={
+                usuario?.permissoes.pode_ver_central_conhecimento && !projeto.apenas_banca
+                  ? () => navigate(rotaArquivamento(projeto.id), { state: { de: location.pathname } })
+                  : undefined
+              }
               onEditar={() => setEditandoProjeto(true)}
               onArquivar={() => setConfirmandoArquivamento(true)}
               onExcluir={() => setConfirmandoExclusao(true)}
@@ -570,6 +583,19 @@ export function ProjetoPage() {
           onSalvo={async () => {
             setEditandoProjeto(false);
             await carregar();
+          }}
+        />
+      )}
+
+      {arquivamentoPendente && (
+        <ConfirmarModal
+          titulo="Antes de finalizar, o arquivamento na Central"
+          mensagem="O projeto só vai para Finalizado depois que o coordenador arquivar na Central de Conhecimento o que se destacou, garantir o acervo e dizer o que usou. Leva poucos minutos."
+          rotuloConfirmar="Preencher o arquivamento"
+          rotuloProcessando="Abrindo…"
+          onCancelar={() => setArquivamentoPendente(false)}
+          onConfirmar={async () => {
+            navigate(rotaArquivamento(projeto.id), { state: { de: location.pathname } });
           }}
         />
       )}
@@ -733,10 +759,14 @@ function MenuAcoesProjeto({
   podeExcluir,
   arquivado,
   ocupado,
+  onArquivamento,
   onEditar,
   onArquivar,
   onExcluir,
 }: {
+  /** O arquivamento na Central de Conhecimento (2026-10-29): a qualquer
+   *  hora, e obrigatório antes de Finalizado. Ausente = sem a caixa de ver. */
+  onArquivamento?: () => void;
   podeEditar: boolean;
   podeArquivar: boolean;
   podeExcluir: boolean;
@@ -795,7 +825,7 @@ function MenuAcoesProjeto({
   // Apagar só existe para projeto arquivado — arquivar é o passo anterior
   // obrigatório, e um menu com um item morto não ajuda ninguém.
   const mostrarExcluir = podeExcluir && arquivado;
-  if (!podeEditar && !podeArquivar && !mostrarExcluir) return null;
+  if (!podeEditar && !podeArquivar && !mostrarExcluir && !onArquivamento) return null;
 
   return (
     <AcoesWrap ref={ref}>
@@ -811,6 +841,19 @@ function MenuAcoesProjeto({
 
       {aberto && (
         <AcoesMenu ref={menuRef} role="menu">
+          {onArquivamento && (
+            <AcoesItem
+              type="button"
+              role="menuitem"
+              onClick={() => {
+                setAberto(false);
+                onArquivamento();
+              }}
+            >
+              <BookMarked size={14} />
+              Arquivar na Central
+            </AcoesItem>
+          )}
           {podeEditar && (
             <AcoesItem
               type="button"

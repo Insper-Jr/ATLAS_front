@@ -1,4 +1,4 @@
-import { createContext, useCallback, useContext, useEffect, useState, ReactNode } from "react";
+import { createContext, startTransition, useCallback, useContext, useEffect, useState, ReactNode } from "react";
 import { useNavigate } from "react-router-dom";
 import { apiFetch } from "@/lib/api";
 import { getPosicoesPermissoes, mesclarPermissoes } from "@/lib/posicoes-permissoes";
@@ -18,6 +18,9 @@ interface UsuarioResponse {
   /** Cargo extra opcional, soma permissões à posição base — ver
    *  `UsuarioResumo.cargo_extra` em `types/auth.ts`. */
   cargo_extra: Posicao | null;
+  /** Caixas que o backend dá por fora da posição (prévia da Central,
+   *  2026-10-30: e-mails listados em CENTRAL_PREVIA_EMAILS). */
+  caixas_extras?: string[];
   status: StatusUsuario;
   ativo: boolean;
   /** Primeiro acesso pendente, ver `Usuario.senha_provisoria`. */
@@ -85,6 +88,8 @@ const PERMISSOES_PLACEHOLDER: Permissoes = {
   pode_enviar_comunicados: false,
   pode_gerir_gestao_pessoas: false,
   pode_configurar_gestao_pessoas: false,
+  pode_gerir_central_conhecimento: false,
+  pode_ver_central_conhecimento: false,
 };
 
 /**
@@ -168,6 +173,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           ? catalogo.find((p) => p.posicao === dados.cargo_extra) ?? null
           : null;
         permissoes = mesclarPermissoes(base, extra);
+        for (const caixa of dados.caixas_extras ?? []) {
+          if (caixa in permissoes) permissoes = { ...permissoes, [caixa]: true };
+        }
       }
       const completo = { ...dados, permissoes };
       setUsuario(completo);
@@ -215,9 +223,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     // estivesse montada quando o token sumisse, o PrivateRoute mandaria pro
     // login com `?volta=` da página de onde a pessoa saiu, e quem entrasse
     // em seguida (outra conta, 2026-10-22) cairia numa tela que não é dela.
+    //
+    // Só navegar primeiro não bastava (2026-10-29): no React Router 7 a
+    // navegação é uma transição, e o `setToken(null)` síncrono comitava
+    // antes dela, com a tela antiga ainda montada. Dentro de uma transição
+    // os dois comitam no mesmo render: a rota já é /login quando o token some.
     navigate("/login", { replace: true });
-    setToken(null);
-    setUsuario(null);
+    startTransition(() => {
+      setToken(null);
+      setUsuario(null);
+    });
   }
 
   return (

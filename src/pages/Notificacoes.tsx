@@ -2,6 +2,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import {
   AlertTriangle,
+  BookMarked,
   ArrowLeftRight,
   Bell,
   CalendarCheck,
@@ -159,6 +160,8 @@ const APARENCIA: Record<TipoNotificacao, { icone: LucideIcon; rotulo: string; al
   // faixa é o aviso formal, pintado como alerta.
   gp_pontos_recebidos: { icone: Flag, rotulo: "Pontos", alerta: false },
   gp_faixa: { icone: AlertTriangle, rotulo: "Aviso de pontuação", alerta: true },
+  central_pendencia: { icone: BookMarked, rotulo: "Central: esperando você", alerta: true },
+  central_andamento: { icone: BookMarked, rotulo: "Central: ficha andou", alerta: false },
 };
 
 /**

@@ -31,6 +31,9 @@ export interface DiaNaoLetivo {
 export interface Semestre {
   id: number;
   nome: string;
+  /** O número da gestão (2026.2 é a 51ª). Nulo nas antigas sem registro;
+   *  a próxima nasce com o maior + 1 (2026-10-29). */
+  numero_gestao: number | null;
   inicio: string;
   fim: string;
   status: "ativa" | "arquivada";
@@ -48,7 +51,7 @@ export function getSemestres(token: string) {
 }
 
 export function createSemestre(
-  dados: { nome: string; inicio: string; fim: string },
+  dados: { nome: string; inicio: string; fim: string; numero_gestao?: number | null },
   token: string,
 ) {
   return apiFetch<Semestre>("/semestres", {
@@ -61,7 +64,7 @@ export function createSemestre(
 /** Arquivar a gestão, os indicadores reiniciam na próxima. */
 export function updateSemestre(
   semestreId: number,
-  dados: { status?: "ativa" | "arquivada"; nome?: string; inicio?: string; fim?: string },
+  dados: { status?: "ativa" | "arquivada"; nome?: string; inicio?: string; fim?: string; numero_gestao?: number | null },
   token: string,
 ) {
   return apiFetch<Semestre>(`/semestres/${semestreId}`, {

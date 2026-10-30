@@ -485,6 +485,8 @@ export interface AvaliacaoNota {
 export interface Semestre {
   id: number;
   nome: string;
+  /** O número da gestão (2026.2 é a 51ª); nulo nas antigas. */
+  numero_gestao?: number | null;
   inicio: string;
   fim: string;
 }

@@ -14,7 +14,9 @@ import { FieldGroup, FieldInput, FieldLabel, FormErrorText, Required } from "./B
 
 interface Props {
   onCancelar: () => void;
-  onSalvar: (dados: { nome: string; inicio: string; fim: string }) => Promise<void>;
+  onSalvar: (dados: { nome: string; inicio: string; fim: string; numero_gestao: number | null }) => Promise<void>;
+  /** O número sugerido: o da gestão atual + 1 (2026.2 é a 51ª, a próxima é a 52ª). */
+  numeroSugerido?: number | null;
 }
 
 /**
@@ -23,8 +25,9 @@ interface Props {
  * Sem campo de status: toda gestão nasce ativa, é o backend que arquiva a
  * anterior sozinho quando esta é criada, então não tem sentido perguntar.
  */
-export function NovoSemestreModal({ onCancelar, onSalvar }: Props) {
+export function NovoSemestreModal({ onCancelar, onSalvar, numeroSugerido }: Props) {
   const [nome, setNome] = useState("");
+  const [numero, setNumero] = useState(numeroSugerido ? String(numeroSugerido) : "");
   const [inicio, setInicio] = useState("");
   const [fim, setFim] = useState("");
   const [salvando, setSalvando] = useState(false);
@@ -51,7 +54,7 @@ export function NovoSemestreModal({ onCancelar, onSalvar }: Props) {
     setErro("");
     setSalvando(true);
     try {
-      await onSalvar({ nome: nome.trim(), inicio, fim });
+      await onSalvar({ nome: nome.trim(), inicio, fim, numero_gestao: numero ? Number(numero) : null });
     } catch (err) {
       setErro(err instanceof Error ? err.message : "Erro ao criar o semestre");
       setSalvando(false);
@@ -80,6 +83,18 @@ export function NovoSemestreModal({ onCancelar, onSalvar }: Props) {
                 value={nome}
                 onChange={(e) => setNome(e.target.value)}
                 placeholder="2026.2"
+              />
+            </FieldGroup>
+
+            <FieldGroup>
+              <FieldLabel htmlFor="semestre-numero">Número da gestão</FieldLabel>
+              <FieldInput
+                id="semestre-numero"
+                type="number"
+                min={1}
+                value={numero}
+                onChange={(e) => setNumero(e.target.value)}
+                placeholder="52"
               />
             </FieldGroup>
 
