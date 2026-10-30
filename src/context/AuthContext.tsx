@@ -18,9 +18,6 @@ interface UsuarioResponse {
   /** Cargo extra opcional, soma permissões à posição base — ver
    *  `UsuarioResumo.cargo_extra` em `types/auth.ts`. */
   cargo_extra: Posicao | null;
-  /** Caixas que o backend dá por fora da posição (prévia da Central,
-   *  2026-10-30: e-mails listados em CENTRAL_PREVIA_EMAILS). */
-  caixas_extras?: string[];
   status: StatusUsuario;
   ativo: boolean;
   /** Primeiro acesso pendente, ver `Usuario.senha_provisoria`. */
@@ -173,9 +170,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           ? catalogo.find((p) => p.posicao === dados.cargo_extra) ?? null
           : null;
         permissoes = mesclarPermissoes(base, extra);
-        for (const caixa of dados.caixas_extras ?? []) {
-          if (caixa in permissoes) permissoes = { ...permissoes, [caixa]: true };
-        }
       }
       const completo = { ...dados, permissoes };
       setUsuario(completo);
