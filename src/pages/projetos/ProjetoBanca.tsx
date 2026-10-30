@@ -1018,7 +1018,9 @@ function AvaliacaoLinha({ avaliacao, rotulo }: { avaliacao: AvaliacaoDaBanca; ro
           {avaliacao.notas.map((n, i) => (
             <Fragment key={`${n.ordem}-${i}`}>
               <CriterioTexto>{n.pergunta}</CriterioTexto>
-              <CriterioNota>{n.nao_aplicavel ? "N/A" : formatNota(n.nota)}</CriterioNota>
+              <CriterioNota>
+                {n.nao_aplicavel ? <PageBadge $tone="muted">N/A</PageBadge> : formatNota(n.nota)}
+              </CriterioNota>
               {n.resposta_texto && <CriterioResposta>{n.resposta_texto}</CriterioResposta>}
             </Fragment>
           ))}
