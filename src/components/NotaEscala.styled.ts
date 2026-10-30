@@ -38,9 +38,10 @@ export const NotaBotoesRow = styled.div`
   gap: ${theme.spacing.sm};
 `;
 
-export const NotaBotao = styled.button<{ $selecionado: boolean }>`
-  width: 2.5rem;
+export const NotaBotao = styled.button<{ $selecionado: boolean; $largo?: boolean }>`
+  width: ${({ $largo }) => ($largo ? "3.25rem" : "2.5rem")};
   height: 2.5rem;
+  margin-left: ${({ $largo }) => ($largo ? theme.spacing.sm : 0)};
   border-radius: ${theme.borderRadius.md};
   border: 1px solid ${({ $selecionado }) => ($selecionado ? theme.colors.primary : theme.colors.border)};
   background: ${({ $selecionado }) => ($selecionado ? theme.colors.primary : theme.colors.background)};

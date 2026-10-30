@@ -126,7 +126,13 @@ export function submeterAvaliacao(
 }
 
 export function createAvaliacaoNota(
-  dados: { avaliacao_id: number; pergunta_id: number; nota?: number | null; resposta_texto?: string | null },
+  dados: {
+    avaliacao_id: number;
+    pergunta_id: number;
+    nota?: number | null;
+    resposta_texto?: string | null;
+    nao_aplicavel?: boolean;
+  },
   token: string,
 ) {
   return apiFetch<AvaliacaoNota>("/avaliacoes-notas", {

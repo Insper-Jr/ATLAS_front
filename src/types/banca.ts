@@ -262,6 +262,8 @@ export interface NotaDoCriterio {
   /** Critério de nota traz isto; pergunta dissertativa traz `resposta_texto`. */
   nota: number | null;
   resposta_texto: string | null;
+  /** O avaliador marcou N/A: o critério não se aplica e fica fora da média. */
+  nao_aplicavel: boolean;
 }
 
 /** A avaliação de um avaliador numa tentativa — notas e feedback pedagógico. */
@@ -480,6 +482,8 @@ export interface AvaliacaoNota {
   pergunta_id: number;
   nota: number | null;
   resposta_texto: string | null;
+  /** N/A: critério não se aplica, fora da média. */
+  nao_aplicavel?: boolean;
 }
 
 export interface Semestre {

@@ -62,7 +62,7 @@ import {
   ListaSimples,
   Pilula,
 } from "@/pages/monitoramento/Monitoramento.styled";
-import { NotaEscala, NotaEscalaGrupo } from "@/components/NotaEscala";
+import { NOTA_NA, NotaEscala, NotaEscalaGrupo, type ValorNota } from "@/components/NotaEscala";
 import { AlertModal } from "@/components/AlertModal";
 import { ConfirmarModal } from "@/components/ConfirmarModal";
 import { DescricaoQuote } from "@/styles/shared.styled";
@@ -2523,10 +2523,14 @@ interface RascunhoAvaliacao {
   projetoAvaliado: string;
   escopoSelecionado: number | typeof OUTRO | "";
   escopoOutro: string;
-  notas: Record<number, number | null>;
+  notas: Record<number, ValorNota | null>;
   respostasTexto: Record<number, string>;
   comentario: string;
 }
+
+/** Quantos critérios precisam de nota de verdade (N/A não conta). Mesma
+ *  régua de `MINIMO_CRITERIOS_COM_NOTA` no backend. */
+const MINIMO_CRITERIOS_COM_NOTA = 3;
 
 function chaveRascunhoAvaliacao(bancaId: number, usuarioId: number) {
   return `avaliacao-banca-rascunho-${bancaId}-${usuarioId}`;
@@ -2642,7 +2646,7 @@ function AvaliarModal({
     todasPerguntas.filter((p) => p.escopo_id === escopoId);
   const perguntasGerais = todasPerguntas.filter((p) => p.escopo_id == null);
 
-  const [notas, setNotas] = useState<Record<number, number | null>>(() => ({
+  const [notas, setNotas] = useState<Record<number, ValorNota | null>>(() => ({
     ...Object.fromEntries(perguntasNota.map((p) => [p.id, null])),
     ...rascunhoInicial?.notas,
   }));
@@ -2702,7 +2706,14 @@ function AvaliarModal({
     }
     const faltando = perguntasNota.some((p) => notas[p.id] == null);
     if (faltando) {
-      setErro("Selecione uma nota de 1 a 5 para todos os critérios.");
+      setErro("Selecione uma nota de 1 a 5 (ou N/A) para todos os critérios.");
+      return;
+    }
+    // N/A em tudo não vale: pelo menos 3 critérios com nota de verdade.
+    const minimoComNota = Math.min(MINIMO_CRITERIOS_COM_NOTA, perguntasNota.length);
+    const comNota = perguntasNota.filter((p) => typeof notas[p.id] === "number").length;
+    if (comNota < minimoComNota) {
+      setErro(`Dê nota a pelo menos ${minimoComNota} critérios. N/A só vale para os demais.`);
       return;
     }
     // ⭐ 2026-09-23 — a pedido: comentário passou a ser obrigatório.
@@ -2731,12 +2742,11 @@ function AvaliarModal({
       );
       for (const pergunta of perguntasVisiveis) {
         if (isPerguntaNota(pergunta.tipo_resposta)) {
+          const valor = notas[pergunta.id];
           await createAvaliacaoNota(
-            {
-              avaliacao_id: avaliacao.id,
-              pergunta_id: pergunta.id,
-              nota: notas[pergunta.id] as number,
-            },
+            valor === NOTA_NA
+              ? { avaliacao_id: avaliacao.id, pergunta_id: pergunta.id, nao_aplicavel: true }
+              : { avaliacao_id: avaliacao.id, pergunta_id: pergunta.id, nota: valor as number },
             token,
           );
         } else {
@@ -2777,13 +2787,14 @@ function AvaliarModal({
     return (
       <>
         {notasDoBloco.length > 0 && (
-          <NotaEscalaGrupo>
+          <NotaEscalaGrupo titulo="Avalie os seguintes critérios (1 a 5). N/A quando o critério não se aplica: fica fora da média, e pelo menos 3 critérios precisam de nota.">
             {notasDoBloco.map((pergunta) => (
               <NotaEscala
                 key={pergunta.id}
                 id={`pergunta-${pergunta.id}`}
                 label={pergunta.texto}
                 value={notas[pergunta.id] ?? null}
+                permiteNa
                 onChange={(valor) => setNotas((n) => ({ ...n, [pergunta.id]: valor }))}
               />
             ))}

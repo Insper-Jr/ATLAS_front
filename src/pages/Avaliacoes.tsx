@@ -854,6 +854,8 @@ function VerAvaliacoesModal({
                                 <PageBadge $tone={tomDaNota(n.nota)}>
                                   {formatNota(n.nota)}
                                 </PageBadge>
+                              ) : n.nao_aplicavel ? (
+                                <PageBadge $tone="muted">N/A</PageBadge>
                               ) : (
                                 n.resposta_texto || "—"
                               )}
@@ -1109,7 +1111,7 @@ function EditarFormularioModal({
         {notas.length > 0 && (
           <NotaEscalaGrupo>
             {notas.map((p, i) => (
-              <NotaEscala key={i} label={p.texto} value={null} disabled />
+              <NotaEscala key={i} label={p.texto} value={null} permiteNa disabled />
             ))}
           </NotaEscalaGrupo>
         )}
