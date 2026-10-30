@@ -5,7 +5,7 @@ import { PageButtonSm } from "@/styles/page.styled";
 import { FieldSelect } from "@/pages/Bancas.styled";
 import { SegmentedButton, SegmentedGroup } from "@/styles/shared.styled";
 import { SecaoAjuda, SecaoTitulo } from "./Central.styled";
-import { ArquivosVitrine, Bloco, Campo, ModalEditor, Numero, SeletorArquivo, Texto, TextoLongo } from "./editores";
+import { Bloco, Campo, CampoArquivo, ModalEditor, Numero, Texto, TextoLongo } from "./editores";
 import { mover, useFichasPublicadas } from "./editores-util";
 
 function chaveDoNome(nome: string): string {
@@ -50,15 +50,13 @@ export function EditorMetodo({ conteudo, onFechar, onSalvo }: { conteudo: Conteu
 
   return (
     <ModalEditor chave="metodo" titulo="Método" conteudo={{ ...conteudo, arquivos }} dados={d} onFechar={onFechar} onSalvo={onSalvo}>
-      <ArquivosVitrine chave="metodo" arquivos={arquivos} onChange={setArquivos} aceita=".pdf,.png,.jpg,.jpeg,.webp" ajuda="Envie aqui o Playbook em PDF (até 50 MB) e escolha-o logo abaixo em 'Documento completo'." />
-
       <div style={{ display: "flex", flexDirection: "column", gap: "0.75rem" }}>
         <SecaoTitulo style={{ fontSize: "0.875rem" }}>Cabeçalho</SecaoTitulo>
         <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(14rem, 1fr))", gap: "1rem 0.75rem" }}>
           <Texto rotulo="Título" valor={d.titulo} onChange={(v) => mudar({ titulo: v })} />
           <Texto rotulo="Versão" valor={d.versao} onChange={(v) => mudar({ versao: v })} placeholder="v2" />
           <Texto rotulo="Origem" valor={d.origem} onChange={(v) => mudar({ origem: v })} placeholder="Documento de método · núcleo de Inovação" />
-          <SeletorArquivo rotulo="Documento completo (PDF)" valor={d.arquivo_id} onChange={(id) => mudar({ arquivo_id: id })} arquivos={arquivos} />
+          <CampoArquivo rotulo="Documento completo (PDF, até 50 MB)" chave="metodo" valor={d.arquivo_id} onChange={(id) => mudar({ arquivo_id: id })} arquivos={arquivos} onArquivos={setArquivos} aceita=".pdf" />
         </div>
         <TextoLongo rotulo="Descrição" valor={d.descricao} onChange={(v) => mudar({ descricao: v })} />
       </div>

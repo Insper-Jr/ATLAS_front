@@ -2,8 +2,8 @@ import { useEffect, useRef, useState, type ReactNode } from "react";
 import { ArrowDown, ArrowUp, Paperclip, Plus, Trash2, X } from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
 import {
-  apagarArquivoConteudo,
   atualizarConteudo,
+  editarLegendaArquivoConteudo,
   enviarArquivoConteudo,
   restaurarConteudo,
   type ArquivoConteudo,
@@ -11,7 +11,7 @@ import {
   type Conteudo,
   type Ficha,
 } from "@/lib/central";
-import { mover } from "./editores-util";
+import { mover, useMiniatura } from "./editores-util";
 import { MultiSelect } from "@/components/MultiSelect";
 import { PageButton, PageButtonSm } from "@/styles/page.styled";
 import {
@@ -27,17 +27,16 @@ import {
   FieldGroup,
   FieldInput,
   FieldLabel,
-  FieldSelect,
   FieldTextarea,
   FormErrorText,
 } from "@/pages/Bancas.styled";
 import {
   Acoes,
   FichaCard,
-  ListaSimples,
+  GradeMiniaturas,
   Meta,
+  Miniatura,
   SecaoAjuda,
-  SecaoTitulo,
 } from "./Central.styled";
 
 /* ------------------------------------------------------------------ */
@@ -314,165 +313,75 @@ export function SeletorFichas({
   );
 }
 
-/** Escolhe um arquivo já enviado pelo nome (guarda o id). */
-export function SeletorArquivo({
+/** Tamanho legível de um arquivo. */
+function tamanhoLegivel(bytes: number): string {
+  if (bytes >= 1_000_000) return `${(bytes / 1_000_000).toFixed(1)} MB`;
+  if (bytes >= 1_000) return `${Math.round(bytes / 1_000)} KB`;
+  return `${bytes} B`;
+}
+
+/**
+ * Um arquivo só (o Playbook, a aula completa), enviado direto daqui
+ * (2026-10-30, a pedido: acabou a lista separada de arquivos em que a
+ * pessoa enviava tudo e depois escolhia pelo nome). O arquivo novo entra
+ * em `arquivos` e vira o valor do campo na hora.
+ */
+export function CampoArquivo({
   rotulo,
+  chave,
   valor,
   onChange,
   arquivos,
-  apenasImagens = false,
-}: {
-  rotulo: string;
-  valor: number | null;
-  onChange: (id: number | null) => void;
-  arquivos: ArquivoConteudo[];
-  apenasImagens?: boolean;
-}) {
-  const lista = arquivos.filter((a) => !apenasImagens || a.imagem);
-  return (
-    <Campo rotulo={rotulo}>
-      <FieldSelect
-        value={valor ? String(valor) : ""}
-        onChange={(e) =>
-          onChange(e.target.value ? Number(e.target.value) : null)
-        }
-      >
-        <option value="">Nenhum</option>
-        {lista.map((a) => (
-          <option key={a.id} value={String(a.id)}>
-            {a.legenda ? `${a.legenda} (${a.nome})` : a.nome}
-          </option>
-        ))}
-      </FieldSelect>
-    </Campo>
-  );
-}
-
-/** Escolhe várias imagens já enviadas (guarda os ids). */
-export function SeletorImagens({
-  rotulo,
-  ids,
-  onChange,
-  arquivos,
-}: {
-  rotulo: string;
-  ids: number[];
-  onChange: (ids: number[]) => void;
-  arquivos: ArquivoConteudo[];
-}) {
-  const imagens = arquivos.filter((a) => a.imagem);
-  return (
-    <Campo
-      rotulo={rotulo}
-      ajuda={
-        imagens.length === 0
-          ? "Envie as imagens na seção Arquivos, acima."
-          : undefined
-      }
-    >
-      <MultiSelect
-        valores={ids.map(String)}
-        onChange={(v) => onChange(v.map(Number))}
-        opcoes={imagens.map((a) => ({
-          value: String(a.id),
-          label: a.legenda ? `${a.legenda} (${a.nome})` : a.nome,
-        }))}
-        rotuloVazio="Nenhuma prévia"
-        resumo={(n) => `${n} prévias`}
-        aria-label={rotulo}
-      />
-    </Campo>
-  );
-}
-
-/** Os arquivos da vitrine: enviar, legendar e apagar. */
-export function ArquivosVitrine({
-  chave,
-  arquivos,
-  onChange,
+  onArquivos,
   aceita,
   ajuda,
 }: {
+  rotulo: string;
   chave: ChaveConteudo;
+  valor: number | null;
+  onChange: (id: number | null) => void;
   arquivos: ArquivoConteudo[];
-  onChange: (a: ArquivoConteudo[]) => void;
+  onArquivos: (a: ArquivoConteudo[]) => void;
   aceita: string;
-  ajuda: string;
+  ajuda?: string;
 }) {
   const { token } = useAuth();
-  const [legenda, setLegenda] = useState("");
-  const [erro, setErro] = useState("");
-  const [enviando, setEnviando] = useState(false);
   const ref = useRef<HTMLInputElement>(null);
+  const [enviando, setEnviando] = useState(false);
+  const [erro, setErro] = useState("");
+  const atual = arquivos.find((a) => a.id === valor) ?? null;
 
   async function enviar(lista: FileList | null) {
-    if (!token || !lista) return;
+    const arquivo = lista?.[0];
+    if (!token || !arquivo) return;
     setEnviando(true);
     setErro("");
     try {
-      const novos: ArquivoConteudo[] = [];
-      for (const arquivo of Array.from(lista))
-        novos.push(await enviarArquivoConteudo(chave, arquivo, legenda, token));
-      onChange([...arquivos, ...novos]);
-      setLegenda("");
-      if (ref.current) ref.current.value = "";
+      const novo = await enviarArquivoConteudo(chave, arquivo, "", token);
+      onArquivos([...arquivos, novo]);
+      onChange(novo.id);
     } catch (err) {
       setErro(err instanceof Error ? err.message : "Não foi possível enviar");
     } finally {
       setEnviando(false);
-    }
-  }
-
-  async function apagar(id: number) {
-    if (!token) return;
-    try {
-      await apagarArquivoConteudo(id, token);
-      onChange(arquivos.filter((a) => a.id !== id));
-    } catch (err) {
-      setErro(err instanceof Error ? err.message : "Não foi possível apagar");
+      if (ref.current) ref.current.value = "";
     }
   }
 
   return (
-    <div style={{ display: "flex", flexDirection: "column", gap: "0.375rem" }}>
-      <SecaoTitulo style={{ fontSize: "0.875rem" }}>Arquivos</SecaoTitulo>
-      <SecaoAjuda>{ajuda}</SecaoAjuda>
-      {arquivos.length > 0 && (
-        <ListaSimples style={{ listStyle: "none", paddingLeft: 0 }}>
-          {arquivos.map((a) => (
-            <li
-              key={a.id}
-              style={{ display: "flex", gap: "0.5rem", alignItems: "center" }}
-            >
-              <span>
-                {a.legenda ? `${a.legenda} · ` : ""}
-                {a.nome}
-              </span>
-              <PageButtonSm
-                type="button"
-                $variant="ghost"
-                aria-label="Apagar arquivo"
-                onClick={() => apagar(a.id)}
-              >
-                <Trash2 size={12} />
-              </PageButtonSm>
-            </li>
-          ))}
-        </ListaSimples>
-      )}
+    <Campo rotulo={rotulo} ajuda={ajuda}>
       <Acoes>
-        <FieldInput
-          aria-label="Legenda"
-          maxLength={300}
-          value={legenda}
-          onChange={(e) => setLegenda(e.target.value)}
-          placeholder="Legenda do próximo arquivo (opcional)"
-          style={{ flex: "1 1 14rem" }}
-        />
+        {atual ? (
+          <span style={{ fontSize: "0.875rem" }}>
+            <Paperclip size={12} style={{ verticalAlign: "-2px" }} /> {atual.nome}
+            <span style={{ color: "var(--atlas-muted-foreground)" }}> · {tamanhoLegivel(atual.tamanho)}</span>
+          </span>
+        ) : (
+          <SecaoAjuda>Nenhum arquivo enviado.</SecaoAjuda>
+        )}
         <input
           ref={ref}
           type="file"
-          multiple
           accept={aceita}
           style={{ display: "none" }}
           onChange={(e) => enviar(e.target.files)}
@@ -483,11 +392,148 @@ export function ArquivosVitrine({
           disabled={enviando}
           onClick={() => ref.current?.click()}
         >
-          <Paperclip size={14} /> {enviando ? "Enviando…" : "Enviar arquivo"}
+          {enviando ? "Enviando…" : atual ? "Trocar arquivo" : "Enviar arquivo"}
+        </PageButtonSm>
+        {atual && (
+          <PageButtonSm type="button" $variant="ghost" onClick={() => onChange(null)}>
+            <Trash2 size={14} /> Remover
+          </PageButtonSm>
+        )}
+      </Acoes>
+      {erro && <FormErrorText>{erro}</FormErrorText>}
+    </Campo>
+  );
+}
+
+/** Miniatura de uma imagem protegida, com a legenda editável embaixo. */
+function MiniaturaEditavel({
+  arquivo,
+  onLegenda,
+  onSubir,
+  onDescer,
+  onRemover,
+}: {
+  arquivo: ArquivoConteudo;
+  onLegenda: (legenda: string) => void;
+  onSubir?: () => void;
+  onDescer?: () => void;
+  onRemover: () => void;
+}) {
+  const { token } = useAuth();
+  const url = useMiniatura(arquivo, token);
+  const [legenda, setLegenda] = useState(arquivo.legenda ?? "");
+  return (
+    <Miniatura>
+      <div className="imagem">{url ? <img src={url} alt={arquivo.legenda ?? arquivo.nome} /> : <span>…</span>}</div>
+      <FieldInput
+        aria-label={`Legenda de ${arquivo.nome}`}
+        maxLength={300}
+        value={legenda}
+        placeholder="Legenda (opcional)"
+        onChange={(e) => setLegenda(e.target.value)}
+        onBlur={() => {
+          if (legenda.trim() !== (arquivo.legenda ?? "")) onLegenda(legenda);
+        }}
+      />
+      <div className="acoes">
+        <BotoesItem onSubir={onSubir} onDescer={onDescer} onRemover={onRemover} />
+      </div>
+    </Miniatura>
+  );
+}
+
+/**
+ * As imagens de um item (as prévias de uma aula), enviadas direto daqui.
+ * Cada uma mostra a miniatura, a legenda editável e os botões de ordem.
+ */
+export function CampoImagens({
+  rotulo,
+  chave,
+  ids,
+  onChange,
+  arquivos,
+  onArquivos,
+  ajuda,
+}: {
+  rotulo: string;
+  chave: ChaveConteudo;
+  ids: number[];
+  onChange: (ids: number[]) => void;
+  arquivos: ArquivoConteudo[];
+  onArquivos: (a: ArquivoConteudo[]) => void;
+  ajuda?: string;
+}) {
+  const { token } = useAuth();
+  const ref = useRef<HTMLInputElement>(null);
+  const [enviando, setEnviando] = useState(false);
+  const [erro, setErro] = useState("");
+  const escolhidas = ids
+    .map((id) => arquivos.find((a) => a.id === id))
+    .filter((a): a is ArquivoConteudo => !!a);
+
+  async function enviar(lista: FileList | null) {
+    if (!token || !lista || lista.length === 0) return;
+    setEnviando(true);
+    setErro("");
+    try {
+      const novos: ArquivoConteudo[] = [];
+      for (const arquivo of Array.from(lista)) novos.push(await enviarArquivoConteudo(chave, arquivo, "", token));
+      onArquivos([...arquivos, ...novos]);
+      onChange([...ids, ...novos.map((n) => n.id)]);
+    } catch (err) {
+      setErro(err instanceof Error ? err.message : "Não foi possível enviar");
+    } finally {
+      setEnviando(false);
+      if (ref.current) ref.current.value = "";
+    }
+  }
+
+  async function legendar(arquivo: ArquivoConteudo, legenda: string) {
+    if (!token) return;
+    try {
+      const atualizado = await editarLegendaArquivoConteudo(arquivo.id, legenda, token);
+      onArquivos(arquivos.map((a) => (a.id === arquivo.id ? atualizado : a)));
+    } catch (err) {
+      setErro(err instanceof Error ? err.message : "Não foi possível salvar a legenda");
+    }
+  }
+
+  return (
+    <Campo rotulo={rotulo} ajuda={ajuda}>
+      {escolhidas.length > 0 && (
+        <GradeMiniaturas>
+          {escolhidas.map((a, i) => (
+            <MiniaturaEditavel
+              key={a.id}
+              arquivo={a}
+              onLegenda={(l) => legendar(a, l)}
+              onSubir={() => onChange(mover(ids, i, -1))}
+              onDescer={() => onChange(mover(ids, i, 1))}
+              onRemover={() => onChange(ids.filter((id) => id !== a.id))}
+            />
+          ))}
+        </GradeMiniaturas>
+      )}
+      <Acoes>
+        <input
+          ref={ref}
+          type="file"
+          multiple
+          accept=".png,.jpg,.jpeg,.webp"
+          style={{ display: "none" }}
+          onChange={(e) => enviar(e.target.files)}
+        />
+        <PageButtonSm
+          type="button"
+          $variant="outline"
+          disabled={enviando}
+          onClick={() => ref.current?.click()}
+        >
+          <Paperclip size={14} /> {enviando ? "Enviando…" : "Enviar imagens"}
         </PageButtonSm>
       </Acoes>
       {erro && <FormErrorText>{erro}</FormErrorText>}
-    </div>
+    </Campo>
   );
 }
 

@@ -767,6 +767,20 @@ export function enviarArquivoConteudo(chave: ChaveConteudo, arquivo: File, legen
   return apiFetch<ArquivoConteudo>(`/central/conteudo/${chave}/arquivos`, { aviso: "Arquivo enviado", method: "POST", token, body });
 }
 
+export function editarLegendaArquivoConteudo(arquivoId: number, legenda: string, token: string) {
+  return apiFetch<ArquivoConteudo>(`/central/conteudo/arquivos/${arquivoId}`, {
+    method: "PATCH",
+    token,
+    body: JSON.stringify({ legenda: legenda.trim() || null }),
+  });
+}
+
+/** Apaga sem aviso na tela: é a limpeza dos arquivos que ficaram sem uso
+ *  depois de salvar uma vitrine. */
+export function apagarArquivoConteudoSilencioso(arquivoId: number, token: string) {
+  return apiFetch<void>(`/central/conteudo/arquivos/${arquivoId}`, { method: "DELETE", token });
+}
+
 export function apagarArquivoConteudo(arquivoId: number, token: string) {
   return apiFetch<void>(`/central/conteudo/arquivos/${arquivoId}`, { aviso: "Arquivo apagado", method: "DELETE", token });
 }

@@ -1,6 +1,12 @@
 import { useEffect, useState } from "react";
 import { useAuth } from "@/context/AuthContext";
-import { getToolBox, type Ficha } from "@/lib/central";
+import {
+  blobUrlProtegida,
+  getToolBox,
+  urlArquivoConteudo,
+  type ArquivoConteudo,
+  type Ficha,
+} from "@/lib/central";
 
 /** Move o item `i` de uma lista uma posição para cima ou para baixo. */
 export function mover<T>(lista: T[], i: number, delta: -1 | 1): T[] {
@@ -29,4 +35,25 @@ export function useFichasPublicadas(): Ficha[] {
     };
   }, [token]);
   return fichas;
+}
+
+/** URL temporária da miniatura de uma imagem protegida (nula até carregar). */
+export function useMiniatura(arquivo: ArquivoConteudo | null, token: string | null): string | null {
+  const [url, setUrl] = useState<string | null>(null);
+  useEffect(() => {
+    if (!arquivo || !arquivo.imagem || !token) return;
+    let vivo = true;
+    let criado: string | null = null;
+    blobUrlProtegida(urlArquivoConteudo(arquivo.id), token)
+      .then((u) => {
+        criado = u;
+        if (vivo) setUrl(u);
+      })
+      .catch(() => {});
+    return () => {
+      vivo = false;
+      if (criado) URL.revokeObjectURL(criado);
+    };
+  }, [arquivo, token]);
+  return url;
 }

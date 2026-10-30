@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
-import { Download, ExternalLink, Pencil } from "lucide-react";
+import { Download, ExternalLink, Pencil, X } from "lucide-react";
 import {
   abrirUrlProtegida,
   blobUrlProtegida,
@@ -13,11 +13,49 @@ import {
 import { EstadoVazio } from "@/components/EstadoVazio";
 import { ErrorText, PageBadge, PageButtonSm, PageCard, PageCardContent, PageCardHeader, PageCardTitle, PageLoadingBlock } from "@/styles/page.styled";
 import { FieldSelect } from "@/pages/Bancas.styled";
-import { Acoes, AulaCabecalho, AulaCard, AulaConteudo, AulaCorpo, AulaPrevias, AulaRodape, Nota, SecaoAjuda } from "./Central.styled";
+import { Acoes, AulaCabecalho, AulaCard, AulaConteudo, AulaCorpo, AulaPrevias, AulaRodape, Lightbox, Nota, SecaoAjuda } from "./Central.styled";
 import { EditorCapacitacao } from "./EditorCapacitacao";
 import { useConteudo } from "./useConteudo";
 
-function Previa({ arquivo, token }: { arquivo: ArquivoConteudo; token: string }) {
+/** A imagem ampliada por cima da página (2026-10-30, a pedido): sem rota
+ *  nova, o site transparece atrás e o X (ou Esc, ou clicar fora) volta. */
+function Ampliada({ arquivo, token, onFechar }: { arquivo: ArquivoConteudo; token: string; onFechar: () => void }) {
+  const [url, setUrl] = useState<string | null>(null);
+  useEffect(() => {
+    let vivo = true;
+    let criado: string | null = null;
+    blobUrlProtegida(urlArquivoConteudo(arquivo.id), token)
+      .then((u) => {
+        criado = u;
+        if (vivo) setUrl(u);
+      })
+      .catch(() => {});
+    return () => {
+      vivo = false;
+      if (criado) URL.revokeObjectURL(criado);
+    };
+  }, [arquivo, token]);
+  useEffect(() => {
+    function aoTeclar(e: KeyboardEvent) {
+      if (e.key === "Escape") onFechar();
+    }
+    window.addEventListener("keydown", aoTeclar);
+    return () => window.removeEventListener("keydown", aoTeclar);
+  }, [onFechar]);
+  return (
+    <Lightbox role="dialog" aria-label={arquivo.legenda ?? arquivo.nome} onMouseDown={onFechar}>
+      <button type="button" className="fechar" aria-label="Fechar" onClick={onFechar}>
+        <X size={20} />
+      </button>
+      <figure onMouseDown={(e) => e.stopPropagation()}>
+        {url ? <img src={url} alt={arquivo.legenda ?? arquivo.nome} /> : <span>…</span>}
+        <figcaption>{arquivo.legenda || arquivo.nome}</figcaption>
+      </figure>
+    </Lightbox>
+  );
+}
+
+function Previa({ arquivo, token, onAmpliar }: { arquivo: ArquivoConteudo; token: string; onAmpliar: (a: ArquivoConteudo) => void }) {
   const [url, setUrl] = useState<string | null>(null);
   useEffect(() => {
     if (!arquivo.imagem) return;
@@ -36,7 +74,11 @@ function Previa({ arquivo, token }: { arquivo: ArquivoConteudo; token: string })
   }, [arquivo, token]);
   return (
     <figure>
-      <button type="button" className="abrir" onClick={() => abrirUrlProtegida(urlArquivoConteudo(arquivo.id), token).catch(() => {})}>
+      <button
+        type="button"
+        className="abrir"
+        onClick={() => (arquivo.imagem ? onAmpliar(arquivo) : abrirUrlProtegida(urlArquivoConteudo(arquivo.id), token).catch(() => {}))}
+      >
         {arquivo.imagem ? url ? <img src={url} alt={arquivo.legenda ?? arquivo.nome} /> : <span>…</span> : <span>{arquivo.nome.split(".").pop()?.toUpperCase()}</span>}
       </button>
       <figcaption>{arquivo.legenda || arquivo.nome}</figcaption>
@@ -63,6 +105,7 @@ export function Capacitacao() {
   const { token, conteudo, setConteudo, erro, editando, setEditando } = useConteudo<CapacitacaoDados>("capacitacao");
   const [escopo, setEscopo] = useState("");
   const [erroBaixar, setErroBaixar] = useState("");
+  const [ampliada, setAmpliada] = useState<ArquivoConteudo | null>(null);
   // Os escopos do Método, para o "Ver no Método" de cada aula.
   const [escoposDoMetodo, setEscoposDoMetodo] = useState<{ chave: string; nome: string }[]>([]);
   useEffect(() => {
@@ -134,7 +177,7 @@ export function Capacitacao() {
                 {previas.length > 0 && token ? (
                   <AulaPrevias>
                     {previas.slice(0, 3).map((p) => (
-                      <Previa key={p.id} arquivo={p} token={token} />
+                      <Previa key={p.id} arquivo={p} token={token} onAmpliar={setAmpliada} />
                     ))}
                   </AulaPrevias>
                 ) : (
@@ -196,6 +239,7 @@ export function Capacitacao() {
           }}
         />
       )}
+      {ampliada && token && <Ampliada arquivo={ampliada} token={token} onFechar={() => setAmpliada(null)} />}
     </>
   );
 }

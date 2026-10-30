@@ -1674,3 +1674,103 @@ export const AulaRodape = styled.div`
   font-size: ${theme.fontSize.xs};
   color: ${theme.colors.mutedForeground};
 `;
+
+/* Editor das vitrines: miniaturas das prévias enviadas de dentro da aula. */
+export const GradeMiniaturas = styled.div`
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(11rem, 1fr));
+  gap: 0.75rem;
+`;
+
+export const Miniatura = styled.figure`
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.375rem;
+
+  .imagem {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    aspect-ratio: 16 / 9;
+    border: 1px solid ${theme.colors.border};
+    border-radius: 0.625rem;
+    overflow: hidden;
+    background: ${theme.colors.muted};
+    color: ${theme.colors.mutedForeground};
+    font-size: ${theme.fontSize.xs};
+  }
+
+  img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+  }
+
+  .acoes {
+    display: flex;
+    gap: 0.25rem;
+    align-items: center;
+  }
+`;
+
+/* A prévia ampliada por cima da página, com o site transparecendo. */
+export const Lightbox = styled.div`
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 2rem;
+  background: rgba(15, 23, 42, 0.72);
+  backdrop-filter: blur(2px);
+
+  figure {
+    margin: 0;
+    max-width: min(92vw, 70rem);
+    max-height: 90vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.5rem;
+    color: #fff;
+  }
+
+  img {
+    max-width: 100%;
+    max-height: 82vh;
+    object-fit: contain;
+    border-radius: 0.5rem;
+    background: ${theme.colors.background};
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.45);
+  }
+
+  figcaption {
+    font-size: ${theme.fontSize.sm};
+    text-align: center;
+    opacity: 0.9;
+  }
+
+  .fechar {
+    position: absolute;
+    top: 1rem;
+    right: 1rem;
+    width: 2.5rem;
+    height: 2.5rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: 1px solid rgba(255, 255, 255, 0.4);
+    border-radius: 999px;
+    background: rgba(0, 0, 0, 0.35);
+    color: #fff;
+    cursor: pointer;
+  }
+
+  @media (max-width: ${theme.breakpoints.sm}px) {
+    padding: 1rem;
+  }
+`;
