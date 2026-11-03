@@ -4,6 +4,7 @@ import { getAprovacoes, type Aprovacoes } from "@/lib/monitoramento";
 import { AtrasosSemJustificativaCard } from "./AtrasosSemJustificativaCard";
 import { BancasForaDaJanelaCard } from "./BancasForaDaJanelaCard";
 import { BancasSemResultadoCard } from "./BancasSemResultadoCard";
+import { DispensasDeBancaCard } from "./DispensasDeBancaCard";
 import { EntradasEmBancaCard } from "./EntradasEmBancaCard";
 import { EntradasEmProjetoCard } from "./EntradasEmProjetoCard";
 import { ExcecoesDeChoqueCard } from "./ExcecoesDeChoqueCard";
@@ -93,6 +94,7 @@ export function AprovacoesAba() {
     { rotulo: "Choques de horário", n: dados.excecoes_de_choque.length, id: "fila-choque" },
     { rotulo: "Bancas fora da janela", n: dados.bancas_fora_da_janela.length, id: "fila-fora-da-janela" },
     { rotulo: "Remarcações de banca", n: dados.remarcacoes_de_banca.length, id: "fila-remarcacoes-de-banca" },
+    { rotulo: "Entregas sem banca", n: dados.dispensas_de_banca.length, id: "fila-dispensas-de-banca" },
     { rotulo: "Dias de ajuste", n: dados.dias_de_ajuste.length, id: "fila-dias" },
     { rotulo: "Bancas sem veredito", n: dados.bancas_sem_resultado.length, id: "fila-bancas" },
     { rotulo: "Pedidos de entrada", n: dados.solicitacoes_de_entrada.length, id: "fila-entradas" },
@@ -119,12 +121,13 @@ export function AprovacoesAba() {
       </FaixaResumo>
 
       {dados.total === 0 && (
-        <EmptyText>Nada esperando por você. As oito filas estão limpas.</EmptyText>
+        <EmptyText>Nada esperando por você. As nove filas estão limpas.</EmptyText>
       )}
 
       <ExcecoesDeChoqueCard itens={dados.excecoes_de_choque} onDecidiu={carregar} />
       <BancasForaDaJanelaCard itens={dados.bancas_fora_da_janela} onDecidiu={carregar} />
       <RemarcacoesDeBancaCard itens={dados.remarcacoes_de_banca} onDecidiu={carregar} />
+      <DispensasDeBancaCard itens={dados.dispensas_de_banca} onDecidiu={carregar} />
       <PedidosDeDiasCard
         itens={dados.dias_de_ajuste}
         onDecidiu={carregar}

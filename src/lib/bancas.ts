@@ -801,7 +801,14 @@ export function getRemarcacoesPendentes(token: string) {
 /** A decisão da diretoria sobre a remarcação — aprovar já remarca a banca. */
 export function decidirRemarcacao(
   pedidoId: number,
-  dados: { aprovar: boolean; resposta: string; autorizar_choque?: boolean },
+  dados: {
+    aprovar: boolean;
+    resposta: string;
+    autorizar_choque?: boolean;
+    /** Autoriza também marcar fora da janela do escopo (§13), quando a data
+     *  pedida passa do fim dela; a fila avisa antes do clique. */
+    autorizar_fora_janela?: boolean;
+  },
   token: string,
 ) {
   return apiFetch(`/bancas/remarcacao/${pedidoId}`, {
@@ -883,4 +890,36 @@ export function decidirEntradaBanca(
  */
 export function getBancasDoProjeto(projetoId: number, token: string) {
   return apiFetch<BancaDetalhes[]>(`/projetos/${projetoId}/bancas`, { token });
+}
+
+/**
+ * Pedir para entregar um escopo SEM banca (2026-11-03, a pedido). Projetos que
+ * terminaram nas férias, ou que entraram na plataforma prontos, não têm banca,
+ * e a saída era marcar uma banca de mentira só para destravar a entrega.
+ *
+ * O coordenador do projeto pede, a diretoria decide na aba Aprovações; a
+ * diretoria pedindo já aprova no mesmo ato (`status` volta "aprovada").
+ */
+export function solicitarDispensaBanca(
+  dados: { projeto_escopo_id: number; justificativa: string },
+  token: string,
+) {
+  return apiFetch<{ id: number; status: "pendente" | "aprovada" | "recusada" }>("/bancas/dispensa", {
+    aviso: "Pedido de dispensa enviado", method: "POST",
+    token,
+    body: JSON.stringify(dados),
+  });
+}
+
+/** A decisão da diretoria sobre a dispensa, `resposta` obrigatória nos dois sentidos. */
+export function decidirDispensaBanca(
+  pedidoId: number,
+  dados: { aprovar: boolean; resposta: string },
+  token: string,
+) {
+  return apiFetch(`/bancas/dispensa/${pedidoId}`, {
+    aviso: "Decisão registrada", method: "PATCH",
+    token,
+    body: JSON.stringify(dados),
+  });
 }

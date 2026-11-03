@@ -18,6 +18,7 @@ import {
   AtrasoTitulo,
   LinkProjeto,
   ListaSimples,
+  Pilula,
 } from "./Monitoramento.styled";
 import { AprovacaoLinha, FormDecisao } from "./AprovacaoLinha";
 
@@ -67,6 +68,13 @@ export function RemarcacoesDeBancaCard({
                       {p.projeto_nome}
                       {p.escopo_nome ? ` — ${p.escopo_nome}` : ""}
                     </LinkProjeto>
+                    {/* 2026-11-03: a data nova passa da janela do escopo. Dito
+                        ANTES do clique, para a aprovação já autorizar o §13 junto
+                        em vez de bater na trava da janela com uma mensagem
+                        escrita para quem pede, não para quem decide. */}
+                    {p.fora_da_janela && p.fim_janela && (
+                      <Pilula $tom="alerta">janela até {formatarData(p.fim_janela)}</Pilula>
+                    )}
                   </AtrasoTitulo>
                 }
                 acoes={
@@ -74,7 +82,7 @@ export function RemarcacoesDeBancaCard({
                     <FormDecisao
                       rotuloConfirmar={
                         decidindo.aprovar
-                          ? `Autorizar e remarcar para ${formatarDataHora(p.data_hora_pretendida)}`
+                          ? `${p.fora_da_janela ? "Autorizar fora da janela e remarcar" : "Autorizar e remarcar"} para ${formatarDataHora(p.data_hora_pretendida)}`
                           : "Confirmar recusa"
                       }
                       aviso={
@@ -84,6 +92,14 @@ export function RemarcacoesDeBancaCard({
                               Confirmar já <strong>remarca a banca</strong> para esta data — quem
                               pediu não precisa voltar ao cronograma, e quem estava escalado é
                               avisado.
+                              {p.fora_da_janela && p.fim_janela && (
+                                <>
+                                  {" "}
+                                  A data passa da janela do escopo (até {formatarData(p.fim_janela)}):
+                                  autorizar aqui também libera a marcação fora dela, e os dias além da
+                                  janela seguem contando como atraso.
+                                </>
+                              )}
                             </span>
                           </AprovacaoMeta>
                         ) : undefined
@@ -91,7 +107,15 @@ export function RemarcacoesDeBancaCard({
                       onCancelar={() => setDecidindo(null)}
                       onConfirmar={async (texto) => {
                         if (!token) return;
-                        await decidirRemarcacao(p.id, { aprovar: decidindo.aprovar, resposta: texto }, token);
+                        await decidirRemarcacao(
+                          p.id,
+                          {
+                            aprovar: decidindo.aprovar,
+                            resposta: texto,
+                            autorizar_fora_janela: decidindo.aprovar && p.fora_da_janela,
+                          },
+                          token,
+                        );
                         setDecidindo(null);
                         onDecidiu();
                       }}
@@ -108,7 +132,12 @@ export function RemarcacoesDeBancaCard({
                                 if (!token) return;
                                 await decidirRemarcacao(
                                   p.id,
-                                  { aprovar: true, resposta: texto, autorizar_choque: true },
+                                  {
+                                    aprovar: true,
+                                    resposta: texto,
+                                    autorizar_choque: true,
+                                    autorizar_fora_janela: p.fora_da_janela,
+                                  },
                                   token,
                                 );
                                 setDecidindo(null);

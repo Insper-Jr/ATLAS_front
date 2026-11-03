@@ -740,6 +740,22 @@ export interface AprovacaoRemarcacao {
   /** A data que vale hoje — o "de" do "de → para". */
   data_hora_anterior: string;
   data_hora_pretendida: string;
+  /** O fim da janela do escopo, só quando a data pedida passa dele (§13). */
+  fim_janela: string | null;
+  /** true = aprovar também autoriza marcar fora da janela, e o botão diz isso. */
+  fora_da_janela: boolean;
+  justificativa: string;
+  solicitado_por_nome: string | null;
+  criado_em: string;
+}
+
+/** 2026-11-03: um pedido para entregar um escopo sem banca. */
+export interface AprovacaoDispensaBanca {
+  id: number;
+  projeto_id: number | null;
+  projeto_nome: string;
+  projeto_escopo_id: number;
+  escopo_nome: string | null;
   justificativa: string;
   solicitado_por_nome: string | null;
   criado_em: string;
@@ -787,6 +803,8 @@ export interface Aprovacoes {
   remarcacoes_de_banca: AprovacaoRemarcacao[];
   /** 2026-09-18: pedidos para entrar como avaliador numa banca sem vaga. */
   entradas_em_banca: AprovacaoEntradaBanca[];
+  /** 2026-11-03: pedidos para entregar um escopo sem banca. */
+  dispensas_de_banca: AprovacaoDispensaBanca[];
   /** Servido pronto pelo backend — o badge da aba precisa dele antes de
    *  qualquer render, e somar no front duplicaria a conta. */
   total: number;

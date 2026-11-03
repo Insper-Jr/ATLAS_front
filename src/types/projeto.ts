@@ -209,8 +209,19 @@ export interface EscopoVendido {
   /** O prazo ainda está aberto hoje. */
   pedido_ajuste_aberto: boolean;
   banca: BancaDoEscopo | null;
-  /** só true quando a banca do escopo saiu aprovada. */
+  /** true quando a banca do escopo saiu aprovada, ou quando a diretoria
+   *  dispensou a banca deste escopo (2026-11-03). */
   entrega_liberada: boolean;
+  /**
+   * O pedido de dispensa de banca que vale para este escopo (2026-11-03):
+   * aprovada libera a entrega; pendente espera a diretoria. Nulo quando
+   * ninguém pediu.
+   */
+  dispensa_banca: {
+    id: number;
+    status: "pendente" | "aprovada" | "recusada";
+    justificativa: string;
+  } | null;
   /**
    * ⭐ Quando alguém **confirmou** que a entrega foi ao cliente — o ato que
    * move o status para "entregue".

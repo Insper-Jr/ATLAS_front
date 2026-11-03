@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import { Check, Lock, Plus, Trash2, UserPen, X } from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
-import { ROTULO_STATUS_BANCA, tomDoStatusBanca } from "@/lib/bancas";
+import { ROTULO_STATUS_BANCA, solicitarDispensaBanca, tomDoStatusBanca } from "@/lib/bancas";
 import { ConfirmarModal } from "@/components/ConfirmarModal";
 import { InfoDica } from "@/components/InfoDica";
 import { ehDiretoriaDeProjetos } from "@/utils/permissoes";
@@ -391,7 +391,8 @@ function EquipeCard() {
  * diferença aparece na tela.
  */
 function motivoDaTrava(banca: BancaDoEscopo | null): string {
-  if (!banca) return "Este escopo ainda não tem banca marcada, marque-a no Cronograma.";
+  if (!banca)
+    return "Este escopo ainda não tem banca marcada: marque-a no Cronograma ou, se o projeto não vai ter banca, peça a dispensa à diretoria.";
   if (!banca.realizado_em) return "A banca deste escopo ainda não foi realizada.";
   if (banca.resultado === "nao_aprovada")
     return "A banca não foi aprovada, é preciso marcar uma nova banca antes de entregar ao cliente.";
@@ -714,10 +715,18 @@ function TabelaEscopos() {
                               onConfirmou={recarregar}
                             />
                           ) : (
-                            <Cadeado title={motivoDaTrava(escopo.banca)}>
-                              <Lock size={12} />
-                              travada
-                            </Cadeado>
+                            <EntregaCelula>
+                              <Cadeado title={motivoDaTrava(escopo.banca)}>
+                                <Lock size={12} />
+                                travada
+                              </Cadeado>
+                              <DispensaDeBanca
+                                escopo={escopo}
+                                podePedir={podeConfirmar}
+                                ehDiretor={!!usuario && ehDiretoriaDeProjetos(usuario)}
+                                onMudou={recarregar}
+                              />
+                            </EntregaCelula>
                           )}
                         </TableCell>
 
@@ -815,6 +824,101 @@ function TabelaEscopos() {
  * 🔒 O botão só aparece para o coordenador do projeto e para a diretoria — e a
  * confirmação não tem volta pela interface, por isso passa por um modal.
  */
+/**
+ * 2026-11-03, a pedido: a saída para o escopo que não vai ter banca.
+ *
+ * Projetos que terminaram nas férias, ou que entraram na plataforma já
+ * prontos, não têm banca, e a entrega ficava travada para sempre, a não ser
+ * marcando uma banca de mentira. Aqui o coordenador pede a dispensa à
+ * diretoria com uma justificativa; a diretoria pedindo já aprova no ato.
+ * Com a dispensa aprovada o backend devolve `entrega_liberada`, e esta célula
+ * dá lugar à de entrega normal.
+ */
+function DispensaDeBanca({
+  escopo,
+  podePedir,
+  ehDiretor,
+  onMudou,
+}: {
+  escopo: EscopoVendido;
+  podePedir: boolean;
+  ehDiretor: boolean;
+  onMudou: () => Promise<void> | void;
+}) {
+  const { token } = useAuth();
+  const [pedindo, setPedindo] = useState(false);
+  const [justificativa, setJustificativa] = useState("");
+
+  // Banca que já aconteceu segue pelo resultado dela, não por dispensa.
+  if (escopo.banca?.realizado_em) return null;
+
+  if (escopo.dispensa_banca?.status === "pendente") {
+    return (
+      <small>
+        dispensa de banca pedida
+        {ehDiretor ? (
+          <>
+            {" · "}
+            <Link to="/monitoramento/aprovacoes#fila-dispensas-de-banca">decidir em Aprovações</Link>
+          </>
+        ) : (
+          ", aguardando a diretoria"
+        )}
+      </small>
+    );
+  }
+
+  if (!podePedir) return null;
+
+  return (
+    <>
+      <PageButtonSm type="button" $variant="ghost" onClick={() => setPedindo(true)}>
+        {ehDiretor ? "Dispensar banca" : "Pedir dispensa de banca"}
+      </PageButtonSm>
+      {pedindo && token && (
+        <ConfirmarModal
+          titulo={ehDiretor ? "Dispensar a banca deste escopo" : "Pedir dispensa de banca"}
+          rotuloConfirmar={ehDiretor ? "Dispensar banca" : "Enviar pedido"}
+          rotuloProcessando="Enviando…"
+          mensagem={
+            <>
+              <p>
+                {ehDiretor
+                  ? "A entrega de "
+                  : "A diretoria decide se a entrega de "}
+                <strong>{escopo.nome}</strong>
+                {ehDiretor
+                  ? " passa a ser liberada sem banca. Vale só para este escopo."
+                  : " pode ser liberada sem banca. Explique por que este escopo não vai ter banca."}
+              </p>
+              <FieldGroup>
+                <FieldLabel htmlFor={`dispensa-${escopo.id}`}>Justificativa</FieldLabel>
+                <FieldTextarea
+                  id={`dispensa-${escopo.id}`}
+                  rows={3}
+                  value={justificativa}
+                  placeholder="Ex.: o projeto terminou nas férias e foi cadastrado depois de entregue"
+                  onChange={(e) => setJustificativa(e.target.value)}
+                />
+              </FieldGroup>
+            </>
+          }
+          onCancelar={() => setPedindo(false)}
+          onConfirmar={async () => {
+            if (!justificativa.trim()) throw new Error("Escreva a justificativa antes de enviar.");
+            await solicitarDispensaBanca(
+              { projeto_escopo_id: escopo.id, justificativa: justificativa.trim() },
+              token,
+            );
+            setPedindo(false);
+            await onMudou();
+          }}
+        />
+      )}
+    </>
+  );
+}
+
 function CelulaEntrega({
   escopo,
   projetoId,
