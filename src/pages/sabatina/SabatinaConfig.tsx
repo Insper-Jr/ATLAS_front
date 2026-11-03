@@ -304,6 +304,9 @@ function FormEleicao({
   const [candidatos, setCandidatos] = useState<string[]>(
     inicial?.candidatos.map((c) => String(c.usuario_id)) ?? [],
   );
+  // Quem vota: todos os ativos (o padrão) ou uma escolha da diretoria.
+  const [todosVotam, setTodosVotam] = useState((inicial?.eleitores_ids ?? []).length === 0);
+  const [eleitores, setEleitores] = useState<string[]>(inicial?.eleitores_ids.map(String) ?? []);
   const [salvando, setSalvando] = useState(false);
   const [erro, setErro] = useState("");
 
@@ -318,16 +321,35 @@ function FormEleicao({
     return base.sort((a, b) => a.label.localeCompare(b.label, "pt-BR"));
   }, [ativos, inicial, rotuloPosicao]);
 
+  // Quem pode votar: os ativos que não concorrem.
+  const opcoesEleitores = useMemo(() => {
+    const concorrem = new Set(candidatos);
+    return ativos
+      .filter((u) => !concorrem.has(String(u.id)))
+      .map((u) => ({ value: String(u.id), label: `${u.nome} (${rotuloPosicao(u.posicao)})` }))
+      .sort((a, b) => a.label.localeCompare(b.label, "pt-BR"));
+  }, [ativos, candidatos, rotuloPosicao]);
+  const eleitoresValidos = useMemo(() => {
+    const possiveis = new Set(opcoesEleitores.map((o) => o.value));
+    return eleitores.filter((id) => possiveis.has(id));
+  }, [eleitores, opcoesEleitores]);
+
   async function handleSubmit(e: FormEvent) {
     e.preventDefault();
     const pct = Number(percentual);
     if (!nome.trim()) return setErro("Dê um nome à eleição (ex.: Diretoria de Projetos).");
     if (!Number.isInteger(pct) || pct < 1 || pct > 100) return setErro("O percentual precisa ser um inteiro entre 1 e 100.");
     if (candidatos.length === 0) return setErro("Escolha pelo menos um candidato.");
+    if (!todosVotam && eleitoresValidos.length === 0) return setErro("Escolha quem vota, ou marque que todos votam.");
     setSalvando(true);
     setErro("");
     try {
-      await onSalvar({ nome: nome.trim(), percentual_aprovacao: pct, candidato_ids: candidatos.map(Number) });
+      await onSalvar({
+        nome: nome.trim(),
+        percentual_aprovacao: pct,
+        candidato_ids: candidatos.map(Number),
+        eleitores_ids: todosVotam ? [] : eleitoresValidos.map(Number),
+      });
     } catch (err) {
       setErro(err instanceof Error ? err.message : "Não foi possível salvar");
     } finally {
@@ -373,6 +395,36 @@ function FormEleicao({
           aria-label="Candidatos"
         />
         <Meta>Quem concorre não vota nesta eleição.</Meta>
+      </FieldGroup>
+      <FieldGroup>
+        <FieldLabel>Quem vota</FieldLabel>
+        <label style={{ display: "flex", alignItems: "center", gap: "0.5rem", cursor: "pointer" }}>
+          <input type="checkbox" checked={todosVotam} onChange={(e) => setTodosVotam(e.target.checked)} />
+          Todos os membros ativos (menos os candidatos)
+        </label>
+        {!todosVotam && (
+          <>
+            <MultiSelect
+              valores={eleitoresValidos}
+              onChange={setEleitores}
+              opcoes={opcoesEleitores}
+              rotuloVazio="Escolha quem recebe a cédula"
+              resumo={(n) => `${n} de ${opcoesEleitores.length} votam`}
+              pesquisavel
+              aria-label="Quem vota"
+            />
+            <Meta>
+              <LinkAcao type="button" onClick={() => setEleitores(opcoesEleitores.map((o) => o.value))}>
+                marcar todos
+              </LinkAcao>
+              {" · "}
+              <LinkAcao type="button" onClick={() => setEleitores([])}>
+                limpar
+              </LinkAcao>
+              {" · "}marque todos e desmarque quem não vota, ou monte a lista do zero. A lista é congelada ao abrir.
+            </Meta>
+          </>
+        )}
       </FieldGroup>
       {erro && <FormErrorText>{erro}</FormErrorText>}
       <Acoes style={{ marginTop: 0 }}>
@@ -498,17 +550,39 @@ function CardEleicao({
             />
           </Secao>
         ) : (
-          <Secao>
-            <SecaoTitulo>Candidatos</SecaoTitulo>
-            <Chips>
-              {eleicao.candidatos.map((c) => (
-                <Chip key={c.id}>
-                  {c.nome}
-                  {c.posicao && <Meta>· {rotuloPosicao(c.posicao)}</Meta>}
-                </Chip>
-              ))}
-            </Chips>
-          </Secao>
+          <>
+            <Secao>
+              <SecaoTitulo>Candidatos</SecaoTitulo>
+              <Chips>
+                {eleicao.candidatos.map((c) => (
+                  <Chip key={c.id}>
+                    {c.nome}
+                    {c.posicao && <Meta>· {rotuloPosicao(c.posicao)}</Meta>}
+                  </Chip>
+                ))}
+              </Chips>
+            </Secao>
+            {eleicao.status === "rascunho" && (
+              <Secao>
+                <SecaoTitulo>Quem vota</SecaoTitulo>
+                {eleicao.eleitores_ids.length === 0 ? (
+                  <Meta>Todos os membros ativos, menos os candidatos.</Meta>
+                ) : (
+                  <Chips>
+                    {eleicao.eleitores_ids.map((id) => {
+                      const u = ativos.find((a) => a.id === id);
+                      return (
+                        <Chip key={id}>
+                          {u?.nome ?? `Usuário ${id}`}
+                          {u?.posicao && <Meta>· {rotuloPosicao(u.posicao)}</Meta>}
+                        </Chip>
+                      );
+                    })}
+                  </Chips>
+                )}
+              </Secao>
+            )}
+          </>
         )}
 
         {eleicao.status !== "rascunho" && (
@@ -516,19 +590,22 @@ function CardEleicao({
             <SecaoTitulo>Participação</SecaoTitulo>
             <Aviso>
               <strong>{eleicao.total_votos}</strong> de {eleicao.total_eleitores} votaram
-              {eleicao.pendentes.length > 0 ? (
+              {eleicao.total_votos >= eleicao.total_eleitores ? (
+                " · todo mundo votou"
+              ) : eleicao.status === "fechada" ? (
                 <>
                   {" · "}
                   <LinkAcao type="button" onClick={() => setMostrarPendentes((v) => !v)}>
-                    {mostrarPendentes ? "esconder" : "ver"} quem {eleicao.status === "fechada" ? "faltou" : "ainda não votou"} (
-                    {eleicao.pendentes.length})
+                    {mostrarPendentes ? "esconder" : "ver"} quem faltou ({eleicao.pendentes.length})
                   </LinkAcao>
                 </>
               ) : (
-                " · todo mundo votou"
+                // Enquanto aberta, o backend não manda quem falta: a lista
+                // mudando ao lado da corrida entregaria o voto de cada um.
+                " · quem falta aparece quando a votação fechar"
               )}
             </Aviso>
-            {mostrarPendentes && (
+            {mostrarPendentes && eleicao.status === "fechada" && (
               <Chips>
                 {eleicao.pendentes.map((p) => (
                   <Chip key={p.usuario_id}>
@@ -574,7 +651,11 @@ function CardEleicao({
         {confirmando === "abrir" && (
           <ConfirmarModal
             titulo="Abrir votação"
-            mensagem={`Abrir "${eleicao.nome}" agora? A cédula aparece para todos os membros ativos (menos os candidatos) e a lista de candidatos não muda mais.`}
+            mensagem={
+              eleicao.eleitores_ids.length === 0
+                ? `Abrir "${eleicao.nome}" agora? A cédula aparece para todos os membros ativos (menos os candidatos) e a lista de candidatos não muda mais.`
+                : `Abrir "${eleicao.nome}" agora? A cédula aparece só para as ${eleicao.eleitores_ids.length} pessoas escolhidas e as listas de candidatos e de quem vota não mudam mais.`
+            }
             rotuloConfirmar="Abrir votação"
             rotuloProcessando="Abrindo…"
             onConfirmar={() => executar("abrir")}

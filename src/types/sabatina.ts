@@ -52,6 +52,9 @@ export interface Eleicao {
   candidatos: CandidatoSabatina[];
   total_eleitores: number;
   total_votos: number;
+  /** Em rascunho, a escolha da diretoria (vazio = todos os ativos menos candidatos); depois, quem recebeu a cédula. */
+  eleitores_ids: number[];
+  /** Quem não votou. Só vem fechada; aberta, a lista é vazia de propósito. */
   pendentes: PessoaSabatina[];
   /** Só vem fechada. */
   resultado: ResultadoEleicao | null;
@@ -101,4 +104,6 @@ export interface EleicaoPayload {
   nome: string;
   percentual_aprovacao: number;
   candidato_ids: number[];
+  /** Vazio = todos os membros ativos (menos candidatos). */
+  eleitores_ids: number[];
 }
