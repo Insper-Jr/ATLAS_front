@@ -9,8 +9,10 @@ import type {
   LinkAprovacao,
   ModeloContratual,
   ParagrafoEditavel,
+  ProjetoVendidoRecente,
   SolicitacaoAlteracao,
   TipoDocumentoContratual,
+  TrechoCitado,
   VersaoDocumentoContratual,
 } from "@/types/contratos";
 
@@ -65,9 +67,18 @@ export function criarDocumentoInstitucional(
 /** Dias tipo "prova" do calendário acadêmico da(s) frente(s) do projeto,
  *  dentro de [inicio, fim] — só sugestão pro campo "Dias de exceção", quem
  *  preenche decide o que de fato entra. */
-export function sugerirDiasExcecao(projetoId: number, inicio: string, fim: string, token: string) {
+export function sugerirDiasExcecao(
+  projetoId: number,
+  inicio: string,
+  fim: string | null,
+  token: string,
+  diasUteis = 0,
+) {
+  // Sem término previsto (não é mais obrigatório, 2026-11-05) o backend
+  // conta `diasUteis` úteis a partir do início: a soma dos escopos.
+  const query = fim ? `&fim=${fim}` : `&dias_uteis=${diasUteis}`;
   return apiFetch<{ dias: { inicio: string; fim: string }[] }>(
-    `/projetos/${projetoId}/documentos-contratuais/sugerir-dias-excecao?inicio=${inicio}&fim=${fim}`,
+    `/projetos/${projetoId}/documentos-contratuais/sugerir-dias-excecao?inicio=${inicio}${query}`,
     { token },
   );
 }
@@ -101,6 +112,16 @@ export function gerarDocumento(documentoId: number, token: string) {
 export function aprovarInternamente(documentoId: number, token: string) {
   return apiFetch<DocumentoContratual>(`/documentos-contratuais/${documentoId}/aprovar-internamente`, {
     aviso: "Aprovado internamente", method: "POST",
+    token,
+  });
+}
+
+/** A administradora jurídica devolve o rascunho com o que quer que mude, em
+ *  vez de aprovar (2026-11-05). O documento continua em revisão interna. */
+export function solicitarRevisaoInterna(documentoId: number, comentario: string, token: string) {
+  return apiFetch<DocumentoContratual>(`/documentos-contratuais/${documentoId}/solicitar-revisao`, {
+    aviso: "Revisão pedida", method: "POST",
+    body: JSON.stringify({ comentario }),
     token,
   });
 }
@@ -205,9 +226,12 @@ export function recusarAssinaturaTep(documentoId: number, token: string) {
   });
 }
 
-export function marcarAssinado(documentoId: number, token: string) {
+/** `abrirDeclaracao` (2026-11-05): no Contrato de Prestação, se a declaração
+ *  de interesse do projeto abre no mesmo clique. */
+export function marcarAssinado(documentoId: number, token: string, abrirDeclaracao = true) {
   return apiFetch<DocumentoContratual>(`/documentos-contratuais/${documentoId}/marcar-assinado`, {
     aviso: "Marcado como assinado", method: "POST",
+    body: JSON.stringify({ abrir_declaracao: abrirDeclaracao }),
     token,
   });
 }
@@ -233,7 +257,7 @@ export function getTextoAprovacao(token: string) {
 
 export function responderAprovacao(
   token: string,
-  request: { acao: "aprovar" | "alteracao"; texto?: string; trechos?: string[] },
+  request: { acao: "aprovar" | "alteracao"; texto?: string; trechos?: TrechoCitado[] },
 ) {
   return apiFetch<{ ok: true }>(`/aprovacao/${token}/responder`, {
     aviso: "Resposta registrada", method: "POST",
@@ -380,4 +404,12 @@ export function enviarModeloContratual(tipo: string, arquivo: File, token: strin
 
 export function removerModeloContratual(tipo: string, token: string) {
   return apiFetch<void>(`/documentos-contratuais/modelos/${tipo}`, { aviso: "Modelo removido", method: "DELETE", token });
+}
+
+// ---------- Comemoração de venda ----------
+
+/** Projetos que viraram Vendido nas últimas 36 horas: enquanto houver um, a
+ *  abertura do ATLAS solta confetes (`CelebracaoVenda`). */
+export function getVendidosRecentes(token: string) {
+  return apiFetch<{ projetos: ProjetoVendidoRecente[] }>("/projetos/vendidos-recentes", { token });
 }

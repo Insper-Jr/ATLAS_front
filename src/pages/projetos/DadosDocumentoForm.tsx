@@ -136,11 +136,22 @@ function Numero({ dados, set, caminho, label }: { dados: Dados; set: Setter; cam
   );
 }
 
+/** "01/03/2026" -> "2026-03-01". Uma data que veio da Coleta como texto (ou
+ *  foi digitada em outro lugar) precisa virar ISO pra o campo de data e pra
+ *  API; o que já é ISO (ou não é data) volta como está. */
+function dataParaIso(valor: unknown): string {
+  if (typeof valor !== "string") return "";
+  const m = valor.trim().match(/^(\d{1,2})\/(\d{1,2})\/(\d{2,4})$/);
+  if (!m) return valor.trim();
+  const ano = m[3].length === 2 ? `20${m[3]}` : m[3];
+  return `${ano}-${m[2].padStart(2, "0")}-${m[1].padStart(2, "0")}`;
+}
+
 function DataCampo({ dados, set, caminho, label }: { dados: Dados; set: Setter; caminho: Caminho; label: string }) {
   const valor = obter(dados, caminho);
   return (
     <Campo label={label} caminho={caminho} valor={valor}>
-      <FieldInput type="date" value={valor ?? ""} onChange={(e) => set(caminho, e.target.value)} />
+      <FieldInput type="date" value={dataParaIso(valor)} onChange={(e) => set(caminho, e.target.value)} />
     </Campo>
   );
 }
@@ -223,6 +234,125 @@ function ListaTexto({
         + adicionar
       </ListaAdicionarBotao>
     </FieldGroup>
+  );
+}
+
+type ParcelaLinha = { vencimento: string; tipo: "valor" | "percentual" | "restante"; valor: number | null };
+
+/**
+ * ⭐ 2026-11-05 — parcelas do contrato (e do aditivo) em dois modos: N
+ * iguais todo mês (o de sempre) ou personalizadas, uma a uma: a data e o
+ * valor em reais, em porcentagem do total ou "o que sobrar". O backend
+ * confere que a soma fecha o total (`validar_dados_documento_contratual.py`).
+ */
+function ParcelasCampos({
+  dados,
+  set,
+  prefixo,
+  caminhoTotal,
+}: {
+  dados: Dados;
+  set: Setter;
+  prefixo: "financeiro" | "preco";
+  caminhoTotal: Caminho;
+}) {
+  const modo: "iguais" | "personalizadas" = obter(dados, [prefixo, "modo_parcelas"]) ?? "iguais";
+  const parcelas: ParcelaLinha[] = obter(dados, [prefixo, "parcelas"]) ?? [];
+  const total = Number(obter(dados, caminhoTotal) ?? 0);
+  const caminhoLista: Caminho = [prefixo, "parcelas"];
+
+  function valorResolvido(p: ParcelaLinha, i: number): number | null {
+    if (p.tipo === "percentual") return Math.round(total * (p.valor ?? 0)) / 100;
+    if (p.tipo === "restante") {
+      const outras = parcelas.reduce((soma, q, j) => {
+        if (j === i || q.tipo === "restante") return soma;
+        return soma + (q.tipo === "percentual" ? Math.round(total * (q.valor ?? 0)) / 100 : (q.valor ?? 0));
+      }, 0);
+      return Math.round((total - outras) * 100) / 100;
+    }
+    return p.valor;
+  }
+  const soma = parcelas.reduce((acc, p, i) => acc + (valorResolvido(p, i) ?? 0), 0);
+  const fecha = Math.abs(Math.round(soma * 100) / 100 - Math.round(total * 100) / 100) <= 0.01;
+
+  return (
+    <>
+      <FieldGroup style={{ marginTop: "0.75rem" }}>
+        <FieldLabel>Como são as parcelas</FieldLabel>
+        <FieldSelect
+          value={modo}
+          onChange={(e) => set([prefixo, "modo_parcelas"], e.target.value as "iguais" | "personalizadas")}
+        >
+          <option value="iguais">Iguais, todo mês no mesmo dia</option>
+          <option value="personalizadas">Personalizadas (data e valor de cada uma)</option>
+        </FieldSelect>
+      </FieldGroup>
+      {modo === "iguais" ? (
+        <FormGrid $colunas={2} style={{ marginTop: "0.75rem" }}>
+          <Numero dados={dados} set={set} caminho={[prefixo, "numero_parcelas"]} label="Nº de parcelas" />
+          <Numero dados={dados} set={set} caminho={[prefixo, "valor_parcela"]} label="Valor da parcela (R$)" />
+          <DataCampo dados={dados} set={set} caminho={[prefixo, "primeiro_vencimento"]} label="Primeiro vencimento" />
+          <Numero dados={dados} set={set} caminho={[prefixo, "dia_vencimento_mensal"]} label="Dia de vencimento mensal" />
+        </FormGrid>
+      ) : (
+        <Campo label="Parcelas" caminho={caminhoLista} valor={parcelas.length ? parcelas : null}>
+          {parcelas.map((p, i) => {
+            const resolvido = valorResolvido(p, i);
+            return (
+              <ListaLinha key={i}>
+                <FieldInput
+                  type="date"
+                  value={p.vencimento ?? ""}
+                  onChange={(e) => set([...caminhoLista, i, "vencimento"], e.target.value)}
+                />
+                <FieldSelect
+                  style={{ maxWidth: "11rem" }}
+                  value={p.tipo ?? "valor"}
+                  onChange={(e) => set([...caminhoLista, i, "tipo"], e.target.value)}
+                >
+                  <option value="valor">Valor (R$)</option>
+                  <option value="percentual">% do total</option>
+                  <option value="restante">O que sobrar</option>
+                </FieldSelect>
+                {p.tipo === "restante" ? (
+                  <FieldInput style={{ maxWidth: "9rem" }} value={resolvido == null ? "" : resolvido.toFixed(2)} readOnly />
+                ) : (
+                  <FieldInput
+                    type="number"
+                    style={{ maxWidth: "9rem" }}
+                    placeholder={p.tipo === "percentual" ? "%" : "R$"}
+                    value={p.valor ?? ""}
+                    onChange={(e) =>
+                      set([...caminhoLista, i, "valor"], e.target.value === "" ? null : Number(e.target.value))
+                    }
+                  />
+                )}
+                <ListaRemoverBotao
+                  type="button"
+                  aria-label="Remover parcela"
+                  onClick={() => set(caminhoLista, parcelas.filter((_, idx) => idx !== i))}
+                >
+                  ×
+                </ListaRemoverBotao>
+              </ListaLinha>
+            );
+          })}
+          <ListaAdicionarBotao
+            type="button"
+            onClick={() => set(caminhoLista, [...parcelas, { vencimento: "", tipo: parcelas.length ? "restante" : "valor", valor: null }])}
+          >
+            + adicionar parcela
+          </ListaAdicionarBotao>
+          {parcelas.length > 0 && (
+            <CampoObrigatorioTexto style={fecha ? { color: "inherit" } : undefined}>
+              {fecha
+                ? `As parcelas fecham o total de R$ ${total.toFixed(2)}.`
+                : `As parcelas somam R$ ${soma.toFixed(2)} e o total é R$ ${total.toFixed(2)}.`}
+            </CampoObrigatorioTexto>
+          )}
+        </Campo>
+      )}
+    </>
   );
 }
 
@@ -332,17 +462,43 @@ function ContratoSecoes({
   const dataTermino = obter(dados, ["projeto", "data_termino"]) as string | undefined;
   const [sugerindo, setSugerindo] = useState(false);
   const [erroSugestao, setErroSugestao] = useState("");
+  // Sugestão já aplicada para este intervalo: o botão trava até início,
+  // término ou escopos mudarem (2026-11-05). Clicar de novo só repetia a
+  // mesma consulta e não trazia nada.
+  const [sugeridoPara, setSugeridoPara] = useState<string | null>(null);
+  const [avisoSugestao, setAvisoSugestao] = useState("");
+
+  // Sem término previsto (não é mais obrigatório, 2026-11-05), o intervalo
+  // vai até a soma dos dias úteis dos escopos a partir do início.
+  const diasUteisDosEscopos = escopos.reduce((soma, e) => soma + (e?.prazo_dias_uteis ?? 0), 0);
+  const chaveSugestao = `${dataInicio ?? ""}|${dataTermino ?? ""}|${diasUteisDosEscopos}`;
+  const jaSugerido = sugeridoPara === chaveSugestao;
 
   async function sugerirAutomaticamente() {
-    if (!projetoId || !token || !dataInicio || !dataTermino) return;
+    if (!projetoId || !token || !dataInicio) return;
     setSugerindo(true);
     setErroSugestao("");
+    setAvisoSugestao("");
     try {
-      const { dias } = await sugerirDiasExcecao(projetoId, dataInicio, dataTermino, token);
+      const { dias } = await sugerirDiasExcecao(
+        projetoId,
+        dataParaIso(dataInicio),
+        dataParaIso(dataTermino) || null,
+        token,
+        diasUteisDosEscopos,
+      );
       // Merge sem duplicar — não apaga o que já foi editado à mão.
       const existentes = new Set(diasExcecao.map((d) => `${d.inicio}|${d.fim}`));
       const novos = dias.filter((d) => !existentes.has(`${d.inicio}|${d.fim}`));
       if (novos.length > 0) set(["projeto", "dias_excecao"], [...diasExcecao, ...novos]);
+      setSugeridoPara(chaveSugestao);
+      setAvisoSugestao(
+        dias.length === 0
+          ? "Nenhuma prova do calendário cai nesse intervalo."
+          : novos.length === 0
+            ? "Os dias do calendário já estavam na lista."
+            : `${novos.length} ${novos.length === 1 ? "janela adicionada" : "janelas adicionadas"} do calendário.`,
+      );
     } catch (err) {
       setErroSugestao(err instanceof Error ? err.message : "Erro ao sugerir dias de exceção");
     } finally {
@@ -359,7 +515,7 @@ function ContratoSecoes({
           <Numero dados={dados} set={set} caminho={["projeto", "num_consultores"]} label="Nº de consultores" />
           <Numero dados={dados} set={set} caminho={["projeto", "num_coordenadores"]} label="Nº de coordenadores" />
           <DataCampo dados={dados} set={set} caminho={["projeto", "data_inicio"]} label="Início" />
-          <DataCampo dados={dados} set={set} caminho={["projeto", "data_termino"]} label="Término previsto" />
+          <DataCampo dados={dados} set={set} caminho={["projeto", "data_termino"]} label="Término previsto (opcional)" />
         </FormGrid>
 
         <FormSubsecaoTitulo>Escopos (o primeiro é sempre a Ambientação)</FormSubsecaoTitulo>
@@ -407,28 +563,43 @@ function ContratoSecoes({
             <PageButtonSm
               type="button"
               $variant="outline"
-              disabled={sugerindo || !dataInicio || !dataTermino}
+              disabled={sugerindo || !dataInicio || jaSugerido}
               title={
-                !dataInicio || !dataTermino
-                  ? "Preencha início e término do projeto antes de sugerir"
-                  : undefined
+                !dataInicio
+                  ? "Preencha o início do projeto antes de sugerir"
+                  : jaSugerido
+                    ? "Já sugerido para este intervalo. Mude início, término ou escopos para sugerir de novo."
+                    : !dataTermino
+                      ? "Sem término previsto, conta os dias úteis dos escopos a partir do início"
+                      : undefined
               }
               onClick={sugerirAutomaticamente}
             >
-              {sugerindo ? "Sugerindo…" : "Sugerir a partir do calendário"}
+              {sugerindo ? "Sugerindo…" : jaSugerido ? "Sugestão aplicada" : "Sugerir a partir do calendário"}
             </PageButtonSm>
+            {avisoSugestao && (
+              <span style={{ marginLeft: "0.5rem", fontSize: "0.85rem", opacity: 0.8 }}>{avisoSugestao}</span>
+            )}
           </div>
         )}
         <FieldGroup>
           {diasExcecao.map((dia, i) => (
-            <ListaLinha key={i}>
+            <ListaLinha key={i} style={{ alignItems: "center" }}>
+              <FieldLabel as="span" style={{ margin: 0 }}>
+                De
+              </FieldLabel>
               <FieldInput
                 type="date"
+                aria-label="Início do dia de exceção"
                 value={dia?.inicio ?? ""}
                 onChange={(e) => set(["projeto", "dias_excecao", i, "inicio"], e.target.value)}
               />
+              <FieldLabel as="span" style={{ margin: 0 }}>
+                até
+              </FieldLabel>
               <FieldInput
                 type="date"
+                aria-label="Fim do dia de exceção"
                 value={dia?.fim ?? ""}
                 onChange={(e) => set(["projeto", "dias_excecao", i, "fim"], e.target.value)}
               />
@@ -460,12 +631,7 @@ function ContratoSecoes({
           <Marcar dados={dados} set={set} caminho={["financeiro", "parcelado"]} label="Pagamento parcelado" />
         </div>
         {parcelado && (
-          <FormGrid $colunas={2} style={{ marginTop: "0.75rem" }}>
-            <Numero dados={dados} set={set} caminho={["financeiro", "numero_parcelas"]} label="Nº de parcelas" />
-            <Numero dados={dados} set={set} caminho={["financeiro", "valor_parcela"]} label="Valor da parcela (R$)" />
-            <DataCampo dados={dados} set={set} caminho={["financeiro", "primeiro_vencimento"]} label="Primeiro vencimento" />
-            <Numero dados={dados} set={set} caminho={["financeiro", "dia_vencimento_mensal"]} label="Dia de vencimento mensal" />
-          </FormGrid>
+          <ParcelasCampos dados={dados} set={set} prefixo="financeiro" caminhoTotal={["financeiro", "valor_total"]} />
         )}
       </section>
     </>
@@ -564,12 +730,7 @@ function AditivoSecoes({ dados, set }: { dados: Dados; set: Setter }) {
             <Marcar dados={dados} set={set} caminho={["preco", "parcelado"]} label="Pagamento parcelado" />
           </div>
           {precoParcelado && (
-            <FormGrid $colunas={2} style={{ marginTop: "0.75rem" }}>
-              <Numero dados={dados} set={set} caminho={["preco", "numero_parcelas"]} label="Nº de parcelas" />
-              <Numero dados={dados} set={set} caminho={["preco", "valor_parcela"]} label="Valor da parcela (R$)" />
-              <DataCampo dados={dados} set={set} caminho={["preco", "primeiro_vencimento"]} label="Primeiro vencimento" />
-              <Numero dados={dados} set={set} caminho={["preco", "dia_vencimento_mensal"]} label="Dia de vencimento mensal" />
-            </FormGrid>
+            <ParcelasCampos dados={dados} set={set} prefixo="preco" caminhoTotal={["preco", "valor_novo"]} />
           )}
         </section>
       )}

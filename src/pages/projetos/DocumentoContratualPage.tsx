@@ -33,6 +33,7 @@ import {
   montarLinkWhatsapp,
   reanexarDocumento,
   recusarAssinaturaTep,
+  solicitarRevisaoInterna,
   visualizarArquivoDocumento,
 } from "@/lib/contratos";
 import type {
@@ -41,7 +42,7 @@ import type {
   SolicitacaoAlteracao,
   VersaoDocumentoContratual,
 } from "@/types/contratos";
-import { ROTULO_STATUS_DOCUMENTO, ROTULO_TIPO_DOCUMENTO } from "@/types/contratos";
+import { ROTULO_STATUS_DOCUMENTO, ROTULO_TIPO_DOCUMENTO, normalizarTrecho } from "@/types/contratos";
 import { DadosDocumentoForm } from "./DadosDocumentoForm";
 import { ConfirmarModal } from "@/components/ConfirmarModal";
 import {
@@ -207,6 +208,15 @@ export function DocumentoContratualPage() {
   const [marcandoAssinado, setMarcandoAssinado] = useState(false);
   const [considerandoAceito, setConsiderandoAceito] = useState(false);
   const [mostrarConfirmarApagar, setMostrarConfirmarApagar] = useState(false);
+  // Pedido de revisão interna (2026-11-05): a administradora jurídica devolve
+  // o rascunho com um comentário em vez de aprovar.
+  const [mostrarPedirRevisao, setMostrarPedirRevisao] = useState(false);
+  const [comentarioRevisao, setComentarioRevisao] = useState("");
+  const [pedindoRevisao, setPedindoRevisao] = useState(false);
+  // Marcar como assinado pede confirmação e, no Contrato de Prestação,
+  // pergunta se a declaração de interesse abre agora (2026-11-05).
+  const [mostrarConfirmarAssinado, setMostrarConfirmarAssinado] = useState(false);
+  const [abrirDeclaracao, setAbrirDeclaracao] = useState(true);
   const [mostrarConfirmarApagarPermanente, setMostrarConfirmarApagarPermanente] = useState(false);
   const [baixando, setBaixando] = useState<"pdf" | "docx" | null>(null);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
@@ -519,12 +529,34 @@ export function DocumentoContratualPage() {
     setMarcandoAssinado(true);
     setErro("");
     try {
-      const atualizado = await marcarAssinado(atual.id, token);
+      const atualizado = await marcarAssinado(atual.id, token, atual.tipo === "contrato" ? abrirDeclaracao : true);
       setAtual(atualizado);
+      setMostrarConfirmarAssinado(false);
     } catch (err) {
       setErro(err instanceof Error ? err.message : "Erro ao marcar como assinado");
+      throw err;
     } finally {
       setMarcandoAssinado(false);
+    }
+  }
+
+  async function handlePedirRevisao() {
+    if (!atual || !token) return;
+    if (!comentarioRevisao.trim()) {
+      setErro("Escreva o que precisa mudar no rascunho.");
+      return;
+    }
+    setPedindoRevisao(true);
+    setErro("");
+    try {
+      const atualizado = await solicitarRevisaoInterna(atual.id, comentarioRevisao.trim(), token);
+      setAtual(atualizado);
+      setComentarioRevisao("");
+      setMostrarPedirRevisao(false);
+    } catch (err) {
+      setErro(err instanceof Error ? err.message : "Erro ao pedir revisão");
+    } finally {
+      setPedindoRevisao(false);
     }
   }
 
@@ -572,12 +604,19 @@ export function DocumentoContratualPage() {
     }
   }
 
+  // "Contrato de Prestação de Serviços - Projeto X v2.pdf" (2026-11-05), o
+  // mesmo nome que o backend manda no download.
+  function nomeDoArquivo(versao: number, formato: "pdf" | "docx"): string {
+    if (!atual) return `documento_v${versao}.${formato}`;
+    return `${ROTULO_TIPO_DOCUMENTO[atual.tipo]} - ${atual.projeto_nome} v${versao}.${formato}`;
+  }
+
   async function handleBaixar(formato: "pdf" | "docx") {
     if (!atual || !token) return;
     setBaixando(formato);
     setErro("");
     try {
-      await baixarArquivoDocumento(atual.id, formato, `${atual.tipo}_v${atual.ultima_versao}.${formato}`, token);
+      await baixarArquivoDocumento(atual.id, formato, nomeDoArquivo(atual.ultima_versao ?? 0, formato), token);
     } catch (err) {
       setErro(err instanceof Error ? err.message : "Erro ao baixar arquivo");
     } finally {
@@ -590,7 +629,7 @@ export function DocumentoContratualPage() {
     setBaixandoAntigo({ versao, formato });
     setErro("");
     try {
-      await baixarArquivoDocumento(atual.id, formato, `${atual.tipo}_v${versao}.${formato}`, token, versao);
+      await baixarArquivoDocumento(atual.id, formato, nomeDoArquivo(versao, formato), token, versao);
     } catch (err) {
       setErro(err instanceof Error ? err.message : "Erro ao baixar arquivo");
     } finally {
@@ -656,7 +695,15 @@ export function DocumentoContratualPage() {
   const versoesAnteriores = versoes
     .filter((v) => v.versao !== atual.ultima_versao)
     .sort((a, b) => b.versao - a.versao);
-  const podeAprovarInternamente = atual.status === "em_revisao_interna" && !!atual.ultima_versao;
+  // 2026-11-05: o rascunho ficou pra trás (dados editados e salvos depois
+  // dele, pedido de revisão em aberto, ou edição ainda não salva nesta
+  // tela) -> "Gerar rascunho de novo" aparece, e aprovar o rascunho velho
+  // deixa de fazer sentido.
+  const dadosLocaisAlterados = !dadosTravados && JSON.stringify(dados ?? {}) !== JSON.stringify(atual.dados ?? {});
+  const rascunhoDesatualizado =
+    !!atual.ultima_versao && (atual.rascunho_desatualizado || !!atual.revisao_pendente || dadosLocaisAlterados);
+  const podeAprovarInternamente =
+    atual.status === "em_revisao_interna" && !!atual.ultima_versao && !atual.rascunho_desatualizado && !atual.revisao_pendente;
   // ⭐ 2026-09-23 — a pedido: quem não pode aprovar internamente continua
   // vendo que essa etapa existe (o botão não some), só não consegue clicar
   // — sem isto, `podeAprovarInternamente` (só por status) deixava o botão
@@ -665,7 +712,9 @@ export function DocumentoContratualPage() {
   const usuarioPodeAprovarInternamente = !!usuario?.permissoes.pode_aprovar_contrato_internamente;
   const podeExportar = atual.status === "aprovado_internamente" && !!atual.ultima_versao;
   const podeGerar =
-    STATUS_GERACAO_PERMITIDA.has(atual.status) && !podeConfirmar && !podeAprovarInternamente && !podeExportar;
+    STATUS_GERACAO_PERMITIDA.has(atual.status) &&
+    !podeConfirmar &&
+    ((!podeAprovarInternamente && !podeExportar) || rascunhoDesatualizado);
   const podeEditarRascunho = STATUS_EDICAO_TEXTO.has(atual.status) && !!atual.ultima_versao;
   const ehTep = atual.tipo === "tep";
   const podeRecusarAssinatura = ehTep && atual.status === "aprovado_pelo_cliente";
@@ -757,7 +806,7 @@ export function DocumentoContratualPage() {
                   ref={coletaRef}
                   id="coleta-dados-upload"
                   type="file"
-                  accept=".docx"
+                  accept=".docx,.pdf"
                   disabled={extraindoColeta}
                   onChange={(e) => {
                     const arquivo = e.target.files?.[0];
@@ -766,7 +815,7 @@ export function DocumentoContratualPage() {
                 />
               </ArquivoBotao>
               <ArquivoNome $vazio>
-                .docx preenchido pelo cliente — só pré-preenche (
+                .docx ou PDF preenchido pelo cliente — só pré-preenche (
                 <LinkDiscreto
                   type="button"
                   onClick={() =>
@@ -835,6 +884,29 @@ export function DocumentoContratualPage() {
           )}
         </PageCardContent>
       </PageCard>
+
+      {atual.revisoes.length > 0 && (
+        <PageCard>
+          <PageCardHeader>
+            <PageCardTitle>Revisões pedidas pela administração jurídica</PageCardTitle>
+          </PageCardHeader>
+          <PageCardContent>
+            {atual.revisoes.map((r) => (
+              <SolicitacaoCard key={r.id} style={{ marginBottom: "0.5rem" }}>
+                <AcoesLinha>
+                  <PageBadge $tone={r.atendida_em ? "success" : "warning"}>
+                    {r.atendida_em ? "atendida" : "aguardando novo rascunho"}
+                  </PageBadge>
+                  <EmptyText style={{ margin: 0 }}>
+                    {r.solicitado_por_nome ?? "Administração jurídica"} · {formatarDataHora(r.criado_em)}
+                  </EmptyText>
+                </AcoesLinha>
+                <p style={{ margin: 0, fontSize: "0.85rem", whiteSpace: "pre-wrap" }}>{r.comentario}</p>
+              </SolicitacaoCard>
+            ))}
+          </PageCardContent>
+        </PageCard>
+      )}
 
       {!!atual.ultima_versao && (
         <PageCard>
@@ -998,8 +1070,15 @@ export function DocumentoContratualPage() {
                   </PageBadge>
                 </AcoesLinha>
                 <p style={{ margin: 0, fontSize: "0.85rem" }}>{s.texto}</p>
-                {s.trechos.map((t, i) => (
-                  <TrechoCitado key={i}>{t}</TrechoCitado>
+                {s.trechos.map(normalizarTrecho).map((t, i) => (
+                  <div key={i}>
+                    <TrechoCitado>{t.texto}</TrechoCitado>
+                    {t.comentario && (
+                      <p style={{ margin: "0.125rem 0 0 0.75rem", fontSize: "0.85rem" }}>
+                        <strong>Comentário:</strong> {t.comentario}
+                      </p>
+                    )}
+                  </div>
                 ))}
                 {s.status === "pendente" && (
                   <PageButtonSm
@@ -1023,6 +1102,13 @@ export function DocumentoContratualPage() {
           {atual.status === "aguardando_aprovacao_cliente" && (
             <EmptyText style={{ margin: 0 }}>Aguardando o cliente responder pelo link enviado.</EmptyText>
           )}
+          {rascunhoDesatualizado && atual.status !== "aguardando_aprovacao_cliente" && (
+            <EmptyText style={{ margin: 0 }}>
+              {atual.revisao_pendente
+                ? "A administração jurídica pediu revisão: ajuste os dados e gere o rascunho de novo."
+                : "Os dados mudaram depois do último rascunho: gere o rascunho de novo antes de seguir."}
+            </EmptyText>
+          )}
           {atual.status === "assinado_e_arquivado" && <EmptyText style={{ margin: 0 }}>Documento arquivado.</EmptyText>}
         </div>
         <AcoesLinha>
@@ -1033,14 +1119,24 @@ export function DocumentoContratualPage() {
           )}
           {podeGerar && (
             <PageButton type="button" disabled={gerando} onClick={handleGerar}>
-              {gerando ? "Gerando..." : "Gerar rascunho"}
+              {gerando ? "Gerando..." : atual.ultima_versao ? "Gerar rascunho de novo" : "Gerar rascunho"}
             </PageButton>
           )}
           {podeAprovarInternamente &&
             (usuarioPodeAprovarInternamente ? (
-              <PageButton type="button" disabled={aprovandoInternamente} onClick={handleAprovarInternamente}>
-                {aprovandoInternamente ? "Aprovando..." : "Aprovar internamente"}
-              </PageButton>
+              <>
+                <PageButton type="button" disabled={aprovandoInternamente} onClick={handleAprovarInternamente}>
+                  {aprovandoInternamente ? "Aprovando..." : "Aprovar internamente"}
+                </PageButton>
+                <PageButton
+                  type="button"
+                  $variant="outline"
+                  disabled={aprovandoInternamente}
+                  onClick={() => setMostrarPedirRevisao(true)}
+                >
+                  Pedir revisão
+                </PageButton>
+              </>
             ) : (
               <PageButton type="button" $variant="outline" disabled title="Só quem pode aprovar internamente vê este botão liberado.">
                 Aguardando aprovação interna
@@ -1052,7 +1148,14 @@ export function DocumentoContratualPage() {
             </PageButton>
           )}
           {podeMarcarAssinado && (
-            <PageButton type="button" disabled={marcandoAssinado} onClick={handleMarcarAssinado}>
+            <PageButton
+              type="button"
+              disabled={marcandoAssinado}
+              onClick={() => {
+                setAbrirDeclaracao(true);
+                setMostrarConfirmarAssinado(true);
+              }}
+            >
               {marcandoAssinado ? "Marcando..." : "Marcar como assinado"}
             </PageButton>
           )}
@@ -1096,6 +1199,75 @@ export function DocumentoContratualPage() {
 
       {mostrarEditorTexto && (
         <EditarTextoModal documentoId={atual.id} token={token!} onClose={() => setMostrarEditorTexto(false)} />
+      )}
+
+      {mostrarConfirmarAssinado && (
+        <ConfirmarModal
+          titulo="Marcar como assinado"
+          mensagem={
+            <div style={{ display: "grid", gap: "0.75rem" }}>
+              <span>
+                O {ROTULO_TIPO_DOCUMENTO[atual.tipo]} de <strong>{atual.projeto_nome}</strong> vai para Assinado e
+                Arquivado.
+                {atual.tipo === "contrato" &&
+                  " O projeto vira Vendido e a empresa inteira é avisada."}
+              </span>
+              {atual.tipo === "contrato" && (
+                <label style={{ display: "flex", gap: "0.5rem", alignItems: "flex-start", cursor: "pointer" }}>
+                  <input
+                    type="checkbox"
+                    checked={abrirDeclaracao}
+                    onChange={(e) => setAbrirDeclaracao(e.target.checked)}
+                    style={{ marginTop: "0.2rem" }}
+                  />
+                  <span>
+                    Abrir a declaração de interesse agora. Quem é das frentes do projeto recebe, no mesmo aviso,
+                    que pode se candidatar. Sem marcar, dá para abrir depois em Configurações do projeto.
+                  </span>
+                </label>
+              )}
+            </div>
+          }
+          rotuloConfirmar="Marcar como assinado"
+          rotuloProcessando="Marcando…"
+          onConfirmar={handleMarcarAssinado}
+          onCancelar={() => setMostrarConfirmarAssinado(false)}
+        />
+      )}
+
+      {mostrarPedirRevisao && (
+        <ModalOverlay onClick={() => !pedindoRevisao && setMostrarPedirRevisao(false)}>
+          <ModalContent onClick={(e) => e.stopPropagation()}>
+            <ModalHeader>
+              <ModalTitle>Pedir revisão do rascunho</ModalTitle>
+              <ModalClose type="button" onClick={() => setMostrarPedirRevisao(false)} aria-label="Fechar">
+                ×
+              </ModalClose>
+            </ModalHeader>
+            <ModalBody>
+              <EmptyText style={{ marginTop: 0 }}>
+                O documento continua em revisão interna. Quem elabora o contrato recebe o seu comentário e gera o
+                rascunho de novo.
+              </EmptyText>
+              <FieldLabel htmlFor="comentario-revisao">O que precisa mudar?</FieldLabel>
+              <FieldTextarea
+                id="comentario-revisao"
+                rows={5}
+                value={comentarioRevisao}
+                onChange={(e) => setComentarioRevisao(e.target.value)}
+                autoFocus
+              />
+            </ModalBody>
+            <ModalFooter>
+              <PageButton type="button" $variant="outline" disabled={pedindoRevisao} onClick={() => setMostrarPedirRevisao(false)}>
+                Cancelar
+              </PageButton>
+              <PageButton type="button" disabled={pedindoRevisao || !comentarioRevisao.trim()} onClick={handlePedirRevisao}>
+                {pedindoRevisao ? "Enviando..." : "Pedir revisão"}
+              </PageButton>
+            </ModalFooter>
+          </ModalContent>
+        </ModalOverlay>
       )}
 
       {mostrarConfirmarApagar && (

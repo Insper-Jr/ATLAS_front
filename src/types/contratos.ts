@@ -73,6 +73,28 @@ export interface DocumentoContratual {
    *  `null` = nenhum link ativo agora (nunca exportado, ou o cliente já
    *  respondeu e o token virou usado). */
   link_aprovacao: LinkAprovacao | null;
+  /** 2026-11-05: os dados foram editados depois da última versão gerada,
+   *  então o rascunho ficou pra trás e o botão "Gerar rascunho de novo"
+   *  aparece mesmo em revisão interna. */
+  rascunho_desatualizado: boolean;
+  /** O pedido de revisão da administradora jurídica ainda não atendido
+   *  (some quando uma versão nova é gerada ou reanexada). */
+  revisao_pendente: RevisaoInterna | null;
+  revisoes: RevisaoInterna[];
+}
+
+/** Pedido de revisão INTERNA (2026-11-05): a administradora jurídica, em vez
+ *  de aprovar, escreve o que quer que mude. Não confundir com
+ *  `SolicitacaoAlteracao`, que é o pedido do cliente. */
+export interface RevisaoInterna {
+  id: number;
+  documento_id: number;
+  versao_id: number | null;
+  comentario: string;
+  solicitado_por: number | null;
+  solicitado_por_nome: string | null;
+  criado_em: string;
+  atendida_em: string | null;
 }
 
 /** Resposta de `POST .../exportar-aprovacao` e `.../recusar-assinatura-tep`.
@@ -85,14 +107,25 @@ export interface LinkAprovacao {
   mensagem_whatsapp: string;
 }
 
+/** Um trecho citado pelo cliente, com o comentário dele sobre AQUELE trecho
+ *  (2026-11-05). Pedidos antigos guardavam só o texto (string). */
+export interface TrechoCitado {
+  texto: string;
+  comentario: string | null;
+}
+
 export interface SolicitacaoAlteracao {
   id: number;
   documento_id: number;
   versao_id: number;
   texto: string;
-  trechos: string[];
+  trechos: (TrechoCitado | string)[];
   status: "pendente" | "analisada";
   criado_em: string;
+}
+
+export function normalizarTrecho(trecho: TrechoCitado | string): TrechoCitado {
+  return typeof trecho === "string" ? { texto: trecho, comentario: null } : trecho;
 }
 
 /** O que a tela pública de aprovação (`/aprovacao/:token`, sem login) recebe.
@@ -161,6 +194,15 @@ export interface IdentidadeInstitucional {
 
 /** Resposta de `POST .../extrair-coleta` — não persiste nada, o front decide
  *  aplicar `dados` no formulário. */
+/** Projeto vendido nas últimas 36 horas: a comemoração na abertura do ATLAS
+ *  (`GET /projetos/vendidos-recentes`). */
+export interface ProjetoVendidoRecente {
+  id: number;
+  nome: string;
+  cliente: string | null;
+  vendido_em: string;
+}
+
 export interface ExtracaoColeta {
   dados: Record<string, unknown>;
   pendencias: string[];
@@ -217,9 +259,21 @@ export interface DiaExcecao {
   fim: string;
 }
 
+/** Uma parcela desenhada à mão (2026-11-05): a data e como o valor é
+ *  definido, em reais, em porcentagem do total, ou "o que sobrar". */
+export interface ParcelaPersonalizada {
+  vencimento: string;
+  tipo: "valor" | "percentual" | "restante";
+  valor: number | null;
+}
+
 export interface Financeiro {
   valor_total: number;
   parcelado: boolean;
+  /** "iguais" (N parcelas iguais, todo mês no mesmo dia) é o padrão quando
+   *  ausente; "personalizadas" usa a lista `parcelas`. */
+  modo_parcelas?: "iguais" | "personalizadas";
+  parcelas?: ParcelaPersonalizada[];
   numero_parcelas: number;
   valor_parcela: number;
   primeiro_vencimento: string;
@@ -275,6 +329,8 @@ export interface DadosAditivo {
     valor_antigo: number | null;
     valor_novo: number | null;
     parcelado: boolean;
+    modo_parcelas?: "iguais" | "personalizadas";
+    parcelas?: ParcelaPersonalizada[];
     numero_parcelas: number | null;
     valor_parcela: number | null;
     primeiro_vencimento: string;

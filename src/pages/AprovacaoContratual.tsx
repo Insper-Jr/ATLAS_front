@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import { useParams } from "react-router-dom";
 import { useLogoInsperJr } from "@/lib/logo-insper-jr";
 import { getAprovacao, getTextoAprovacao, responderAprovacao, urlArquivoAprovacao } from "@/lib/contratos";
-import type { AprovacaoPublica } from "@/types/contratos";
+import type { AprovacaoPublica, TrechoCitado } from "@/types/contratos";
 import { ROTULO_TIPO_DOCUMENTO } from "@/types/contratos";
 import { PageButton, PageButtonSm, ErrorText, PageLoadingBlock } from "@/styles/page.styled";
 import { FieldGroup, FieldLabel, FieldTextarea } from "./Bancas.styled";
@@ -52,7 +52,10 @@ export function AprovacaoContratual() {
 
   const [modo, setModo] = useState<"nenhum" | "alteracao">("nenhum");
   const [texto, setTexto] = useState("");
-  const [trechos, setTrechos] = useState<string[]>([]);
+  // Cada trecho citado leva o próprio comentário (2026-11-05): com vários
+  // trechos, um comentário geral só ficava confuso. Nenhum trecho é
+  // obrigatório; o texto geral também não, se algum trecho tiver comentário.
+  const [trechos, setTrechos] = useState<TrechoCitado[]>([]);
   const [enviando, setEnviando] = useState(false);
 
   const textoRef = useRef<HTMLDivElement>(null);
@@ -91,8 +94,9 @@ export function AprovacaoContratual() {
 
   function citarTrechoSelecionado() {
     if (!botaoCitar) return;
-    if (trechos.length < MAXIMO_TRECHOS && !trechos.includes(botaoCitar.texto)) {
-      setTrechos((atuais) => [...atuais, botaoCitar.texto]);
+    const textoCitado = botaoCitar.texto;
+    if (trechos.length < MAXIMO_TRECHOS && !trechos.some((t) => t.texto === textoCitado)) {
+      setTrechos((atuais) => [...atuais, { texto: textoCitado, comentario: null }]);
     }
     window.getSelection()?.removeAllRanges();
     setBotaoCitar(null);
@@ -112,8 +116,9 @@ export function AprovacaoContratual() {
   }
 
   async function handleSolicitarAlteracao() {
-    if (!texto.trim()) {
-      setErro("Descreva o que precisa ser ajustado.");
+    const temComentarioEmTrecho = trechos.some((t) => (t.comentario ?? "").trim());
+    if (!texto.trim() && !temComentarioEmTrecho) {
+      setErro("Descreva o que precisa ser ajustado, no geral ou em algum trecho citado.");
       return;
     }
     setEnviando(true);
@@ -183,7 +188,7 @@ export function AprovacaoContratual() {
             ) : (
               <>
                 <FieldGroup>
-                  <FieldLabel htmlFor="texto-alteracao">O que precisa ser ajustado?</FieldLabel>
+                  <FieldLabel htmlFor="texto-alteracao">O que precisa ser ajustado? (comentário geral)</FieldLabel>
                   <FieldTextarea
                     id="texto-alteracao"
                     rows={4}
@@ -194,7 +199,9 @@ export function AprovacaoContratual() {
                 </FieldGroup>
 
                 <FieldGroup>
-                  <TextoDocumentoTitulo>Selecione um trecho abaixo pra citar (opcional)</TextoDocumentoTitulo>
+                  <TextoDocumentoTitulo>
+                    Se quiser, selecione trechos abaixo pra citar e comente cada um (opcional)
+                  </TextoDocumentoTitulo>
                   <TextoDocumentoBloco ref={textoRef}>
                     {paragrafos.map((p, i) => (
                       <p key={i}>{p}</p>
@@ -204,8 +211,8 @@ export function AprovacaoContratual() {
                   {trechos.length > 0 && (
                     <TrechosCitadosLista>
                       {trechos.map((trecho, i) => (
-                        <TrechoCitadoLinha key={i}>
-                          <blockquote>{trecho}</blockquote>
+                        <TrechoCitadoLinha key={i} style={{ flexWrap: "wrap" }}>
+                          <blockquote>{trecho.texto}</blockquote>
                           <ListaRemoverBotao
                             type="button"
                             aria-label="Remover trecho citado"
@@ -213,6 +220,17 @@ export function AprovacaoContratual() {
                           >
                             ×
                           </ListaRemoverBotao>
+                          <FieldTextarea
+                            rows={2}
+                            style={{ flexBasis: "100%" }}
+                            placeholder="O que mudar neste trecho?"
+                            value={trecho.comentario ?? ""}
+                            onChange={(e) =>
+                              setTrechos((atuais) =>
+                                atuais.map((t, j) => (j === i ? { ...t, comentario: e.target.value } : t)),
+                              )
+                            }
+                          />
                         </TrechoCitadoLinha>
                       ))}
                     </TrechosCitadosLista>

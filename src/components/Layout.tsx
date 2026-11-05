@@ -4,6 +4,7 @@ import { Bell, Menu } from "lucide-react";
 import { NotificacoesProvider, useNotificacoes } from "@/context/NotificacoesContext";
 import { useLogoInsperJr } from "@/lib/logo-insper-jr";
 import { Sidebar } from "./Sidebar";
+import { CelebracaoVenda } from "./CelebracaoVenda";
 import {
   ID_MENU_LATERAL,
   LayoutWrapper,
@@ -117,6 +118,9 @@ export function Layout() {
         <Main>
           <Outlet />
         </Main>
+        {/* Confetes de projeto vendido (2026-11-05): monta uma vez por
+            abertura do app, junto com o shell, não por página. */}
+        <CelebracaoVenda />
       </LayoutWrapper>
     </NotificacoesProvider>
   );
