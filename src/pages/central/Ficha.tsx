@@ -1,13 +1,17 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Link, useLocation, useParams } from "react-router-dom";
-import { ArrowLeft, Check, Paperclip, Trash2 } from "lucide-react";
+import { ArrowLeft, Check, Paperclip, Plus, Trash2, X } from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
 import {
+  ROTULO_BLOCO,
   ROTULO_VIA,
   abrirAnexo,
   anexarArquivo,
   apagarAnexo,
+  chipsDeStatus,
+  codigoEGestao,
   decidirPertinencia,
+  definirPerguntasRevisor,
   editarFicha,
   enviarParaRevisao,
   getFicha,
@@ -17,8 +21,10 @@ import {
   publicarFicha,
   urlDoAnexo,
   type AnexoFicha,
+  type Bloco,
   type EditarFichaPayload,
   type FichaCompleta,
+  type ItemGaleria,
   type OpcoesCentral,
 } from "@/lib/central";
 import { camposFaltandoDoErro } from "@/lib/api";
@@ -34,17 +40,25 @@ import {
   AnexosGrid,
   AvisoCaixa,
   BarraAcoes,
+  BlocoCard,
+  Blocos,
   CabecalhoFicha,
   CabecalhoFichaLinha,
   Chip,
   Documento,
   DocumentoGrid,
+  DuasListas,
+  GaleriaItemEdicao,
+  GaleriaSlides,
   Historico,
   Indice,
   IndiceCreditos,
+  Lightbox,
   Meta,
+  Numeros,
   PassoLinha,
   PassosDoc,
+  PerguntasRevisor,
   Resposta,
   RespostasGrid,
   SecaoAjuda,
@@ -56,6 +70,7 @@ import {
   TituloFicha,
 } from "./Central.styled";
 import { IconeCategoria, LinhaDoTempo } from "./FichaCard";
+import { BotoesItem, ListaTextos } from "./editores";
 
 interface Form {
   titulo: string;
@@ -68,20 +83,63 @@ interface Form {
   em_uma_frase: string;
   problema: string;
   passos: string[];
-  quando_usar: string;
+  /** Uma situação por linha. */
+  funciona_bem: string;
+  nao_ajuda: string;
   onde_aparece: string;
+  galeria: ItemGaleriaForm[];
+  blocos: Bloco[];
+  respostas_revisor: string[];
   visao_autores: string[];
   pontos_atencao: string;
   revisar_em: string;
   apontada_diagnostico: boolean;
 }
 
+interface ItemGaleriaForm {
+  anexo_id: number;
+  titulo: string;
+  descricao: string;
+  pagina: string;
+}
+
+/** O bloco como vai para a API: a imagem só leva o id do anexo. */
+function semAnexo(b: Bloco): Bloco {
+  if (b.tipo === "imagem") return { tipo: "imagem", titulo: b.titulo, legenda: b.legenda, anexo_id: b.anexo_id };
+  return { ...b };
+}
+
+function blocoNovo(tipo: Bloco["tipo"], primeiraImagem: number | null): Bloco | null {
+  switch (tipo) {
+    case "codigo":
+      return { tipo, titulo: "", arquivo: "", texto: "", legenda: "" };
+    case "numeros":
+      return { tipo, titulo: "", itens: [["", ""]] };
+    case "lista":
+      return { tipo, titulo: "", itens: [""] };
+    case "aviso":
+      return { tipo, titulo: "Antes de tudo", texto: "" };
+    case "texto":
+      return { tipo, titulo: "", texto: "" };
+    case "imagem":
+      return primeiraImagem ? { tipo, titulo: "", legenda: "", anexo_id: primeiraImagem } : null;
+  }
+}
+
+function linhas(texto: string): string[] {
+  return texto
+    .split("\n")
+    .map((l) => l.replace(/^[-•*]\s*/, "").trim())
+    .filter(Boolean);
+}
+
 const ROTULO_CAMPO: Record<string, string> = {
   em_uma_frase: "1. Em uma frase",
   problema: "2. Problema que resolveu",
   passos: "3. Como funciona",
-  quando_usar: "4. Quando usar",
-  visao_autores: "6. Como foi feito, na visão de quem fez",
+  funciona_bem: "4. Quando usar (funciona bem)",
+  perguntas_revisor: "7. Pontos para os autores responderem",
+  visao_autores: "8. Como foi feito, na visão de quem fez",
 };
 
 const SECOES = [
@@ -89,9 +147,11 @@ const SECOES = [
   ["s2", "2. Problema que resolveu"],
   ["s3", "3. Como funciona"],
   ["s4", "4. Quando usar"],
-  ["s5", "5. Onde aparece no projeto"],
-  ["s6", "6. Como foi feito"],
-  ["s7", "7. Pontos de atenção"],
+  ["s5", "5. No projeto"],
+  ["s6", "6. Por que virou referência"],
+  ["s7", "7. Pontos para os autores"],
+  ["s8", "8. Como foi feito"],
+  ["s9", "9. Pontos de atenção"],
 ] as const;
 
 function formDaFicha(f: FichaCompleta): Form {
@@ -108,8 +168,12 @@ function formDaFicha(f: FichaCompleta): Form {
     em_uma_frase: f.em_uma_frase ?? "",
     problema: f.problema ?? "",
     passos: f.passos.length > 0 ? [...f.passos] : ["", "", ""],
-    quando_usar: f.quando_usar ?? "",
+    funciona_bem: f.funciona_bem.join("\n"),
+    nao_ajuda: f.nao_ajuda.join("\n"),
     onde_aparece: f.onde_aparece ?? "",
+    galeria: f.galeria.map((g) => ({ anexo_id: g.anexo_id, titulo: g.titulo, descricao: g.descricao, pagina: g.pagina })),
+    blocos: f.blocos.map((b) => semAnexo(b)),
+    respostas_revisor: f.perguntas_revisor.map((q) => q.resposta),
     visao_autores: respostas,
     pontos_atencao: f.pontos_atencao ?? "",
     revisar_em: f.revisar_em ?? "",
@@ -132,11 +196,22 @@ function diferencas(form: Form, ficha: FichaCompleta): EditarFichaPayload {
   if (form.por_que_se_destacou.trim() !== ficha.por_que_se_destacou && form.por_que_se_destacou.trim()) {
     d.por_que_se_destacou = form.por_que_se_destacou.trim();
   }
-  for (const campo of ["em_uma_frase", "problema", "quando_usar", "onde_aparece", "pontos_atencao", "revisar_em"] as const) {
+  for (const campo of ["em_uma_frase", "problema", "onde_aparece", "pontos_atencao", "revisar_em"] as const) {
     if (texto(form[campo]) !== (ficha[campo] ?? null)) d[campo] = texto(form[campo]);
   }
   const passos = form.passos.map((p) => p.trim()).filter(Boolean);
   if (passos.join("\n") !== ficha.passos.join("\n")) d.passos = passos;
+  for (const lista of ["funciona_bem", "nao_ajuda"] as const) {
+    const itens = linhas(form[lista]);
+    if (itens.join("\n") !== ficha[lista].join("\n")) d[lista] = itens;
+  }
+  const galeria = form.galeria.map((g) => ({ anexo_id: g.anexo_id, titulo: g.titulo.trim(), descricao: g.descricao.trim(), pagina: g.pagina.trim() }));
+  const galeriaAtual = ficha.galeria.map((g) => ({ anexo_id: g.anexo_id, titulo: g.titulo, descricao: g.descricao, pagina: g.pagina }));
+  if (JSON.stringify(galeria) !== JSON.stringify(galeriaAtual)) d.galeria = galeria;
+  const blocos = form.blocos.map(semAnexo);
+  if (JSON.stringify(blocos) !== JSON.stringify(ficha.blocos.map(semAnexo))) d.blocos = blocos;
+  const respostasRevisor = form.respostas_revisor.map((r) => r.trim());
+  if (respostasRevisor.join("\n") !== ficha.perguntas_revisor.map((q) => q.resposta.trim()).join("\n")) d.respostas_revisor = respostasRevisor;
   const respostas = form.visao_autores.map((r) => r.trim());
   if (respostas.join("\n") !== ficha.visao_autores.map((r) => r.trim()).join("\n")) d.visao_autores = respostas;
   if (form.apontada_diagnostico !== ficha.apontada_diagnostico) d.apontada_diagnostico = form.apontada_diagnostico;
@@ -165,9 +240,208 @@ function Miniatura({ anexo, token }: { anexo: AnexoFicha; token: string }) {
   return <img src={url} alt={anexo.legenda ?? anexo.nome} />;
 }
 
+/** Um bloco opcional em leitura (plano, 1.5). */
+function BlocoLeitura({ bloco, token, onAmpliar }: { bloco: Bloco; token: string; onAmpliar: (item: ItemGaleria) => void }) {
+  if (bloco.tipo === "aviso") {
+    return (
+      <AvisoCaixa $tom="atencao">
+        {bloco.titulo && <strong>{bloco.titulo}. </strong>}
+        {bloco.texto}
+      </AvisoCaixa>
+    );
+  }
+  if (bloco.tipo === "codigo") {
+    return (
+      <BlocoCard>
+        <h4>
+          {bloco.titulo}
+          {bloco.arquivo && <code className="arquivo">{bloco.arquivo}</code>}
+        </h4>
+        <pre>{bloco.texto}</pre>
+        {bloco.legenda && <span className="legenda">{bloco.legenda}</span>}
+      </BlocoCard>
+    );
+  }
+  if (bloco.tipo === "numeros") {
+    return (
+      <BlocoCard>
+        {bloco.titulo && <h4>{bloco.titulo}</h4>}
+        <Numeros>
+          {bloco.itens.map(([rotulo, valor], i) => (
+            <div key={i}>
+              <b className={valor.length > 18 ? "longo" : undefined}>{valor}</b>
+              <span>{rotulo}</span>
+            </div>
+          ))}
+        </Numeros>
+      </BlocoCard>
+    );
+  }
+  if (bloco.tipo === "lista") {
+    return (
+      <BlocoCard>
+        {bloco.titulo && <h4>{bloco.titulo}</h4>}
+        <ul>
+          {bloco.itens.map((item, i) => (
+            <li key={i}>{item}</li>
+          ))}
+        </ul>
+      </BlocoCard>
+    );
+  }
+  if (bloco.tipo === "imagem") {
+    if (!bloco.anexo) return null;
+    const anexo = bloco.anexo;
+    const item: ItemGaleria = { anexo_id: bloco.anexo_id, titulo: bloco.titulo, descricao: bloco.legenda, pagina: "", anexo };
+    return (
+      <BlocoCard>
+        {bloco.titulo && <h4>{bloco.titulo}</h4>}
+        <figure>
+          <button type="button" onClick={() => onAmpliar(item)} aria-label={`Ampliar ${bloco.titulo || anexo.nome}`}>
+            <Miniatura anexo={anexo} token={token} />
+          </button>
+          {bloco.legenda && <figcaption>{bloco.legenda}</figcaption>}
+        </figure>
+      </BlocoCard>
+    );
+  }
+  return (
+    <BlocoCard>
+      {bloco.titulo && <h4>{bloco.titulo}</h4>}
+      <Texto>{bloco.texto}</Texto>
+    </BlocoCard>
+  );
+}
+
+function moverItem<T>(lista: T[], i: number, delta: number): T[] {
+  const j = i + delta;
+  if (j < 0 || j >= lista.length) return lista;
+  const nova = [...lista];
+  [nova[i], nova[j]] = [nova[j], nova[i]];
+  return nova;
+}
+
+/** Um bloco opcional em edição: os campos do tipo dele. */
+function BlocoEdicao({
+  bloco,
+  imagens,
+  token,
+  onChange,
+  onSubir,
+  onDescer,
+  onRemover,
+}: {
+  bloco: Bloco;
+  imagens: AnexoFicha[];
+  token: string;
+  onChange: (b: Bloco) => void;
+  onSubir?: () => void;
+  onDescer?: () => void;
+  onRemover: () => void;
+}) {
+  const mono = { fontFamily: "ui-monospace, SFMono-Regular, Menlo, Consolas, monospace", fontSize: "0.8rem" };
+  return (
+    <BlocoCard>
+      <h4>
+        <Chip>{ROTULO_BLOCO[bloco.tipo]}</Chip>
+        <span style={{ marginLeft: "auto" }}>
+          <BotoesItem onSubir={onSubir} onDescer={onDescer} onRemover={onRemover} />
+        </span>
+      </h4>
+      <FieldInput aria-label="Título do bloco" maxLength={200} value={bloco.titulo} onChange={(e) => onChange({ ...bloco, titulo: e.target.value })} placeholder="Título" />
+      {bloco.tipo === "codigo" && (
+        <>
+          <FieldInput aria-label="Nome do arquivo" maxLength={120} value={bloco.arquivo} onChange={(e) => onChange({ ...bloco, arquivo: e.target.value })} placeholder="Nome do arquivo (ex.: montecarlo.py)" style={mono} />
+          <FieldTextarea aria-label="Código" rows={6} value={bloco.texto} onChange={(e) => onChange({ ...bloco, texto: e.target.value })} placeholder="O trecho de código" style={mono} />
+          <FieldInput aria-label="Legenda do código" maxLength={300} value={bloco.legenda} onChange={(e) => onChange({ ...bloco, legenda: e.target.value })} placeholder="Legenda (o que o trecho faz)" />
+        </>
+      )}
+      {(bloco.tipo === "aviso" || bloco.tipo === "texto") && (
+        <FieldTextarea aria-label="Texto do bloco" rows={3} value={bloco.texto} onChange={(e) => onChange({ ...bloco, texto: e.target.value })} placeholder={bloco.tipo === "aviso" ? "O que precisa ser dito antes de tudo" : "Texto"} />
+      )}
+      {bloco.tipo === "lista" && <ListaTextos rotulo="Itens" itens={bloco.itens} onChange={(itens) => onChange({ ...bloco, itens })} placeholder="Um item" />}
+      {bloco.tipo === "numeros" && (
+        <div style={{ display: "flex", flexDirection: "column", gap: "0.375rem" }}>
+          {bloco.itens.map(([rotulo, valor], i) => (
+            <PassoLinha key={i}>
+              <FieldInput aria-label={`Rótulo ${i + 1}`} value={rotulo} onChange={(e) => onChange({ ...bloco, itens: bloco.itens.map((x, j) => (j === i ? ([e.target.value, x[1]] as [string, string]) : x)) })} placeholder="Rótulo (ex.: Probabilidade de VPL positivo)" />
+              <FieldInput aria-label={`Valor ${i + 1}`} value={valor} onChange={(e) => onChange({ ...bloco, itens: bloco.itens.map((x, j) => (j === i ? ([x[0], e.target.value] as [string, string]) : x)) })} placeholder="Valor (ex.: 59,76%)" style={{ maxWidth: "11rem" }} />
+              <BotoesItem onSubir={() => onChange({ ...bloco, itens: moverItem(bloco.itens, i, -1) })} onDescer={() => onChange({ ...bloco, itens: moverItem(bloco.itens, i, 1) })} onRemover={() => onChange({ ...bloco, itens: bloco.itens.filter((_, j) => j !== i) })} />
+            </PassoLinha>
+          ))}
+          <div>
+            <PageButtonSm type="button" $variant="outline" onClick={() => onChange({ ...bloco, itens: [...bloco.itens, ["", ""]] })}>
+              <Plus size={14} /> Adicionar número
+            </PageButtonSm>
+          </div>
+        </div>
+      )}
+      {bloco.tipo === "imagem" && (
+        <div style={{ display: "grid", gridTemplateColumns: "8rem minmax(0, 1fr)", gap: "0.75rem", alignItems: "start" }}>
+          <div style={{ aspectRatio: "16 / 9", borderRadius: "0.5rem", overflow: "hidden", background: "var(--atlas-muted)" }}>
+            {(() => {
+              const anexo = imagens.find((a) => a.id === bloco.anexo_id);
+              return anexo ? <Miniatura anexo={anexo} token={token} /> : <span>Imagem apagada</span>;
+            })()}
+          </div>
+          <div style={{ display: "flex", flexDirection: "column", gap: "0.5rem" }}>
+            <FieldSelect aria-label="Imagem anexada" value={String(bloco.anexo_id)} onChange={(e) => onChange({ ...bloco, anexo_id: Number(e.target.value) })}>
+              {imagens.map((a) => (
+                <option key={a.id} value={String(a.id)}>
+                  {a.legenda || a.nome}
+                </option>
+              ))}
+            </FieldSelect>
+            <FieldInput aria-label="Legenda da imagem" maxLength={300} value={bloco.legenda} onChange={(e) => onChange({ ...bloco, legenda: e.target.value })} placeholder="Legenda" />
+          </div>
+        </div>
+      )}
+    </BlocoCard>
+  );
+}
+
+/** A imagem da galeria ampliada por cima da página, como na Capacitação:
+ *  Esc, o X ou clicar fora fecham. */
+function Ampliada({ item, token, onFechar }: { item: ItemGaleria; token: string; onFechar: () => void }) {
+  const [url, setUrl] = useState<string | null>(null);
+  useEffect(() => {
+    let vivo = true;
+    let criado: string | null = null;
+    urlDoAnexo(item.anexo, token)
+      .then((u) => {
+        criado = u;
+        if (vivo) setUrl(u);
+      })
+      .catch(() => {});
+    return () => {
+      vivo = false;
+      if (criado) URL.revokeObjectURL(criado);
+    };
+  }, [item, token]);
+  useEffect(() => {
+    function aoTeclar(e: KeyboardEvent) {
+      if (e.key === "Escape") onFechar();
+    }
+    window.addEventListener("keydown", aoTeclar);
+    return () => window.removeEventListener("keydown", aoTeclar);
+  }, [onFechar]);
+  const legenda = [item.titulo, item.descricao].filter(Boolean).join(". ") + (item.pagina ? ` · ${item.pagina}` : "");
+  return (
+    <Lightbox role="dialog" aria-label={legenda || item.anexo.nome} onMouseDown={onFechar}>
+      <button type="button" className="fechar" aria-label="Fechar" onClick={onFechar}>
+        <X size={20} />
+      </button>
+      <figure onMouseDown={(e) => e.stopPropagation()}>
+        {url ? <img src={url} alt={legenda || item.anexo.nome} /> : <span>…</span>}
+        <figcaption>{legenda || item.anexo.nome}</figcaption>
+      </figure>
+    </Lightbox>
+  );
+}
+
 /**
  * A ficha aberta como documento: cabeçalho com o ícone da categoria, índice lateral e as
- * sete seções numeradas. Para quem está com ela, as seções viram campos.
+ * oito seções numeradas. Para quem está com ela, as seções viram campos.
  * As ações de cada papel vêm prontas do backend em `permissoes`.
  */
 export function Ficha() {
@@ -194,6 +468,11 @@ export function Ficha() {
   const [projetoUso, setProjetoUso] = useState("");
   const [legenda, setLegenda] = useState("");
   const arquivoRef = useRef<HTMLInputElement>(null);
+  const [ampliada, setAmpliada] = useState<ItemGaleria | null>(null);
+  // O revisor edita as perguntas num bloco próprio, salvo na hora (não faz
+  // parte do formulário dos autores).
+  const [perguntas, setPerguntas] = useState<string[] | null>(null);
+  const [tipoNovoBloco, setTipoNovoBloco] = useState<Bloco["tipo"]>("aviso");
 
   const carregar = useCallback(async () => {
     if (!token || !fichaId) return;
@@ -342,17 +621,42 @@ export function Ficha() {
     setConfirmandoUso(false);
   }
 
+  async function aoSalvarPerguntas() {
+    if (!token || !ficha || perguntas === null) return;
+    setSalvando(true);
+    setErro("");
+    try {
+      const f = await definirPerguntasRevisor(ficha.id, perguntas.map((q) => q.trim()).filter(Boolean), token);
+      setFicha(f);
+      setForm(formDaFicha(f));
+      setPerguntas(null);
+    } catch (err) {
+      setErro(err instanceof Error ? err.message : "Não foi possível salvar as perguntas");
+    } finally {
+      setSalvando(false);
+    }
+  }
+
   async function aoAnexar(arquivos: FileList | null) {
     if (!token || !ficha || !arquivos || arquivos.length === 0) return;
     setSalvando(true);
     setErro("");
     try {
+      // O que foi digitado até aqui vai junto, senão a recarga apagaria.
+      await salvar();
       for (const arquivo of Array.from(arquivos)) {
         await anexarArquivo(ficha.id, arquivo, legenda, token);
       }
       setLegenda("");
       if (arquivoRef.current) arquivoRef.current.value = "";
-      await carregar();
+      // Imagem nova entra na galeria na hora, com a legenda como título;
+      // quem edita ajusta a frase e a página e salva.
+      const f = await getFicha(ficha.id, token);
+      const conhecidas = new Set(ficha.anexos.map((a) => a.id));
+      const novas = f.anexos.filter((a) => a.imagem && !conhecidas.has(a.id) && !f.galeria.some((g) => g.anexo_id === a.id));
+      const base = formDaFicha(f);
+      setFicha(f);
+      setForm({ ...base, galeria: [...base.galeria, ...novas.map((a) => ({ anexo_id: a.id, titulo: a.legenda ?? "", descricao: "", pagina: "" }))] });
     } catch (err) {
       setErro(err instanceof Error ? err.message : "Não foi possível anexar");
     } finally {
@@ -385,6 +689,47 @@ export function Ficha() {
   const p = ficha.permissoes;
   const falta = (c: string) => faltando.includes(c);
   const marca = (c: string) => (falta(c) ? { borderColor: "var(--atlas-destructive)" } : undefined);
+  const naGaleria = new Set(form.galeria.map((g) => g.anexo_id));
+  // Imagens anexadas que ainda não viraram slide da galeria.
+  const imagensSobrando = ficha.anexos.filter((a) => a.imagem && !naGaleria.has(a.id));
+  // Na leitura, a grade de anexos mostra só o que não está na galeria.
+  const anexosForaDaGaleria = ficha.anexos.filter((a) => !ficha.galeria.some((g) => g.anexo_id === a.id));
+  const faltam = editando ? form.respostas_revisor.filter((r) => !r.trim()).length : ficha.faltam_respostas;
+  // O fluxo com o nome de quem fez cada passo (1.6). Quem enviou à revisão
+  // só está no histórico.
+  const enviouRevisao = [...(ficha.historico ?? [])].reverse().find((h) => h.acao === "enviou_revisao");
+  const fluxo: [string, string][] = [
+    [
+      "Indicada",
+      ficha.indicacoes.length > 1
+        ? `${ficha.indicacoes.length} indicações: ${ficha.indicacoes.map((i) => i.usuario_nome ?? "alguém").join(", ")}`
+        : `${ficha.indicado_por_nome ?? "alguém"}, ${ROTULO_VIA[ficha.indicado_via]}`,
+    ],
+    [
+      "Aprovada",
+      ficha.status === "aguardando_gerente" ? "aguardando o gerente" : ficha.status === "devolvida" ? `devolvida por ${ficha.decidido_por_nome ?? "gerente"}` : (ficha.decidido_por_nome ?? "gerente da frente"),
+    ],
+    [
+      "Autores",
+      ficha.status === "com_autores" || ficha.status === "ajustes_pedidos"
+        ? "escrevendo"
+        : enviouRevisao
+          ? `enviada por ${enviouRevisao.usuario_nome ?? "autores"}`
+          : ficha.status === "aguardando_gerente" || ficha.status === "devolvida"
+            ? "ainda não"
+            : "escreveram",
+    ],
+    [
+      "Publicação",
+      ficha.status === "publicada" ? (ficha.publicado_por_nome ?? "diretor de projetos") : ficha.status === "revisao_final" ? "em revisão pelo diretor" : "ainda não",
+    ],
+  ];
+  function itemGaleria(i: number, mudanca: Partial<ItemGaleriaForm>) {
+    campo(
+      "galeria",
+      form!.galeria.map((g, j) => (j === i ? { ...g, ...mudanca } : g)),
+    );
+  }
   const meta = [
     ficha.projeto_nome ? `${ficha.projeto_nome}${ficha.cliente ? ` · ${ficha.cliente}` : ""}` : null,
     [ficha.frente_nome ?? "Transversal", ficha.escopo_nome].filter(Boolean).join(" · "),
@@ -406,11 +751,18 @@ export function Ficha() {
           <IconeCategoria ficha={ficha} grande />
           <div style={{ flex: 1, minWidth: 0, display: "flex", flexDirection: "column", gap: "0.625rem" }}>
             <Tags>
+              <span style={{ fontSize: "0.75rem", fontWeight: 600, letterSpacing: "0.06em", color: "var(--atlas-muted-foreground)", fontVariantNumeric: "tabular-nums" }}>
+                REF {codigoEGestao(ficha)}
+              </span>
               {ficha.categorias.map((c) => (
                 <Chip key={c.chave}>{c.nome}</Chip>
               ))}
-              {ficha.apontada_diagnostico && <Chip $tom="primario">Apontada pelo Diagnóstico</Chip>}
-              <Chip $tom={ficha.status === "publicada" ? "ok" : ficha.status === "devolvida" ? "neutro" : "atencao"}>{ficha.status_rotulo}</Chip>
+              {ficha.apontada_diagnostico && <Chip $tom="primario">Também apontada pelo Diagnóstico</Chip>}
+              {chipsDeStatus(ficha).map((c) => (
+                <Chip key={c.texto} $tom={c.tom}>
+                  {c.texto}
+                </Chip>
+              ))}
             </Tags>
             {editando ? (
               <FieldInput maxLength={200} value={form.titulo} onChange={(e) => campo("titulo", e.target.value)} aria-label="Título" style={{ fontSize: "1.125rem", fontWeight: 600 }} />
@@ -428,23 +780,35 @@ export function Ficha() {
               ))}
             </Meta>
           </div>
-          {p.marcar_uso && (
+          {(p.marcar_uso || ficha.anexos.length > 0) && (
             <div style={{ flex: "0 0 auto", display: "flex", flexDirection: "column", gap: "0.5rem", alignItems: "flex-end" }}>
+              {ficha.anexos.length > 0 && (
+                <PageButton as="a" href="#s5" $variant="outline">
+                  <Paperclip size={16} aria-hidden="true" />
+                  Abrir arquivos
+                </PageButton>
+              )}
+              {p.marcar_uso && (
               <PageButton type="button" disabled={salvando} onClick={() => setConfirmandoUso(true)}>
                 <Check size={16} aria-hidden="true" />
                 Usei no meu projeto
               </PageButton>
-              <FieldSelect aria-label="Em qual projeto" value={projetoUso} onChange={(e) => setProjetoUso(e.target.value)} pesquisavel>
-                <option value="">Sem projeto específico</option>
-                {(opcoes?.projetos ?? []).map((pr) => (
-                  <option key={pr.id} value={String(pr.id)}>
-                    {pr.nome}
-                  </option>
-                ))}
-              </FieldSelect>
-              <span style={{ fontSize: "0.75rem", color: "var(--atlas-muted-foreground)" }}>
-                {ficha.usos > 0 ? `${ficha.usos} uso${ficha.usos === 1 ? "" : "s"} registrado${ficha.usos === 1 ? "" : "s"}` : "ainda sem usos"}
-              </span>
+              )}
+              {p.marcar_uso && (
+                <FieldSelect aria-label="Em qual projeto" value={projetoUso} onChange={(e) => setProjetoUso(e.target.value)} pesquisavel>
+                  <option value="">Sem projeto específico</option>
+                  {(opcoes?.projetos ?? []).map((pr) => (
+                    <option key={pr.id} value={String(pr.id)}>
+                      {pr.nome}
+                    </option>
+                  ))}
+                </FieldSelect>
+              )}
+              {p.marcar_uso && (
+                <span style={{ fontSize: "0.75rem", color: "var(--atlas-muted-foreground)" }}>
+                  {ficha.usos > 0 ? `${ficha.usos} uso${ficha.usos === 1 ? "" : "s"} registrado${ficha.usos === 1 ? "" : "s"}` : "ainda sem usos"}
+                </span>
+              )}
             </div>
           )}
         </CabecalhoFichaLinha>
@@ -461,10 +825,21 @@ export function Ficha() {
             <strong>O diretor pediu ajustes:</strong> {ficha.revisao_comentario}
           </AvisoCaixa>
         )}
-        {ficha.status === "devolvida" && ficha.decisao_comentario && (
+        {ficha.juntada_em ? (
           <AvisoCaixa>
-            <strong>Devolvida por {ficha.decidido_por_nome}:</strong> {ficha.decisao_comentario}
+            <strong>Juntada por {ficha.decidido_por_nome}:</strong> esta indicação entrou na ficha{" "}
+            <Link to={`/central/fichas/${ficha.juntada_em.id}`} state={{ de: location.pathname }}>
+              {ficha.juntada_em.codigo} · {ficha.juntada_em.titulo}
+            </Link>
+            , com a justificativa e os autores.
           </AvisoCaixa>
+        ) : (
+          ficha.status === "devolvida" &&
+          ficha.decisao_comentario && (
+            <AvisoCaixa>
+              <strong>Devolvida por {ficha.decidido_por_nome}:</strong> {ficha.decisao_comentario}
+            </AvisoCaixa>
+          )
         )}
         {p.decidir && (
           <AvisoCaixa>
@@ -517,22 +892,31 @@ export function Ficha() {
               <b>Autores</b>
               {ficha.autores.length > 0 ? ficha.autores.map((a) => a.nome).join(", ") : "A confirmar pelo coordenador"}
             </span>
+            {(ficha.coordenacao?.length ?? 0) > 0 && (
+              <span>
+                <b>Coordenação</b>
+                {ficha.coordenacao!.join(", ")}
+              </span>
+            )}
+            {(ficha.equipe?.length ?? 0) > 0 && (
+              <span>
+                <b>Equipe do projeto</b>
+                {ficha.equipe!.join(", ")}
+              </span>
+            )}
             {ficha.responsavel_nome && (
               <span>
-                <b>Responsável</b>
+                <b>Responsável pela escrita</b>
                 {ficha.responsavel_nome}
               </span>
             )}
-            <span>
-              <b>Indicada por</b>
-              {ficha.indicado_por_nome}, {ROTULO_VIA[ficha.indicado_via]}
-            </span>
-            {ficha.publicado_por_nome && (
-              <span>
-                <b>Publicada por</b>
-                {ficha.publicado_por_nome}
+            <span style={{ fontSize: "0.6875rem", fontWeight: 600, letterSpacing: "0.06em", textTransform: "uppercase", marginTop: "0.25rem" }}>Fluxo</span>
+            {fluxo.map(([etapa, quem]) => (
+              <span key={etapa}>
+                <b>{etapa}</b>
+                {quem}
               </span>
-            )}
+            ))}
           </IndiceCreditos>
         </Indice>
 
@@ -624,7 +1008,14 @@ export function Ficha() {
               <i aria-hidden="true">3</i>Como funciona
             </SecaoDocTitulo>
             <SecaoDocCorpo>
-              <SecaoAjuda>Passo a passo do que foi feito, na ordem. Cada passo começando por um verbo.</SecaoAjuda>
+              <SecaoAjuda>Passo a passo do que foi feito, na ordem. Cada passo começando por um verbo. Os blocos opcionais (aviso, código, números, lista, imagem) complementam os passos.</SecaoAjuda>
+              {!editando && token && ficha.blocos.some((b) => b.tipo === "aviso") && (
+                <Blocos>
+                  {ficha.blocos.filter((b) => b.tipo === "aviso").map((b, i) => (
+                    <BlocoLeitura key={`aviso-${i}`} bloco={b} token={token} onAmpliar={setAmpliada} />
+                  ))}
+                </Blocos>
+              )}
               {editando ? (
                 <div style={{ display: "flex", flexDirection: "column", gap: "0.375rem" }}>
                   {form.passos.map((passo, i) => (
@@ -654,6 +1045,52 @@ export function Ficha() {
               ) : (
                 <Texto $vazio>Ainda não escrito.</Texto>
               )}
+              {!editando && token && ficha.blocos.some((b) => b.tipo !== "aviso") && (
+                <Blocos>
+                  {ficha.blocos.filter((b) => b.tipo !== "aviso").map((b, i) => (
+                    <BlocoLeitura key={`${b.tipo}-${i}`} bloco={b} token={token} onAmpliar={setAmpliada} />
+                  ))}
+                </Blocos>
+              )}
+              {editando && token && (
+                <Blocos>
+                  {form.blocos.map((b, i) => (
+                    <BlocoEdicao
+                      key={i}
+                      bloco={b}
+                      imagens={ficha.anexos.filter((a) => a.imagem)}
+                      token={token}
+                      onChange={(novo) => campo("blocos", form.blocos.map((x, j) => (j === i ? novo : x)))}
+                      onSubir={i > 0 ? () => campo("blocos", moverItem(form.blocos, i, -1)) : undefined}
+                      onDescer={i < form.blocos.length - 1 ? () => campo("blocos", moverItem(form.blocos, i, 1)) : undefined}
+                      onRemover={() => campo("blocos", form.blocos.filter((_, j) => j !== i))}
+                    />
+                  ))}
+                  <Acoes>
+                    <FieldSelect aria-label="Tipo do bloco novo" value={tipoNovoBloco} onChange={(e) => setTipoNovoBloco(e.target.value as Bloco["tipo"])} style={{ maxWidth: "18rem" }}>
+                      {(Object.keys(ROTULO_BLOCO) as Bloco["tipo"][]).map((t) => (
+                        <option key={t} value={t}>
+                          {ROTULO_BLOCO[t]}
+                        </option>
+                      ))}
+                    </FieldSelect>
+                    <PageButtonSm
+                      type="button"
+                      $variant="outline"
+                      onClick={() => {
+                        const novo = blocoNovo(tipoNovoBloco, ficha.anexos.find((a) => a.imagem)?.id ?? null);
+                        if (!novo) {
+                          setErro("Anexe uma imagem na seção 5 antes de criar um bloco de imagem.");
+                          return;
+                        }
+                        campo("blocos", [...form.blocos, novo]);
+                      }}
+                    >
+                      <Plus size={14} /> Adicionar bloco
+                    </PageButtonSm>
+                  </Acoes>
+                </Blocos>
+              )}
             </SecaoDocCorpo>
           </SecaoDoc>
 
@@ -662,29 +1099,115 @@ export function Ficha() {
               <i aria-hidden="true">4</i>Quando usar
             </SecaoDocTitulo>
             <SecaoDocCorpo>
-              <SecaoAjuda>Em que tipo de projeto, setor ou situação essa ferramenta faz sentido.</SecaoAjuda>
+              <SecaoAjuda>Em que situações essa ferramenta funciona bem e em quais não ajuda. Uma situação por linha.</SecaoAjuda>
               {editando ? (
-                <FieldTextarea rows={3} value={form.quando_usar} onChange={(e) => campo("quando_usar", e.target.value)} style={marca("quando_usar")} />
+                <DuasListas>
+                  <div>
+                    <Chip $tom="ok">Funciona bem</Chip>
+                    <FieldTextarea rows={4} value={form.funciona_bem} onChange={(e) => campo("funciona_bem", e.target.value)} placeholder={"Mercados novos, sem dado oficial de tamanho\nComparar o posicionamento digital de concorrentes"} style={marca("funciona_bem")} />
+                  </div>
+                  <div>
+                    <Chip>Não ajuda</Chip>
+                    <FieldTextarea rows={4} value={form.nao_ajuda} onChange={(e) => campo("nao_ajuda", e.target.value)} placeholder="Nichos em que o comprador não pesquisa online" />
+                  </div>
+                </DuasListas>
+              ) : ficha.funciona_bem.length + ficha.nao_ajuda.length > 0 ? (
+                <DuasListas>
+                  <div>
+                    <Chip $tom="ok">Funciona bem</Chip>
+                    {ficha.funciona_bem.length > 0 ? (
+                      <ul>
+                        {ficha.funciona_bem.map((t) => (
+                          <li key={t}>{t}</li>
+                        ))}
+                      </ul>
+                    ) : (
+                      <Texto $vazio>Ainda não escrito.</Texto>
+                    )}
+                  </div>
+                  {ficha.nao_ajuda.length > 0 && (
+                    <div>
+                      <Chip>Não ajuda</Chip>
+                      <ul>
+                        {ficha.nao_ajuda.map((t) => (
+                          <li key={t}>{t}</li>
+                        ))}
+                      </ul>
+                    </div>
+                  )}
+                </DuasListas>
               ) : (
-                <Texto $vazio={!ficha.quando_usar}>{ficha.quando_usar || "Ainda não escrito."}</Texto>
+                <Texto $vazio>Ainda não escrito.</Texto>
               )}
             </SecaoDocCorpo>
           </SecaoDoc>
 
           <SecaoDoc id="s5">
             <SecaoDocTitulo>
-              <i aria-hidden="true">5</i>Onde aparece no projeto
+              <i aria-hidden="true">5</i>No projeto
+              {ficha.galeria.length > 0 && (
+                <Chip style={{ marginLeft: "auto" }}>
+                  {ficha.galeria.length} slide{ficha.galeria.length === 1 ? "" : "s"}
+                </Chip>
+              )}
             </SecaoDocTitulo>
             <SecaoDocCorpo>
-              <SecaoAjuda>Páginas do deck ou abas da planilha em que foi aplicada. Anexe prints dos slides, a planilha ou o documento.</SecaoAjuda>
+              <SecaoAjuda>Os slides ou páginas em que foi aplicada, com um título, uma frase e a página. Anexe o print e ele vira um slide da galeria.</SecaoAjuda>
               {editando ? (
-                <FieldTextarea rows={2} value={form.onde_aparece} onChange={(e) => campo("onde_aparece", e.target.value)} placeholder="Ex.: slides 54 a 60 e 99 a 103" />
+                <FieldInput maxLength={120} value={form.onde_aparece} onChange={(e) => campo("onde_aparece", e.target.value)} placeholder="Resumo para o cabeçalho (ex.: slides 54 a 60 e 99 a 103)" />
               ) : (
-                <Texto $vazio={!ficha.onde_aparece}>{ficha.onde_aparece || "Não informado."}</Texto>
+                ficha.onde_aparece && <Texto>{ficha.onde_aparece}</Texto>
               )}
-              {ficha.anexos.length > 0 && token && (
+              {!editando && ficha.galeria.length > 0 && token && (
+                <GaleriaSlides>
+                  {ficha.galeria.map((g) => (
+                    <figure key={g.anexo_id}>
+                      <button type="button" className="abrir" onClick={() => setAmpliada(g)} aria-label={`Ampliar ${g.titulo || g.anexo.nome}`}>
+                        <Miniatura anexo={g.anexo} token={token} />
+                      </button>
+                      <figcaption>
+                        {g.titulo && <b>{g.titulo}. </b>}
+                        {g.descricao}
+                        {g.pagina && <span style={{ whiteSpace: "nowrap" }}> · {g.pagina}</span>}
+                      </figcaption>
+                    </figure>
+                  ))}
+                </GaleriaSlides>
+              )}
+              {!editando && ficha.galeria.length === 0 && !ficha.onde_aparece && <Texto $vazio>Ainda sem slides.</Texto>}
+              {editando && token && (
+                <div style={{ display: "flex", flexDirection: "column", gap: "0.5rem" }}>
+                  {form.galeria.map((g, i) => {
+                    const anexo = ficha.anexos.find((a) => a.id === g.anexo_id);
+                    return (
+                      <GaleriaItemEdicao key={g.anexo_id}>
+                        <div className="miniatura">{anexo ? <Miniatura anexo={anexo} token={token} /> : <span>Anexo apagado</span>}</div>
+                        <div className="campos">
+                          <FieldInput aria-label="Título do slide" maxLength={120} value={g.titulo} onChange={(e) => itemGaleria(i, { titulo: e.target.value })} placeholder="Título (ex.: Mapa competitivo)" />
+                          <FieldInput aria-label="Página ou slide" maxLength={40} value={g.pagina} onChange={(e) => itemGaleria(i, { pagina: e.target.value })} placeholder="slide 57" />
+                          <FieldInput aria-label="Descrição do slide" maxLength={300} value={g.descricao} onChange={(e) => itemGaleria(i, { descricao: e.target.value })} placeholder="Uma frase sobre o que o slide mostra" />
+                        </div>
+                        <PageButtonSm type="button" $variant="ghost" aria-label="Tirar da galeria" onClick={() => campo("galeria", form.galeria.filter((_, j) => j !== i))}>
+                          <Trash2 size={14} />
+                        </PageButtonSm>
+                      </GaleriaItemEdicao>
+                    );
+                  })}
+                  {imagensSobrando.length > 0 && (
+                    <Acoes>
+                      <SecaoAjuda>Imagens anexadas fora da galeria:</SecaoAjuda>
+                      {imagensSobrando.map((a) => (
+                        <PageButtonSm key={a.id} type="button" $variant="outline" onClick={() => campo("galeria", [...form.galeria, { anexo_id: a.id, titulo: a.legenda ?? "", descricao: "", pagina: "" }])}>
+                          Usar {a.nome}
+                        </PageButtonSm>
+                      ))}
+                    </Acoes>
+                  )}
+                </div>
+              )}
+              {anexosForaDaGaleria.length > 0 && token && (
                 <AnexosGrid>
-                  {ficha.anexos.map((a) => (
+                  {anexosForaDaGaleria.map((a) => (
                     <AnexoCard key={a.id}>
                       <button type="button" className="abrir" onClick={() => abrirAnexo(a, token).catch(() => setErro("Não foi possível abrir o anexo"))}>
                         <Miniatura anexo={a} token={token} />
@@ -708,15 +1231,117 @@ export function Ficha() {
                   <PageButtonSm type="button" $variant="outline" disabled={salvando} onClick={() => arquivoRef.current?.click()}>
                     <Paperclip size={14} /> Anexar imagens ou documentos
                   </PageButtonSm>
-                  <SecaoAjuda>Prints de slides, PDF, planilha ou apresentação · até 20 MB por arquivo</SecaoAjuda>
+                  <SecaoAjuda>Prints de slides, PDF, planilha ou apresentação · até 20 MB por arquivo. Uma imagem nova entra na galeria.</SecaoAjuda>
                 </Acoes>
               )}
             </SecaoDocCorpo>
           </SecaoDoc>
 
           <SecaoDoc id="s6">
+            <SecaoDocTitulo>
+              <i aria-hidden="true">6</i>Por que virou referência
+              {ficha.indicacoes.length > 1 && (
+                <Chip style={{ marginLeft: "auto" }}>
+                  {ficha.indicacoes.length} indicações
+                </Chip>
+              )}
+            </SecaoDocTitulo>
+            <SecaoDocCorpo>
+              <SecaoAjuda>
+                A justificativa de cada indicação. O mesmo ativo pode ser indicado pelo coordenador, pela banca e pelo gerente; o gerente junta as repetidas aqui.
+                {editando && " A primeira é o campo \"Por que se destacou\" da identificação."}
+              </SecaoAjuda>
+              <RespostasGrid>
+                {ficha.indicacoes.map((ind, i) => (
+                  <Resposta key={`${ind.origem_ficha_id ?? "propria"}-${i}`}>
+                    <b>
+                      {ind.usuario_nome ?? "Alguém"}, {ROTULO_VIA[ind.via]}
+                      {ind.em ? ` · ${formatarDataHora(ind.em)}` : ""}
+                    </b>
+                    <p>{ind.justificativa || "Sem justificativa."}</p>
+                  </Resposta>
+                ))}
+              </RespostasGrid>
+            </SecaoDocCorpo>
+          </SecaoDoc>
+
+          <SecaoDoc id="s7">
+            <SecaoDocTitulo>
+              <i aria-hidden="true">7</i>Pontos para os autores responderem
+              {ficha.perguntas_revisor.length > 0 && (
+                <Chip $tom={faltam > 0 ? "atencao" : "ok"} style={{ marginLeft: "auto" }}>
+                  {faltam > 0 ? `Faltam ${faltam}` : "Todas respondidas"}
+                </Chip>
+              )}
+            </SecaoDocTitulo>
+            <SecaoDocCorpo>
+              <SecaoAjuda>
+                Perguntas específicas do revisor sobre a ficha, para os autores responderem.
+                {ficha.perguntas_obrigatorias ? " Só dá para enviar ao diretor com todas respondidas." : " As respostas em aberto não travam o envio ao diretor."}
+              </SecaoAjuda>
+              {ficha.perguntas_revisor.length > 0 ? (
+                <PerguntasRevisor>
+                  {ficha.perguntas_revisor.map((q, i) => (
+                    <li key={q.pergunta}>
+                      <i aria-hidden="true">{i + 1}</i>
+                      <div>
+                        <p>
+                          <b>{q.pergunta}</b>
+                        </p>
+                        {editando ? (
+                          <FieldTextarea rows={2} value={form.respostas_revisor[i] ?? ""} onChange={(e) => campo("respostas_revisor", form.respostas_revisor.map((x, j) => (j === i ? e.target.value : x)))} placeholder="Resposta dos autores…" style={marca("perguntas_revisor")} />
+                        ) : q.resposta ? (
+                          <p className="resposta">{q.resposta}</p>
+                        ) : (
+                          <p className="pendente">Sem resposta ainda.</p>
+                        )}
+                      </div>
+                    </li>
+                  ))}
+                </PerguntasRevisor>
+              ) : (
+                !p.perguntar && <Texto $vazio>O revisor não deixou perguntas.</Texto>
+              )}
+              {p.perguntar && perguntas === null && (
+                <div>
+                  <PageButtonSm type="button" $variant="outline" onClick={() => setPerguntas(ficha.perguntas_revisor.length > 0 ? ficha.perguntas_revisor.map((q) => q.pergunta) : [""])}>
+                    {ficha.perguntas_revisor.length > 0 ? "Editar as perguntas" : "Deixar perguntas para os autores"}
+                  </PageButtonSm>
+                </div>
+              )}
+              {p.perguntar && perguntas !== null && (
+                <AvisoCaixa>
+                  <strong>Perguntas para os autores.</strong> Uma por linha, específica sobre a ficha (ex.: "De onde vieram os limites de 40 mil e 60%?"). Tirar uma pergunta apaga a resposta dela.
+                  <div style={{ display: "flex", flexDirection: "column", gap: "0.375rem", marginTop: "0.5rem" }}>
+                    {perguntas.map((q, i) => (
+                      <PassoLinha key={i}>
+                        <span style={{ width: "1.5rem", fontSize: "0.75rem", color: "var(--atlas-muted-foreground)" }}>{i + 1}.</span>
+                        <FieldInput maxLength={500} value={q} onChange={(e) => setPerguntas(perguntas.map((x, j) => (j === i ? e.target.value : x)))} placeholder={`Pergunta ${i + 1}`} />
+                        <PageButtonSm type="button" $variant="ghost" aria-label="Remover pergunta" onClick={() => setPerguntas(perguntas.filter((_, j) => j !== i))}>
+                          <Trash2 size={14} />
+                        </PageButtonSm>
+                      </PassoLinha>
+                    ))}
+                  </div>
+                  <Acoes style={{ marginTop: "0.5rem", justifyContent: "flex-end" }}>
+                    <PageButtonSm type="button" $variant="outline" onClick={() => setPerguntas([...perguntas, ""])}>
+                      Adicionar pergunta
+                    </PageButtonSm>
+                    <PageButtonSm type="button" $variant="ghost" onClick={() => setPerguntas(null)}>
+                      Cancelar
+                    </PageButtonSm>
+                    <PageButtonSm type="button" disabled={salvando} onClick={aoSalvarPerguntas}>
+                      Salvar perguntas
+                    </PageButtonSm>
+                  </Acoes>
+                </AvisoCaixa>
+              )}
+            </SecaoDocCorpo>
+          </SecaoDoc>
+
+          <SecaoDoc id="s8">
             <SecaoDocTitulo $destaque>
-              <i aria-hidden="true">6</i>Como foi feito, na visão de quem fez
+              <i aria-hidden="true">8</i>Como foi feito, na visão de quem fez
             </SecaoDocTitulo>
             <SecaoDocCorpo>
               <SecaoAjuda>A parte mais importante da ficha e a única que só os autores conseguem escrever. As cinco respostas são obrigatórias.</SecaoAjuda>
@@ -742,9 +1367,9 @@ export function Ficha() {
             </SecaoDocCorpo>
           </SecaoDoc>
 
-          <SecaoDoc id="s7">
+          <SecaoDoc id="s9">
             <SecaoDocTitulo>
-              <i aria-hidden="true">7</i>Pontos de atenção
+              <i aria-hidden="true">9</i>Pontos de atenção
             </SecaoDocTitulo>
             <SecaoDocCorpo>
               <SecaoAjuda>Limitações, premissas frágeis ou erros que outro projeto deve evitar ao reaproveitar.</SecaoAjuda>
@@ -777,6 +1402,10 @@ export function Ficha() {
             <BarraAcoes style={{ margin: "0.5rem -2.25rem -1.5rem", borderRadius: "0 0 1.25rem 1.25rem" }}>
               {faltando.length > 0 ? (
                 <p style={{ color: "var(--atlas-destructive)" }}>Falta preencher: {faltando.map((c) => ROTULO_CAMPO[c] ?? c).join("; ")}.</p>
+              ) : faltam > 0 && editando && !ficha.perguntas_obrigatorias ? (
+                <p>
+                  Faltam {faltam} resposta{faltam === 1 ? "" : "s"} ao revisor. Dá para enviar mesmo assim, mas vale responder antes.
+                </p>
               ) : ficha.responsavel_id && editando ? (
                 <p>{ficha.responsavel_nome} é responsável por garantir que os autores escrevam. Prazo: 1 semana após a aprovação do gerente.</p>
               ) : (
@@ -820,6 +1449,7 @@ export function Ficha() {
         </Documento>
       </DocumentoGrid>
 
+      {ampliada && token && <Ampliada item={ampliada} token={token} onFechar={() => setAmpliada(null)} />}
       {confirmandoUso && (
         <ConfirmarModal
           titulo="Registrar o uso"

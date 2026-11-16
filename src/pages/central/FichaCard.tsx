@@ -1,7 +1,7 @@
 import { Link } from "react-router-dom";
 import type { ReactNode } from "react";
 import { Check } from "lucide-react";
-import { ETAPAS_FICHA, ROTULO_VIA, etapaDaFicha, tomDoStatus, type Ficha, type FichaCompleta } from "@/lib/central";
+import { ETAPAS_FICHA, ROTULO_VIA, etapaDaFicha, tomDoStatus, type Ficha, type FichaCompleta, chipsDeStatus, codigoEGestao } from "@/lib/central";
 import { PageBadge } from "@/styles/page.styled";
 import {
   Acoes,
@@ -55,11 +55,18 @@ export function CardToolBox({ ficha }: { ficha: Ficha }) {
         {ficha.escopo_nome && <Chip style={{ fontWeight: 500 }}>{ficha.escopo_nome}</Chip>}
         {ficha.ferramenta && <Chip style={{ fontWeight: 500 }}>{ficha.ferramenta}</Chip>}
         {ficha.gestao_numero && <Chip style={{ fontWeight: 500 }}>{ficha.gestao_numero}ª gestão</Chip>}
-        {ficha.apontada_diagnostico && <Chip $tom="primario">Apontada pelo Diagnóstico</Chip>}
-        {ficha.status !== "publicada" && <Chip $tom="atencao">{ficha.status_rotulo}</Chip>}
+        {ficha.apontada_diagnostico && <Chip $tom="primario">Também apontada pelo Diagnóstico</Chip>}
+        {ficha.status !== "publicada" &&
+          chipsDeStatus(ficha).map((c) => (
+            <Chip key={c.texto} $tom={c.tom}>
+              {c.texto}
+            </Chip>
+          ))}
       </CardCatalogoTags>
       <CardCatalogoRodape>
-        <span>{origem}</span>
+        <span>
+          <span style={{ fontVariantNumeric: "tabular-nums", fontWeight: 600 }}>{codigoEGestao(ficha)}</span> · {origem}
+        </span>
         {ficha.usos > 0 ? (
           <strong>
             <Check size={14} aria-hidden="true" />

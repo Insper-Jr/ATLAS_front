@@ -1,9 +1,9 @@
 import { useState } from "react";
 import { useAuth } from "@/context/AuthContext";
-import { decidirPertinencia, type FichaCompleta } from "@/lib/central";
+import { decidirPertinencia, juntarIndicacao, type FichaCompleta } from "@/lib/central";
 import { EstadoVazio } from "@/components/EstadoVazio";
 import { ErrorText, PageBadge, PageButtonSm, PageCard, PageCardContent, PageCardHeader, PageCardTitle, PageLoadingBlock } from "@/styles/page.styled";
-import { FieldTextarea } from "@/pages/Bancas.styled";
+import { FieldSelect, FieldTextarea } from "@/pages/Bancas.styled";
 import { Acoes, FichasLista, Nota } from "./Central.styled";
 import { CardAcompanhamento } from "./FichaCard";
 import { useCentral } from "./contexto";
@@ -19,9 +19,32 @@ export function Pertinencia() {
   const [devolvendo, setDevolvendo] = useState<number | null>(null);
   const [motivo, setMotivo] = useState("");
   const [salvando, setSalvando] = useState<number | null>(null);
+  // 1.4: a indicação é repetida; o gerente escolhe a ficha que já existe.
+  const [juntando, setJuntando] = useState<number | null>(null);
+  const [destino, setDestino] = useState("");
 
   if (!pendencias) return <PageLoadingBlock />;
   const fila = pendencias.pertinencia;
+  const existentes = pendencias.fichas_existentes ?? [];
+
+  async function juntar(ficha: FichaCompleta) {
+    if (!token || !destino) {
+      setErro("Escolha a ficha em que esta indicação entra.");
+      return;
+    }
+    setErro("");
+    setSalvando(ficha.id);
+    try {
+      await juntarIndicacao(ficha.id, Number(destino), token);
+      setJuntando(null);
+      setDestino("");
+      await recarregarPendencias();
+    } catch (err) {
+      setErro(err instanceof Error ? err.message : "Não foi possível juntar");
+    } finally {
+      setSalvando(null);
+    }
+  }
 
   async function decidir(ficha: FichaCompleta, aprovar: boolean) {
     if (!token) return;
@@ -72,6 +95,28 @@ export function Pertinencia() {
                       onChange={(e) => setMotivo(e.target.value)}
                       placeholder="Por que não vale uma ficha (vai para quem indicou)"
                     />
+                  ) : juntando === f.id ? (
+                    <div style={{ display: "flex", flexDirection: "column", gap: "0.375rem" }}>
+                      <span style={{ fontSize: "0.75rem", color: "var(--atlas-muted-foreground)" }}>
+                        A justificativa, quem indicou e os autores entram na ficha escolhida. Esta indicação sai da fila.
+                      </span>
+                      <FieldSelect autoFocus aria-label="Ficha em que esta indicação entra" value={destino} onChange={(e) => setDestino(e.target.value)} pesquisavel>
+                        <option value="">Escolha a ficha que já existe</option>
+                        {[...existentes]
+                          .sort((a, b) => Number(f.possiveis_duplicadas.includes(b.id)) - Number(f.possiveis_duplicadas.includes(a.id)))
+                          .map((e) => (
+                            <option key={e.id} value={String(e.id)}>
+                              {f.possiveis_duplicadas.includes(e.id) ? "Parece a mesma · " : ""}
+                              {e.codigo} · {e.titulo}
+                              {e.frente_nome ? ` · ${e.frente_nome}` : ""} · {e.status_rotulo.toLowerCase()}
+                            </option>
+                          ))}
+                      </FieldSelect>
+                    </div>
+                  ) : f.possiveis_duplicadas.length > 0 ? (
+                    <span style={{ fontSize: "0.75rem", color: "var(--atlas-warning-foreground, var(--atlas-muted-foreground))" }}>
+                      Parece já existir: {f.possiveis_duplicadas.map((id) => existentes.find((e) => e.id === id)).filter(Boolean).map((e) => `${e!.codigo} · ${e!.titulo}`).join("; ")}.
+                    </span>
                   ) : null
                 }
                 acoes={
@@ -88,14 +133,38 @@ export function Pertinencia() {
                           Confirmar devolução
                         </PageButtonSm>
                       </>
+                    ) : juntando === f.id ? (
+                      <>
+                        <PageButtonSm type="button" $variant="ghost" onClick={() => setJuntando(null)}>
+                          Cancelar
+                        </PageButtonSm>
+                        <PageButtonSm type="button" disabled={salvando === f.id || !destino} onClick={() => juntar(f)}>
+                          Juntar à ficha
+                        </PageButtonSm>
+                      </>
                     ) : (
                       <>
+                        {existentes.length > 0 && (
+                          <PageButtonSm
+                            type="button"
+                            $variant="ghost"
+                            disabled={salvando === f.id}
+                            onClick={() => {
+                              setJuntando(f.id);
+                              setDevolvendo(null);
+                              setDestino(f.possiveis_duplicadas[0] ? String(f.possiveis_duplicadas[0]) : "");
+                            }}
+                          >
+                            Já existe: juntar
+                          </PageButtonSm>
+                        )}
                         <PageButtonSm
                           type="button"
                           $variant="outline"
                           disabled={salvando === f.id}
                           onClick={() => {
                             setDevolvendo(f.id);
+                            setJuntando(null);
                             setMotivo("");
                           }}
                         >

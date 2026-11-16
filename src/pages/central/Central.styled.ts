@@ -847,6 +847,39 @@ export const Pilula = styled.button<{ $ativa?: boolean }>`
   font-size: ${theme.fontSize.sm};
   font-weight: ${({ $ativa }) => ($ativa ? theme.fontWeight.semibold : theme.fontWeight.medium)};
   cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.375rem;
+
+  i {
+    width: 0.5rem;
+    height: 0.5rem;
+    border-radius: ${theme.borderRadius.full};
+    flex: 0 0 auto;
+  }
+
+  small {
+    font-size: 0.6875rem;
+    font-weight: ${theme.fontWeight.semibold};
+    padding: 0 0.375rem;
+    border-radius: ${theme.borderRadius.full};
+    background: ${({ $ativa }) => ($ativa ? "rgba(255, 255, 255, 0.2)" : theme.colors.muted)};
+  }
+`;
+
+/** A faixa que explica o papel da pessoa na Central (plano, 1.7). */
+export const FaixaPapel = styled.p`
+  margin: 0;
+  padding: 0.625rem 0.875rem;
+  border-radius: ${theme.borderRadius.md};
+  font-size: ${theme.fontSize.sm};
+  line-height: 1.5;
+  background: color-mix(in srgb, ${theme.colors.primary} 8%, var(--atlas-card));
+  color: ${theme.colors.foreground};
+
+  strong {
+    font-weight: ${theme.fontWeight.semibold};
+  }
 `;
 
 export const Painel2 = styled.div`
@@ -1772,5 +1805,311 @@ export const Lightbox = styled.div`
 
   @media (max-width: ${theme.breakpoints.sm}px) {
     padding: 1rem;
+  }
+`;
+
+/** "No projeto" como galeria de slides (plano, 1.1): imagem, título em
+ *  negrito, uma frase e a página. Clicar amplia, como na Capacitação. */
+export const GaleriaSlides = styled.div`
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(13rem, 1fr));
+  gap: 0.875rem;
+
+  figure {
+    margin: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+
+  button.abrir {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    padding: 0;
+    border: 1px solid ${theme.colors.border};
+    border-radius: 0.625rem;
+    overflow: hidden;
+    aspect-ratio: 16 / 9;
+    background: ${theme.colors.muted};
+    color: ${theme.colors.mutedForeground};
+    font-size: ${theme.fontSize.xs};
+    cursor: pointer;
+  }
+
+  img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+  }
+
+  figcaption {
+    font-size: ${theme.fontSize.xs};
+    line-height: 1.45;
+    color: ${theme.colors.mutedForeground};
+    overflow-wrap: anywhere;
+  }
+
+  figcaption b {
+    color: ${theme.colors.foreground};
+  }
+
+  @media (max-width: ${theme.breakpoints.sm}px) {
+    grid-template-columns: 1fr;
+  }
+`;
+
+/** Um item da galeria em edição: a miniatura à esquerda, os campos à direita. */
+export const GaleriaItemEdicao = styled.div`
+  display: grid;
+  grid-template-columns: 8rem minmax(0, 1fr) auto;
+  gap: 0.75rem;
+  align-items: start;
+  padding: 0.75rem;
+  border-radius: 0.75rem;
+  border: 1px solid ${theme.colors.border};
+  background: ${theme.colors.card};
+
+  .miniatura {
+    aspect-ratio: 16 / 9;
+    border-radius: 0.5rem;
+    overflow: hidden;
+    background: ${theme.colors.muted};
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: ${theme.fontSize.xs};
+    color: ${theme.colors.mutedForeground};
+  }
+
+  .miniatura img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+  }
+
+  .campos {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 7rem;
+    gap: 0.5rem;
+  }
+
+  .campos > :last-child {
+    grid-column: 1 / -1;
+  }
+
+  @media (max-width: ${theme.breakpoints.sm}px) {
+    grid-template-columns: 1fr;
+  }
+`;
+
+/** "Quando usar" em duas colunas (plano, 1.2): funciona bem e não ajuda. */
+export const DuasListas = styled.div`
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(15rem, 1fr));
+  gap: 0.875rem;
+
+  > div {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    padding: 0.875rem 1rem;
+    border-radius: 0.75rem;
+    border: 1px solid ${theme.colors.border};
+    background: ${theme.colors.card};
+  }
+
+  ul {
+    margin: 0;
+    padding-left: 1.125rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.375rem;
+    font-size: ${theme.fontSize.sm};
+    line-height: 1.5;
+  }
+`;
+
+/** As perguntas do revisor (plano, 1.3): número, pergunta e a resposta. */
+export const PerguntasRevisor = styled.ol`
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.625rem;
+
+  li {
+    display: flex;
+    gap: 0.75rem;
+    padding: 0.75rem 1rem;
+    border-radius: 0.75rem;
+    border: 1px solid ${theme.colors.border};
+    background: ${theme.colors.card};
+    font-size: ${theme.fontSize.sm};
+    line-height: 1.5;
+  }
+
+  li i {
+    flex: 0 0 auto;
+    width: 1.5rem;
+    height: 1.5rem;
+    border-radius: ${theme.borderRadius.full};
+    background: ${theme.colors.muted};
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-style: normal;
+    font-size: ${theme.fontSize.xs};
+    font-weight: ${theme.fontWeight.bold};
+  }
+
+  li > div {
+    flex: 1 1 auto;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 0.375rem;
+  }
+
+  li p {
+    margin: 0;
+    white-space: pre-wrap;
+  }
+
+  li p.resposta {
+    padding: 0.5rem 0.75rem;
+    border-radius: 0.5rem;
+    background: ${theme.colors.muted};
+  }
+
+  li p.pendente {
+    color: ${theme.colors.mutedForeground};
+    font-style: italic;
+  }
+`;
+
+/** Blocos opcionais de conteúdo (plano, 1.5). */
+export const Blocos = styled.div`
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+`;
+
+export const BlocoCard = styled.div`
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  padding: 0.875rem 1rem;
+  border-radius: 0.75rem;
+  border: 1px solid ${theme.colors.border};
+  background: ${theme.colors.card};
+
+  h4 {
+    margin: 0;
+    font-size: ${theme.fontSize.sm};
+    font-weight: ${theme.fontWeight.semibold};
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+  }
+
+  ul {
+    margin: 0;
+    padding-left: 1.125rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.375rem;
+    font-size: ${theme.fontSize.sm};
+    line-height: 1.5;
+  }
+
+  pre {
+    margin: 0;
+    padding: 0.75rem 0.875rem;
+    border-radius: 0.5rem;
+    background: ${theme.colors.foreground};
+    color: ${theme.colors.background};
+    font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    font-size: 0.78rem;
+    line-height: 1.5;
+    overflow-x: auto;
+    white-space: pre;
+  }
+
+  code.arquivo {
+    font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    font-size: ${theme.fontSize.xs};
+    padding: 0.125rem 0.5rem;
+    border-radius: ${theme.borderRadius.full};
+    background: ${theme.colors.muted};
+    font-weight: ${theme.fontWeight.normal};
+  }
+
+  figure {
+    margin: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 0.375rem;
+  }
+
+  figure button {
+    display: block;
+    width: 100%;
+    max-width: 36rem;
+    padding: 0;
+    border: 1px solid ${theme.colors.border};
+    border-radius: 0.5rem;
+    overflow: hidden;
+    background: ${theme.colors.muted};
+    cursor: pointer;
+  }
+
+  figure img {
+    width: 100%;
+    display: block;
+  }
+
+  figcaption,
+  .legenda {
+    font-size: ${theme.fontSize.xs};
+    color: ${theme.colors.mutedForeground};
+    line-height: 1.45;
+  }
+`;
+
+export const Numeros = styled.div`
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(9rem, 1fr));
+  gap: 0.5rem;
+
+  > div {
+    padding: 0.625rem 0.75rem;
+    border-radius: 0.625rem;
+    background: ${theme.colors.muted};
+    display: flex;
+    flex-direction: column;
+    gap: 0.125rem;
+  }
+
+  b {
+    font-size: 1.125rem;
+    font-weight: ${theme.fontWeight.bold};
+    line-height: 1.2;
+  }
+
+  b.longo {
+    font-size: ${theme.fontSize.sm};
+    line-height: 1.35;
+  }
+
+  span {
+    font-size: ${theme.fontSize.xs};
+    color: ${theme.colors.mutedForeground};
+    line-height: 1.4;
   }
 `;

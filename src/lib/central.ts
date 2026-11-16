@@ -87,6 +87,50 @@ export interface AnexoFicha {
   imagem: boolean;
 }
 
+/** Um slide de "No projeto" (plano, 1.1): a imagem é um anexo da ficha. */
+export interface ItemGaleria {
+  anexo_id: number;
+  titulo: string;
+  descricao: string;
+  pagina: string;
+  anexo: AnexoFicha;
+}
+
+/** Uma indicação do ativo (plano, 1.4): a primeira é a da própria ficha, as
+ *  outras foram juntadas pelo gerente. */
+export interface Indicacao {
+  usuario_id: number | null;
+  usuario_nome: string | null;
+  via: ViaFicha;
+  em: string | null;
+  justificativa: string;
+  origem_ficha_id: number | null;
+}
+
+/** Blocos opcionais de conteúdo (plano, 1.5), em ordem. */
+export type Bloco =
+  | { tipo: "codigo"; titulo: string; arquivo: string; texto: string; legenda: string }
+  | { tipo: "numeros"; titulo: string; itens: [string, string][] }
+  | { tipo: "lista"; titulo: string; itens: string[] }
+  | { tipo: "aviso"; titulo: string; texto: string }
+  | { tipo: "texto"; titulo: string; texto: string }
+  | { tipo: "imagem"; titulo: string; legenda: string; anexo_id: number; anexo?: AnexoFicha };
+
+export const ROTULO_BLOCO: Record<Bloco["tipo"], string> = {
+  aviso: "Aviso em destaque (\"Antes de tudo\")",
+  codigo: "Trecho de código",
+  numeros: "Números-chave",
+  lista: "Lista",
+  texto: "Texto",
+  imagem: "Imagem com legenda",
+};
+
+/** Pergunta do revisor e a resposta dos autores (plano, 1.3). */
+export interface PerguntaRevisor {
+  pergunta: string;
+  resposta: string;
+}
+
 export interface PermissoesFicha {
   editar: boolean;
   decidir: boolean;
@@ -94,6 +138,8 @@ export interface PermissoesFicha {
   publicar: boolean;
   pedir_ajustes: boolean;
   marcar_uso: boolean;
+  /** Deixar perguntas para os autores: gerente da frente ou quem gere. */
+  perguntar: boolean;
 }
 
 export interface HistoricoFicha {
@@ -131,6 +177,9 @@ export interface Ficha {
   apontada_diagnostico: boolean;
   status: StatusFicha;
   status_rotulo: string;
+  /** Indicação repetida, juntada àquela ficha (status fica "devolvida"). */
+  juntada_em: { id: number; codigo: string; titulo: string } | null;
+  indicacoes: Indicacao[];
   indicado_por: number;
   indicado_por_nome: string | null;
   indicado_via: ViaFicha;
@@ -151,8 +200,16 @@ export interface Ficha {
 export interface FichaCompleta extends Ficha {
   problema: string | null;
   passos: string[];
-  quando_usar: string | null;
+  funciona_bem: string[];
+  nao_ajuda: string[];
   onde_aparece: string | null;
+  galeria: ItemGaleria[];
+  blocos: Bloco[];
+  perguntas_revisor: PerguntaRevisor[];
+  /** Perguntas do revisor ainda sem resposta. */
+  faltam_respostas: number;
+  /** Ligado no backend: só envia ao diretor com tudo respondido. */
+  perguntas_obrigatorias: boolean;
   visao_autores: string[];
   perguntas_autores: string[];
   pontos_atencao: string | null;
@@ -161,6 +218,9 @@ export interface FichaCompleta extends Ficha {
   revisao_comentario: string | null;
   enviado_revisao_em: string | null;
   historico?: HistoricoFicha[];
+  /** Créditos completos (1.6): só na ficha aberta. */
+  coordenacao?: string[];
+  equipe?: string[];
 }
 
 export interface Destaque {
@@ -181,6 +241,39 @@ export interface ToolBox {
   fichas: Ficha[];
 }
 
+/** Os chips de status do card e do cabeçalho (plano, 1.7): depois da
+ *  aprovação a ficha mostra "Aprovada" e o que falta ("Aguardando autores"). */
+export function chipsDeStatus(ficha: Ficha): { texto: string; tom: "ok" | "atencao" | "neutro" }[] {
+  switch (ficha.status) {
+    case "publicada":
+      return [{ texto: "Publicada", tom: "ok" }];
+    case "com_autores":
+      return [
+        { texto: "Aprovada", tom: "ok" },
+        { texto: "Aguardando autores", tom: "atencao" },
+      ];
+    case "ajustes_pedidos":
+      return [
+        { texto: "Aprovada", tom: "ok" },
+        { texto: "Ajustes pedidos", tom: "atencao" },
+      ];
+    case "revisao_final":
+      return [
+        { texto: "Aprovada", tom: "ok" },
+        { texto: "Revisão final", tom: "atencao" },
+      ];
+    case "devolvida":
+      return [{ texto: ficha.status_rotulo, tom: "neutro" }];
+    default:
+      return [{ texto: ficha.status_rotulo, tom: "atencao" }];
+  }
+}
+
+/** "014 · 26.2": o código da ficha e a gestão em que foi indicada. */
+export function codigoEGestao(ficha: Ficha): string {
+  return [ficha.codigo, ficha.gestao].filter(Boolean).join(" · ");
+}
+
 /** "AR" de "Ana Ribeiro". */
 export function iniciais(nome: string | null | undefined): string {
   const partes = (nome ?? "").trim().split(/\s+/).filter(Boolean);
@@ -196,8 +289,27 @@ export interface Pendencias {
   arquivamentos_pendentes: number;
   /** Finalizado exige o arquivamento (CENTRAL_EXIGE_ARQUIVAMENTO no backend). Na prévia, falso. */
   exige_arquivamento: boolean;
-  pertinencia: FichaCompleta[];
+  /** Para juntar uma indicação repetida (1.4): as fichas que já existem. */
+  fichas_existentes: { id: number; codigo: string; titulo: string; frente_nome: string | null; status_rotulo: string }[];
+  pertinencia: (FichaCompleta & { possiveis_duplicadas: number[] })[];
   revisao: FichaCompleta[];
+  /** Publicadas cuja gestão de "Revisar em" chegou (plano, 2.4). */
+  revisao_periodica: FichaCompleta[];
+}
+
+/** "Sua autoria na Central" (plano, 2.2). */
+export interface PerfilCentral {
+  totais: {
+    indicadas: number;
+    escritas: number;
+    publicadas_como_autor: number;
+    decididas: number;
+    usos_marcados: number;
+    contribuicoes: number;
+  };
+  indicadas: FichaCompleta[];
+  escritas: FichaCompleta[];
+  decididas: FichaCompleta[];
 }
 
 export interface OpcoesCentral {
@@ -279,8 +391,12 @@ export interface EditarFichaPayload {
   em_uma_frase?: string | null;
   problema?: string | null;
   passos?: string[];
-  quando_usar?: string | null;
+  funciona_bem?: string[];
+  nao_ajuda?: string[];
   onde_aparece?: string | null;
+  galeria?: { anexo_id: number; titulo: string; descricao: string; pagina: string }[];
+  blocos?: Bloco[];
+  respostas_revisor?: string[];
   visao_autores?: string[];
   pontos_atencao?: string | null;
   revisar_em?: string | null;
@@ -297,6 +413,15 @@ export function getMinhasFichas(token: string) {
 
 export function getPendenciasCentral(token: string) {
   return apiFetch<Pendencias>("/central/pendencias", { token });
+}
+
+/** O número do menu lateral (plano, 2.1). */
+export function getContadorPendenciasCentral(token: string) {
+  return apiFetch<{ total: number }>("/central/pendencias/contador", { token });
+}
+
+export function getPerfilCentral(token: string) {
+  return apiFetch<PerfilCentral>("/central/perfil", { token });
 }
 
 export function getOpcoesCentral(token: string) {
@@ -328,6 +453,22 @@ export function decidirPertinencia(fichaId: number, aprovar: boolean, comentario
     aviso: aprovar ? "Indicação aprovada" : "Indicação devolvida", method: "POST",
     token,
     body: JSON.stringify({ aprovar, comentario }),
+  });
+}
+
+export function juntarIndicacao(fichaId: number, destinoId: number, token: string) {
+  return apiFetch<FichaCompleta>(`/central/fichas/${fichaId}/juntar`, {
+    aviso: "Indicação juntada à ficha", method: "POST",
+    token,
+    body: JSON.stringify({ destino_id: destinoId }),
+  });
+}
+
+export function definirPerguntasRevisor(fichaId: number, perguntas: string[], token: string) {
+  return apiFetch<FichaCompleta>(`/central/fichas/${fichaId}/perguntas`, {
+    aviso: "Perguntas salvas", method: "PUT",
+    token,
+    body: JSON.stringify({ perguntas }),
   });
 }
 

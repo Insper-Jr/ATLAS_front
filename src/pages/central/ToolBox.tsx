@@ -107,10 +107,12 @@ export function ToolBox() {
   if (!dados) return <PageLoadingBlock />;
 
   const { destaques } = dados;
-  const esperando = (pendencias?.pertinencia.length ?? 0) + (pendencias?.revisao.length ?? 0) + (pendencias?.arquivamentos_pendentes ?? 0);
+  const periodica = pendencias?.revisao_periodica?.length ?? 0;
+  const esperando = (pendencias?.pertinencia.length ?? 0) + (pendencias?.revisao.length ?? 0) + periodica + (pendencias?.arquivamentos_pendentes ?? 0);
   const partesEsperando = [
     pendencias?.pertinencia.length ? `${pendencias.pertinencia.length} pertinência` : null,
     pendencias?.revisao.length ? `${pendencias.revisao.length} revisão` : null,
+    periodica ? `${periodica} revisão periódica` : null,
     pendencias?.arquivamentos_pendentes ? `${pendencias.arquivamentos_pendentes} arquivamento` : null,
   ].filter(Boolean);
 

@@ -58,6 +58,9 @@ export interface NavItemConfig {
    *  for a posição. Quando o item também tem `visiblePorPosicao`, o dado
    *  SOMA à posição (um OU), não substitui. */
   visivelDinamico?: "sabatina" | "fila_desempenho";
+  /** Um contador ao lado do rótulo, vindo do servidor: a Central mostra o
+   *  que espera a pessoa (pertinência, revisão, arquivamentos). */
+  contador?: "central";
 }
 
 // A ordem DENTRO desta lista só decide a ordem dentro do próprio grupo — o
@@ -101,6 +104,7 @@ export const navItems: NavItemConfig[] = [
     prefixo: true,
     // Espelha `require_pode_ver_central_conhecimento` no backend.
     visible: (c) => c.pode_ver_central_conhecimento,
+    contador: "central",
   },
   { icon: Calendar, label: "Calendário", path: "/calendario", grupo: "trabalho" },
   // A cédula da sabatina (2026-10-05): aparece só enquanto houver eleição

@@ -34,6 +34,9 @@ import {
 import { ModalReferencia } from "./ModalReferencia";
 import { useCentral } from "./contexto";
 
+/** A bolinha de cada escopo leva a cor da frente dele (plano, 1.7). */
+const CORES_FRENTE = ["var(--atlas-primary)", "var(--atlas-success)", "var(--atlas-warning)", "var(--atlas-foreground)"];
+
 function Previa({ anexo, token }: { anexo: AnexoFicha; token: string }) {
   const [url, setUrl] = useState<string | null>(null);
   useEffect(() => {
@@ -98,14 +101,25 @@ export function Referencias() {
   }, [carregar, versao]);
 
   const frentes = useMemo(() => [...new Set((lista ?? []).flatMap((r) => r.projeto.frentes))], [lista]);
+  // Cada escopo com a cor da frente e quantos projetos de referência o têm
+  // (plano, 1.7). A cor segue a ordem das frentes na lista.
   const escopos = useMemo(() => {
-    const nomes = new Set<string>();
+    const porNome = new Map<string, { nome: string; frente: string | null; quantos: number }>();
     for (const r of lista ?? []) {
       if (frente && !r.projeto.frentes.includes(frente)) continue;
-      for (const e of r.projeto.escopos) nomes.add(e.nome);
+      const vistos = new Set<string>();
+      for (const e of r.projeto.escopos) {
+        if (vistos.has(e.nome)) continue;
+        vistos.add(e.nome);
+        const frenteDoEscopo = e.frente_id != null ? (r.projeto.frentes[r.projeto.frente_ids.indexOf(e.frente_id)] ?? null) : (r.projeto.frentes[0] ?? null);
+        const atual = porNome.get(e.nome) ?? { nome: e.nome, frente: frenteDoEscopo, quantos: 0 };
+        atual.quantos += 1;
+        porNome.set(e.nome, atual);
+      }
     }
-    return [...nomes];
+    return [...porNome.values()];
   }, [lista, frente]);
+  const corDaFrente = (nome: string | null) => CORES_FRENTE[Math.max(0, frentes.indexOf(nome ?? "")) % CORES_FRENTE.length];
 
   const gestoes = useMemo(
     () => [...new Set((lista ?? []).map((r) => r.numero_gestao).filter((n): n is number => n != null))].sort((a, b) => b - a),
@@ -166,8 +180,10 @@ export function Referencias() {
               Todos os escopos
             </Pilula>
             {escopos.map((e) => (
-              <Pilula key={e} type="button" $ativa={escopo === e} onClick={() => setEscopo(e)}>
-                {e}
+              <Pilula key={e.nome} type="button" $ativa={escopo === e.nome} onClick={() => setEscopo(e.nome)}>
+                <i aria-hidden="true" style={{ background: corDaFrente(e.frente) }} />
+                {e.nome}
+                <small>{e.quantos}</small>
               </Pilula>
             ))}
           </Pilulas>

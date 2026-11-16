@@ -442,3 +442,20 @@ export const LogoutButton = styled.button`
     }
   }
 `;
+
+/** Contador ao lado do rótulo de um item (a Central: o que espera a pessoa). */
+export const MenuBadge = styled.span`
+  margin-left: auto;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 1.25rem;
+  height: 1.25rem;
+  padding: 0 0.375rem;
+  border-radius: 9999px;
+  background: var(--destructive);
+  color: var(--primary-foreground);
+  font-size: 0.65rem;
+  font-weight: 600;
+  line-height: 1;
+`;
