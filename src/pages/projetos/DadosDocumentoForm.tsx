@@ -630,9 +630,20 @@ function ContratoSecoes({
         <div style={{ marginTop: "0.75rem" }}>
           <Marcar dados={dados} set={set} caminho={["financeiro", "parcelado"]} label="Pagamento parcelado" />
         </div>
-        {parcelado && (
+        {parcelado ? (
           <ParcelasCampos dados={dados} set={set} prefixo="financeiro" caminhoTotal={["financeiro", "valor_total"]} />
+        ) : (
+          <FormGrid $colunas={2} style={{ marginTop: "0.75rem" }}>
+            <DataCampo dados={dados} set={set} caminho={["financeiro", "vencimento_unico"]} label="Vencimento do pagamento" />
+          </FormGrid>
         )}
+        <div style={{ marginTop: "0.75rem" }}>
+          <TextoLongo dados={dados} set={set} caminho={["financeiro", "observacoes_pagamento"]} label="Observações sobre o pagamento (opcional)" />
+          <p style={{ margin: "0.25rem 0 0", fontSize: "0.75rem", lineHeight: 1.5, color: "var(--atlas-muted-foreground)" }}>
+            Vira um parágrafo da Cláusula 33ª, logo depois do valor. Use quando a condição não cabe nos números, por exemplo: "O valor acima não considera
+            desconto. Para pagamento à vista até o vencimento, aplica-se desconto de 10% (dez por cento)."
+          </p>
+        </div>
       </section>
     </>
   );
@@ -729,8 +740,12 @@ function AditivoSecoes({ dados, set }: { dados: Dados; set: Setter }) {
           <div style={{ marginTop: "0.75rem" }}>
             <Marcar dados={dados} set={set} caminho={["preco", "parcelado"]} label="Pagamento parcelado" />
           </div>
-          {precoParcelado && (
+          {precoParcelado ? (
             <ParcelasCampos dados={dados} set={set} prefixo="preco" caminhoTotal={["preco", "valor_novo"]} />
+          ) : (
+            <FormGrid $colunas={2} style={{ marginTop: "0.75rem" }}>
+              <DataCampo dados={dados} set={set} caminho={["preco", "vencimento_unico"]} label="Vencimento do pagamento (opcional)" />
+            </FormGrid>
           )}
         </section>
       )}

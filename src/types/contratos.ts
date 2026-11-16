@@ -278,7 +278,11 @@ export interface Financeiro {
   valor_parcela: number;
   primeiro_vencimento: string;
   dia_vencimento_mensal: number;
+  /** Parcela única: quando o pagamento vence (2026-11-16). */
+  vencimento_unico?: string;
   forma_pagamento: string;
+  /** Condições em texto ("10% de desconto à vista"), parágrafo da Cláusula 33. */
+  observacoes_pagamento?: string;
 }
 
 export interface DadosContrato {
@@ -335,6 +339,7 @@ export interface DadosAditivo {
     valor_parcela: number | null;
     primeiro_vencimento: string;
     dia_vencimento_mensal: number | null;
+    vencimento_unico?: string;
   };
   prazo: { dias_uteis: number | null };
   testemunhas: Testemunha[];
