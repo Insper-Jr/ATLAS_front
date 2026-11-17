@@ -2584,3 +2584,38 @@ export const RemoverEscopoBotao = styled.button`
     cursor: not-allowed;
   }
 `;
+
+/** Busca por nome ou cliente, ao lado dos filtros (2026-11-16, a pedido):
+ *  vale para Kanban, Lista e Arquivados. */
+export const BuscaProjetos = styled.label`
+  display: inline-flex;
+  align-items: center;
+  gap: 0.375rem;
+  height: 2.25rem;
+  padding: 0 0.75rem;
+  border-radius: ${theme.borderRadius.lg};
+  border: 1px solid ${theme.colors.input};
+  background: ${theme.colors.background};
+  color: ${theme.colors.mutedForeground};
+  flex: 1 1 12rem;
+  max-width: 20rem;
+
+  input {
+    flex: 1;
+    min-width: 0;
+    border: 0;
+    background: transparent;
+    font: inherit;
+    font-size: ${theme.fontSize.sm};
+    color: ${theme.colors.foreground};
+  }
+
+  input:focus {
+    outline: none;
+  }
+
+  &:focus-within {
+    border-color: ${theme.colors.ring};
+    box-shadow: 0 0 0 3px color-mix(in srgb, ${theme.colors.ring} 25%, transparent);
+  }
+`;

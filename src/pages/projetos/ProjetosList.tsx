@@ -10,6 +10,7 @@ import {
   ChevronDown,
   LayoutGrid,
   KanbanSquare,
+  Search,
 } from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
 import { getFrentes } from "@/lib/bancas";
@@ -58,6 +59,7 @@ import {
   CardEquipe,
   CardAlerta,
   FiltersRow,
+  BuscaProjetos,
   FrenteFilterWrap,
   FrenteFilterButton,
   FrenteFilterPanel,
@@ -78,6 +80,15 @@ import {
 
 type ModoVisualizacao = "lista" | "kanban" | "arquivados";
 
+/** "ÁRABE I" e "arabe" se encontram: sem acento, sem maiúscula. */
+function normalizarBusca(texto: string): string {
+  return texto
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toLowerCase()
+    .trim();
+}
+
 export function ProjetosList() {
   const { usuario, token } = useAuth();
   const [searchParams, setSearchParams] = useSearchParams();
@@ -91,6 +102,8 @@ export function ProjetosList() {
   // lista/kanban geral também, pra quem quer comparar lado a lado com os
   // ativos sem trocar de aba.
   const [mostrarArquivados, setMostrarArquivados] = useState(false);
+  // Busca por nome ou cliente, em qualquer modo (Kanban, Lista, Arquivados).
+  const [busca, setBusca] = useState("");
   const [carregando, setCarregando] = useState(true);
   const [erro, setErro] = useState("");
   // O kanban é a visão prioritária de Projetos, a lista é a segunda opção,
@@ -339,10 +352,14 @@ export function ProjetosList() {
             !p.institucional,
         );
 
-  const projetosFiltrados =
+  const porFrente =
     frentesSelecionadas.length === 0
       ? projetosVisiveis
       : projetosVisiveis.filter((p) => p.frente_ids.some((id) => frentesSelecionadas.includes(id)));
+  const termo = normalizarBusca(busca);
+  const projetosFiltrados = termo
+    ? porFrente.filter((p) => normalizarBusca(p.nome).includes(termo) || normalizarBusca(p.cliente ?? "").includes(termo))
+    : porFrente;
 
   // Ordena pela mesma fila de fases do kanban (`ordemStatus`), não por nome —
   // é a etapa do ciclo de vida que a diretoria quer varrer em ordem, com a
@@ -431,6 +448,10 @@ export function ProjetosList() {
               </ViewToggleBtn>
             )}
           </ViewToggleRow>
+          <BuscaProjetos>
+            <Search size={14} aria-hidden="true" />
+            <input type="search" value={busca} onChange={(e) => setBusca(e.target.value)} placeholder="Buscar por nome ou cliente" aria-label="Buscar projeto" />
+          </BuscaProjetos>
           <FrenteFilterWrap ref={filtroRef}>
             <FrenteFilterButton
               type="button"
