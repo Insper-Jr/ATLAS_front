@@ -1,5 +1,5 @@
 import { apiFetch } from "@/lib/api";
-import { API_URL } from "@/config/config";
+import { baixarArquivo } from "@/lib/arquivos";
 import type {
   EscopoVendido,
   HistoricoEntrada,
@@ -104,27 +104,13 @@ export function uploadAnexoProposta(projetoId: number, arquivo: File, token: str
   });
 }
 
-/**
- * A rota exige Bearer token, então um `<a href>` direto não funciona, baixa
- * como blob e dispara o download via um link temporário.
- */
-export async function baixarAnexoProposta(projetoId: number, nomeArquivo: string, token: string) {
-  const response = await fetch(`${API_URL}/projetos/${projetoId}/anexo-proposta`, {
-    headers: { Authorization: `Bearer ${token}` },
-  });
-  if (response.status === 404) {
-    throw new Error(
-      "O arquivo da proposta não está mais no servidor. Envie o PDF de novo pela edição do projeto.",
-    );
+/** O PDF chega com link assinado no projeto (`anexo_proposta_url_download`);
+ *  nulo quando o nome ficou de uma época em que o arquivo se perdeu. */
+export function baixarAnexoProposta(urlDownload: string | null) {
+  if (!urlDownload) {
+    throw new Error("O arquivo da proposta não está mais no servidor. Envie o PDF de novo pela edição do projeto.");
   }
-  if (!response.ok) throw new Error("Erro ao baixar o anexo da proposta");
-  const blob = await response.blob();
-  const url = URL.createObjectURL(blob);
-  const link = document.createElement("a");
-  link.href = url;
-  link.download = nomeArquivo;
-  link.click();
-  URL.revokeObjectURL(url);
+  baixarArquivo(urlDownload);
 }
 
 /**

@@ -20,6 +20,8 @@ export interface ExMembro {
   /** Ordem no site (menor primeiro). Os 8 primeiros PUBLICADOS vão pro carrossel. */
   ordem: number;
   tem_foto: boolean;
+  /** Link assinado da foto para a aba (só no admin; ver `lib/arquivos.ts`). */
+  foto_url?: string | null;
   /** Sobe a cada troca de foto — entra na URL pra furar o cache. */
   foto_versao: number;
   publicado: boolean;

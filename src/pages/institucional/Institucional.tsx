@@ -343,7 +343,7 @@ function CartaoExMembro({ exMembro: m, indice, noCarrossel, ocupado, onEditar, o
       </CartaoTopo>
 
       <Pessoa>
-        <FotoExMembro id={m.id} nome={m.nome} temFoto={m.tem_foto} versao={m.foto_versao} tamanho={48} />
+        <FotoExMembro nome={m.nome} fotoUrl={m.foto_url} tamanho={48} />
         <Info>
           <Nome title={m.nome}>{m.nome}</Nome>
           <Sub title={m.cargo_pt}>

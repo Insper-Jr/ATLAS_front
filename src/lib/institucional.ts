@@ -1,5 +1,4 @@
 import { apiFetch } from "@/lib/api";
-import { API_URL } from "@/config/config";
 import type { ExMembro, ExMembroPayload } from "@/types/institucional";
 
 // Tudo aqui exige a caixa `pode_acessar_institucional` no backend. A leitura
@@ -66,15 +65,3 @@ export function importarExMembrosIniciais(token: string) {
   });
 }
 
-/**
- * A foto da aba vem pela rota AUTENTICADA (mostra também quem está oculto),
- * então não dá pra pôr a URL direto num `<img>`: precisa do token no header.
- * Baixa como blob e devolve um object URL — quem chama revoga depois.
- */
-export async function baixarFotoExMembro(id: number, token: string, versao: number): Promise<string> {
-  const resposta = await fetch(`${API_URL}/institucional/ex-membros/${id}/foto?v=${versao}`, {
-    headers: { Authorization: `Bearer ${token}` },
-  });
-  if (!resposta.ok) throw new Error("Não foi possível carregar a foto.");
-  return URL.createObjectURL(await resposta.blob());
-}

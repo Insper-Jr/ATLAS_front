@@ -303,7 +303,7 @@ export function ProjetoPage() {
     setBaixandoAnexo(true);
     setErroStatus("");
     try {
-      await baixarAnexoProposta(projeto.id, projeto.anexo_proposta_nome, token);
+      baixarAnexoProposta(projeto.anexo_proposta_url_download);
     } catch (err) {
       // Erro LOCAL e dispensável, não o `erro` de página: um download que
       // falha (ex: arquivo perdido no servidor) não pode trocar a tela

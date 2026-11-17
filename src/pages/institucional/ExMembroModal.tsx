@@ -195,10 +195,8 @@ export function ExMembroModal({ exMembro, onSalvo, onFechar }: Props) {
             <Pilha>
               <FotoBloco>
                 <FotoExMembro
-                  id={exMembro?.id ?? 0}
                   nome={form.nome || "?"}
-                  temFoto={mostraFotoAtual}
-                  versao={exMembro?.foto_versao ?? 0}
+                  fotoUrl={mostraFotoAtual ? exMembro?.foto_url : null}
                   tamanho={72}
                   previewUrl={preview}
                 />

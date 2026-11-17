@@ -254,6 +254,9 @@ export interface ProjetoCompleto extends ProjetoResumo {
   descricao: string | null;
   link_proposta: string | null;
   anexo_proposta_nome: string | null;
+  /** Links assinados do PDF (ver `lib/arquivos.ts`); nulos sem arquivo. */
+  anexo_proposta_url: string | null;
+  anexo_proposta_url_download: string | null;
   dias_ambientacao: number;
   /**
    * O último dia de ambientação, kickoff + `dias_ambientacao` dias
