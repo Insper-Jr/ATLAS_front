@@ -44,26 +44,30 @@ function tipoDoArquivo(nome: string, mime: string): Tipo {
  * abrem aqui mesmo; planilha e documento do Word o navegador não mostra,
  * então o modal avisa e deixa só o botão de baixar.
  *
- * `carregar` busca o arquivo com o token e devolve o Blob: a API exige
- * Authorization, então não dá pra apontar um `<img src>` direto pra URL.
- * O objeto é liberado quando o modal fecha.
+ * Dois jeitos de chegar ao arquivo: `url`, um link já assinado (os módulos
+ * no armazenamento único, 2026-11-17), que vai direto no `<img>`/`<iframe>`;
+ * ou `carregar`, que busca com o token e devolve o Blob, para as rotas que
+ * ainda exigem Authorization. O objeto do blob é liberado quando o modal fecha.
  */
 export function PreviewArquivoModal({
   nomeArquivo,
+  url: urlPronta,
   carregar,
   onBaixar,
   onFechar,
 }: {
   nomeArquivo: string;
-  carregar: () => Promise<Blob>;
+  url?: string;
+  carregar?: () => Promise<Blob>;
   onBaixar: () => void;
   onFechar: () => void;
 }) {
-  const [url, setUrl] = useState<string | null>(null);
-  const [tipo, setTipo] = useState<Tipo>("outro");
+  const [url, setUrl] = useState<string | null>(urlPronta ?? null);
+  const [tipo, setTipo] = useState<Tipo>(urlPronta ? tipoDoArquivo(nomeArquivo, "") : "outro");
   const [erro, setErro] = useState("");
 
   useEffect(() => {
+    if (urlPronta || !carregar) return;
     let ativo = true;
     let criada: string | null = null;
     carregar()
@@ -80,7 +84,7 @@ export function PreviewArquivoModal({
       ativo = false;
       if (criada) URL.revokeObjectURL(criada);
     };
-  }, [carregar, nomeArquivo]);
+  }, [carregar, nomeArquivo, urlPronta]);
 
   useEffect(() => {
     function aoTeclar(e: KeyboardEvent) {

@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { AlertTriangle, ChevronDown, ChevronUp, Download, Maximize2, Minimize2, Plus, X } from "lucide-react";
 import { PreviewArquivoModal } from "@/components/PreviewArquivoModal";
 import { useAuth } from "@/context/AuthContext";
@@ -16,10 +16,10 @@ import {
   getPendenciasPdi,
   getResultadosPastaPdi,
   baixarEnvioPdi,
-  getEnvioPdiBlob,
   updateItemPdi,
   updatePastaPdi,
 } from "@/lib/desempenho-pdi";
+import { urlAbsoluta } from "@/lib/arquivos";
 import { formatarData, formatarDataHora } from "@/lib/projetos";
 import { getGpRegras, getGpTipos, type GpRegras, type GpTipo } from "@/lib/gestao-pessoas";
 import {
@@ -474,19 +474,6 @@ function PastasPdiCard() {
 
   // Prévia sem baixar (2026-10-13): clicar no nome abre; o ícone baixa.
   const [preview, setPreview] = useState<{ mentoradoId: number; envio: DesempenhoPdiResultadoEnvio } | null>(null);
-  const carregarPreview = useCallback(
-    () => getEnvioPdiBlob(preview?.mentoradoId ?? 0, preview?.envio.item_id ?? 0, token ?? ""),
-    [preview, token],
-  );
-
-  async function baixarResultado(mentoradoId: number, envio: DesempenhoPdiResultadoEnvio) {
-    if (!token) return;
-    try {
-      await baixarEnvioPdi(mentoradoId, envio.item_id, envio.arquivo_nome, token);
-    } catch (err) {
-      setResultadosErro(err instanceof Error ? err.message : "Erro ao baixar o arquivo");
-    }
-  }
 
   async function buscar() {
     if (!token) return;
@@ -913,7 +900,7 @@ function PastasPdiCard() {
                               type="button"
                               $variant="ghost"
                               aria-label={`Baixar ${envio.arquivo_nome}`}
-                              onClick={() => baixarResultado(pessoa.mentorado_id, envio)}
+                              onClick={() => baixarEnvioPdi(envio)}
                             >
                               <Download size={14} />
                             </PageButtonSm>
@@ -1264,8 +1251,8 @@ function PastasPdiCard() {
       {preview && (
         <PreviewArquivoModal
           nomeArquivo={preview.envio.arquivo_nome}
-          carregar={carregarPreview}
-          onBaixar={() => baixarResultado(preview.mentoradoId, preview.envio)}
+          url={urlAbsoluta(preview.envio.url)}
+          onBaixar={() => baixarEnvioPdi(preview.envio)}
           onFechar={() => setPreview(null)}
         />
       )}

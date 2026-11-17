@@ -1,5 +1,5 @@
-import { API_URL } from "@/config/config";
 import { apiFetch } from "@/lib/api";
+import { abrirArquivo, baixarArquivo, urlAbsoluta } from "@/lib/arquivos";
 
 /**
  * Central de Conhecimento (2026-10-29): espelha `routers/central_conhecimento.py`.
@@ -90,23 +90,7 @@ export interface AnexoFicha {
   url_download: string;
 }
 
-/** Os links de arquivo vêm relativos à API ("/arquivos/12/conteudo?t=..."). */
-export function urlAbsoluta(url: string): string {
-  return url.startsWith("/") ? `${API_URL}${url}` : url;
-}
-
-/** Abre um arquivo numa aba. O link já traz a autorização, então não precisa de blob. */
-export function abrirArquivo(url: string, pagina?: number | null) {
-  window.open(`${urlAbsoluta(url)}${pagina ? `#page=${pagina}` : ""}`, "_blank", "noopener");
-}
-
-/** Baixa com o nome original: a resposta vem como anexo, a página fica onde está. */
-export function baixarArquivo(urlDownload: string) {
-  const a = document.createElement("a");
-  a.href = urlAbsoluta(urlDownload);
-  a.rel = "noopener";
-  a.click();
-}
+export { abrirArquivo, baixarArquivo, urlAbsoluta };
 
 /** Um slide de "No projeto" (plano, 1.1): a imagem é um anexo da ficha. */
 export interface ItemGaleria {

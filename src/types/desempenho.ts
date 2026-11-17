@@ -253,6 +253,9 @@ export interface DesempenhoPdiResultadoEnvio {
   item_nome: string;
   tipo_arquivo: DesempenhoPdiItemTipoArquivo;
   arquivo_nome: string;
+  /** Link assinado, relativo à API (ver `lib/arquivos.ts`). */
+  url: string;
+  url_download: string;
   enviado_por: number;
   enviado_por_nome: string | null;
   enviado_em: string;
@@ -277,6 +280,8 @@ export interface DesempenhoPdiResultadosPasta {
 
 export interface DesempenhoPdiEnvio {
   arquivo_nome: string;
+  url: string;
+  url_download: string;
   enviado_por: number;
   enviado_por_nome: string | null;
   enviado_em: string;

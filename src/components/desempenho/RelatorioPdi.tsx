@@ -1,9 +1,10 @@
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Download, Eye, Trash2, Upload } from "lucide-react";
 import styled from "styled-components";
 import { theme } from "@/styles/theme";
 import { useAuth } from "@/context/AuthContext";
-import { baixarEnvioPdi, deleteEnvioPdi, getEnvioPdiBlob, getEnviosPdi, uploadEnvioPdi } from "@/lib/desempenho-pdi";
+import { urlAbsoluta } from "@/lib/arquivos";
+import { baixarEnvioPdi, deleteEnvioPdi, getEnviosPdi, uploadEnvioPdi } from "@/lib/desempenho-pdi";
 import { PreviewArquivoModal } from "@/components/PreviewArquivoModal";
 import { formatarData, formatarDataHora } from "@/lib/projetos";
 import type { DesempenhoPdiItemComEnvio, DesempenhoPdiPastaComItens } from "@/types/desempenho";
@@ -110,10 +111,6 @@ export function RelatorioPdi({ usuarioId, podeEnviarInicial, podeEnviarEncontro 
   const inputArquivo = useRef<HTMLInputElement>(null);
   // Prévia sem baixar (2026-10-13): o item cujo arquivo está aberto no modal.
   const [preview, setPreview] = useState<DesempenhoPdiItemComEnvio | null>(null);
-  const carregarPreview = useCallback(
-    () => getEnvioPdiBlob(usuarioId, preview?.item_id ?? 0, token ?? ""),
-    [usuarioId, preview, token],
-  );
 
   async function carregar() {
     if (!token) return;
@@ -173,14 +170,6 @@ export function RelatorioPdi({ usuarioId, podeEnviarInicial, podeEnviarEncontro 
     }
   }
 
-  async function baixar(itemId: number, item: DesempenhoPdiItemComEnvio) {
-    if (!token || !item.envio) return;
-    try {
-      await baixarEnvioPdi(usuarioId, itemId, item.envio.arquivo_nome, token);
-    } catch (err) {
-      setErro(err instanceof Error ? err.message : "Erro ao baixar o arquivo");
-    }
-  }
 
   function acoesDoItem(item: DesempenhoPdiItemComEnvio, podeAgir: boolean) {
     const ocupadoAqui = ocupado === item.item_id;
@@ -192,7 +181,7 @@ export function RelatorioPdi({ usuarioId, podeEnviarInicial, podeEnviarEncontro 
               <Eye size={14} />
               Ver
             </PageButtonSm>
-            <PageButtonSm type="button" $variant="outline" onClick={() => baixar(item.item_id, item)}>
+            <PageButtonSm type="button" $variant="outline" onClick={() => item.envio && baixarEnvioPdi(item.envio)}>
               <Download size={14} />
               Baixar
             </PageButtonSm>
@@ -315,8 +304,8 @@ export function RelatorioPdi({ usuarioId, podeEnviarInicial, podeEnviarEncontro 
       {preview?.envio && (
         <PreviewArquivoModal
           nomeArquivo={preview.envio.arquivo_nome}
-          carregar={carregarPreview}
-          onBaixar={() => baixar(preview.item_id, preview)}
+          url={urlAbsoluta(preview.envio.url)}
+          onBaixar={() => preview.envio && baixarEnvioPdi(preview.envio)}
           onFechar={() => setPreview(null)}
         />
       )}
