@@ -1,5 +1,6 @@
 import { apiFetch } from "./api";
 import { API_URL } from "@/config/config";
+import { baixarArquivo } from "@/lib/arquivos";
 import type {
   AprovacaoPublica,
   DocumentoContratual,
@@ -14,6 +15,7 @@ import type {
   TipoDocumentoContratual,
   TrechoCitado,
   VersaoDocumentoContratual,
+  ArquivoDaVersao,
 } from "@/types/contratos";
 
 export function getDocumentosDoProjeto(projetoId: number, token: string) {
@@ -137,62 +139,12 @@ export function deletarDocumentoPermanente(documentoId: number, token: string) {
   return apiFetch<void>(`/documentos-contratuais/${documentoId}/permanente`, { aviso: "Documento apagado", method: "DELETE", token });
 }
 
-/**
- * A rota exige Bearer token, então nem um `<a href>` nem um `<iframe src>`
- * direto funcionam (nenhum dos dois manda o header Authorization) — busca
- * como blob, e quem chama decide o que fazer com ele (baixar ou exibir).
- */
-async function buscarArquivoDocumento(
-  documentoId: number,
-  formato: "pdf" | "docx",
-  token: string,
-  versao?: number,
-): Promise<Blob> {
-  const query = versao != null ? `&versao=${versao}` : "";
-  const response = await fetch(
-    `${API_URL}/documentos-contratuais/${documentoId}/arquivo?formato=${formato}${query}`,
-    { headers: { Authorization: `Bearer ${token}` } },
-  );
-  if (!response.ok) throw new Error("Erro ao carregar o arquivo do documento");
-  return response.blob();
-}
-
-/** Baixa o arquivo via um link temporário (mesmo padrão de
- *  `baixarAnexoProposta` em `lib/projetos.ts`). Sem `versao`, baixa a
- *  última — com `versao`, baixa aquela específica do histórico. */
-export async function baixarArquivoDocumento(
-  documentoId: number,
-  formato: "pdf" | "docx",
-  nomeArquivo: string,
-  token: string,
-  versao?: number,
-) {
-  const blob = await buscarArquivoDocumento(documentoId, formato, token, versao);
-  const url = URL.createObjectURL(blob);
-  const link = document.createElement("a");
-  link.href = url;
-  link.download = nomeArquivo;
-  link.click();
-  URL.revokeObjectURL(url);
-}
-
-/**
- * Pré-visualização embutida na página do documento — mesma ideia da tela
- * pública de aprovação (`urlArquivoAprovacao`), só que autenticada: em vez
- * de uma URL direta num `<iframe src>` (que não carrega o Authorization),
- * busca o PDF como blob e devolve uma Object URL pra colocar no `src`.
- *
- * ⚠ Quem chama é responsável por `URL.revokeObjectURL` na URL devolvida
- * quando não precisar mais dela (troca de documento, unmount) — senão o
- * blob fica preso em memória pelo resto da sessão.
- */
-export async function visualizarArquivoDocumento(
-  documentoId: number,
-  token: string,
-  versao?: number,
-): Promise<string> {
-  const blob = await buscarArquivoDocumento(documentoId, "pdf", token, versao);
-  return URL.createObjectURL(blob);
+/** O .pdf e o .docx de cada versão chegam com links assinados
+ *  (`arquivo` no documento, e cada item de `GET .../versoes`): entram direto
+ *  num `<iframe src>` ou num download, sem token no cabeçalho. */
+export function baixarArquivoDocumento(arquivo: ArquivoDaVersao | Partial<ArquivoDaVersao>, formato: "pdf" | "docx") {
+  const url = formato === "pdf" ? arquivo.url_pdf_download : arquivo.url_docx_download;
+  if (url) baixarArquivo(url);
 }
 
 /** O histórico inteiro de versões geradas (v1, v2, ...), a mais recente

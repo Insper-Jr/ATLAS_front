@@ -217,9 +217,8 @@ export function ArquivoContratos() {
 
   /** Clique duplo num arquivo: PDF abre numa aba, o resto baixa. */
   function abrirArquivo(i: ItemArquivo) {
-    if (!token) return;
-    const acao = i.mime === "application/pdf" ? abrirItemArquivo(i, token) : baixarItemArquivo(i, token);
-    acao.catch((err) => setErro(err instanceof Error ? err.message : "Não foi possível abrir"));
+    if (i.mime === "application/pdf") abrirItemArquivo(i);
+    else baixarItemArquivo(i);
   }
 
   /** Apagar pasta: se tem conteúdo, a confirmação avisa e apaga tudo junto. */
@@ -340,7 +339,7 @@ export function ArquivoContratos() {
                           type="button"
                           onClick={() => {
                             fechar();
-                            if (token) baixarItemArquivo(i, token).catch((err) => setErro(err.message));
+                            baixarItemArquivo(i);
                           }}
                         >
                           <Download size={14} /> Baixar
@@ -524,7 +523,7 @@ export function ArquivoContratos() {
                                 type="button"
                                 onClick={() => {
                                   fechar();
-                                  if (token) baixarItemArquivo(i, token).catch((err) => setErro(err.message));
+                                  baixarItemArquivo(i);
                                 }}
                               >
                                 <Download size={14} /> Baixar

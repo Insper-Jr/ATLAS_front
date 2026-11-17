@@ -1,6 +1,6 @@
-import { API_URL } from "@/config/config";
 import { apiFetch } from "@/lib/api";
 import type { ConteudoPasta, ItemArquivo, PastaArquivo } from "@/types/arquivo-contratos";
+import { abrirArquivo, baixarArquivo } from "@/lib/arquivos";
 
 export function getPastaArquivo(pastaId: number | null, token: string) {
   return apiFetch<ConteudoPasta>(pastaId == null ? "/arquivo-contratos/pastas" : `/arquivo-contratos/pastas/${pastaId}`, {
@@ -47,30 +47,13 @@ export function importarItemArquivo(pastaId: number, arquivo: File, token: strin
   return apiFetch<ItemArquivo>(`/arquivo-contratos/pastas/${pastaId}/itens`, { aviso: "Arquivo importado", method: "POST", token, body });
 }
 
-export async function baixarItemArquivo(item: ItemArquivo, token: string) {
-  const response = await fetch(`${API_URL}/arquivo-contratos/itens/${item.id}/arquivo`, {
-    headers: { Authorization: `Bearer ${token}` },
-  });
-  if (!response.ok) throw new Error("Erro ao baixar o arquivo");
-  const blob = await response.blob();
-  const url = URL.createObjectURL(blob);
-  const link = document.createElement("a");
-  link.href = url;
-  link.download = item.nome;
-  link.click();
-  URL.revokeObjectURL(url);
+/** O item chega com `url` e `url_download` já assinados (ver `lib/arquivos.ts`). */
+export function baixarItemArquivo(item: ItemArquivo) {
+  baixarArquivo(item.url_download);
 }
 
-/** URL pra abrir o PDF numa aba: a rota exige token, então vai por blob. */
-export async function abrirItemArquivo(item: ItemArquivo, token: string) {
-  const response = await fetch(`${API_URL}/arquivo-contratos/itens/${item.id}/arquivo`, {
-    headers: { Authorization: `Bearer ${token}` },
-  });
-  if (!response.ok) throw new Error("Erro ao abrir o arquivo");
-  const blob = await response.blob();
-  const url = URL.createObjectURL(blob);
-  window.open(url, "_blank", "noopener");
-  window.setTimeout(() => URL.revokeObjectURL(url), 60_000);
+export function abrirItemArquivo(item: ItemArquivo) {
+  abrirArquivo(item.url);
 }
 
 export function renomearItemArquivo(itemId: number, nome: string, token: string) {

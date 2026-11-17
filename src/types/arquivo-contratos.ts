@@ -22,6 +22,9 @@ export interface ItemArquivo {
   criado_por_nome: string | null;
   criado_em: string;
   atualizado_em: string;
+  /** Links assinados, relativos à API (ver `lib/arquivos.ts`). */
+  url: string;
+  url_download: string;
   /** Só na busca: "2026.2 / ANTIQUÁRIO I". */
   caminho?: string;
 }

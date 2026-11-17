@@ -55,6 +55,8 @@ export interface DocumentoContratual {
   atualizado_em: string;
   /** 0 = nenhuma versão gerada ainda. */
   ultima_versao: number | null;
+  /** Os links da última versão; nulo sem versão gerada. */
+  arquivo?: ArquivoDaVersao | null;
   /** Registro de auditoria — "Aprovado por Fulana às 14h32". `null` até
    *  passar por "Aprovar internamente". */
   /** ⭐ 2026-09-23 — a pedido: quem abriu este documento (o "Novo
@@ -346,7 +348,14 @@ export interface DadosAditivo {
   assinatura: Assinatura;
 }
 
-export interface VersaoDocumentoContratual {
+/** Links assinados do .pdf e do .docx de uma versão (ver `lib/arquivos.ts`). */
+export interface ArquivoDaVersao {
+  url_pdf: string;
+  url_pdf_download: string;
+  url_docx_download: string;
+}
+
+export interface VersaoDocumentoContratual extends Partial<ArquivoDaVersao> {
   id: number;
   documento_id: number;
   versao: number;

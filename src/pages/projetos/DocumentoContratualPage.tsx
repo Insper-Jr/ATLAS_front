@@ -34,7 +34,6 @@ import {
   reanexarDocumento,
   recusarAssinaturaTep,
   solicitarRevisaoInterna,
-  visualizarArquivoDocumento,
 } from "@/lib/contratos";
 import type {
   DocumentoContratual,
@@ -62,6 +61,7 @@ import {
 import { FieldInput, FieldLabel, FieldTextarea } from "../Bancas.styled";
 import { ModalOverlay } from "@/styles/ModalOverlay";
 import { VisualizadorPdf } from "../AprovacaoContratual.styled";
+import { urlAbsoluta } from "@/lib/arquivos";
 import { ModalContent, ModalHeader, ModalTitle, ModalClose, ModalBody, ModalFooter } from "@/styles/modal.styled";
 import {
   AcoesLinha,
@@ -218,9 +218,6 @@ export function DocumentoContratualPage() {
   const [mostrarConfirmarAssinado, setMostrarConfirmarAssinado] = useState(false);
   const [abrirDeclaracao, setAbrirDeclaracao] = useState(true);
   const [mostrarConfirmarApagarPermanente, setMostrarConfirmarApagarPermanente] = useState(false);
-  const [baixando, setBaixando] = useState<"pdf" | "docx" | null>(null);
-  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
-  const [erroPreview, setErroPreview] = useState("");
   // ⭐ 2026-09-23 — a pedido: colapsada por padrão. Só quem realmente quer
   // olhar o documento paga o custo (visual e de rede — o PDF só é buscado
   // depois de expandir, ver o efeito abaixo), o resto da página não fica
@@ -232,9 +229,6 @@ export function DocumentoContratualPage() {
   // sumir da tela mesmo com o arquivo intacto no banco.
   const [versoes, setVersoes] = useState<VersaoDocumentoContratual[]>([]);
   const [versaoAntigaAberta, setVersaoAntigaAberta] = useState<number | null>(null);
-  const [previewAntigoUrl, setPreviewAntigoUrl] = useState<string | null>(null);
-  const [erroPreviewAntigo, setErroPreviewAntigo] = useState("");
-  const [baixandoAntigo, setBaixandoAntigo] = useState<{ versao: number; formato: "pdf" | "docx" } | null>(null);
 
   const [solicitacoes, setSolicitacoes] = useState<SolicitacaoAlteracao[]>([]);
   const [analisando, setAnalisando] = useState<number | null>(null);
@@ -330,29 +324,8 @@ export function DocumentoContratualPage() {
   // conteúdo não deveria exigir baixar o arquivo primeiro (mesma experiência
   // que o cliente já tem na tela pública de aprovação). Só busca o PDF
   // depois de expandir (`previewAberta`) — colapsada, não gasta rede.
-  useEffect(() => {
-    if (!atual?.ultima_versao || !token || !previewAberta) {
-      setPreviewUrl(null);
-      return;
-    }
-    let cancelado = false;
-    let url: string | null = null;
-    setErroPreview("");
-    visualizarArquivoDocumento(atual.id, token)
-      .then((objectUrl) => {
-        if (cancelado) {
-          URL.revokeObjectURL(objectUrl);
-          return;
-        }
-        url = objectUrl;
-        setPreviewUrl(objectUrl);
-      })
-      .catch((err) => setErroPreview(err instanceof Error ? err.message : "Erro ao carregar a pré-visualização"));
-    return () => {
-      cancelado = true;
-      if (url) URL.revokeObjectURL(url);
-    };
-  }, [atual?.id, atual?.ultima_versao, token, previewAberta]);
+  // O PDF chega com link assinado (2026-11-17): o iframe aponta direto, sem blob.
+  const previewUrl = previewAberta && atual?.arquivo ? urlAbsoluta(atual.arquivo.url_pdf) : null;
 
   // O histórico inteiro — carrega junto com o documento, é só uma lista
   // (nomes, números, datas), não o arquivo em si.
@@ -365,29 +338,8 @@ export function DocumentoContratualPage() {
 
   // Pré-visualização de uma versão ANTIGA (não a última) — mesma ideia do
   // efeito acima, só que por versão específica, e só uma aberta por vez.
-  useEffect(() => {
-    if (!atual?.id || !token || versaoAntigaAberta == null) {
-      setPreviewAntigoUrl(null);
-      return;
-    }
-    let cancelado = false;
-    let url: string | null = null;
-    setErroPreviewAntigo("");
-    visualizarArquivoDocumento(atual.id, token, versaoAntigaAberta)
-      .then((objectUrl) => {
-        if (cancelado) {
-          URL.revokeObjectURL(objectUrl);
-          return;
-        }
-        url = objectUrl;
-        setPreviewAntigoUrl(objectUrl);
-      })
-      .catch((err) => setErroPreviewAntigo(err instanceof Error ? err.message : "Erro ao carregar a pré-visualização"));
-    return () => {
-      cancelado = true;
-      if (url) URL.revokeObjectURL(url);
-    };
-  }, [atual?.id, token, versaoAntigaAberta]);
+  const versaoAntiga = versaoAntigaAberta != null ? versoes.find((v) => v.versao === versaoAntigaAberta) : undefined;
+  const previewAntigoUrl = versaoAntiga?.url_pdf ? urlAbsoluta(versaoAntiga.url_pdf) : null;
 
   useEffect(() => {
     if (!atual || !token) return;
@@ -604,37 +556,14 @@ export function DocumentoContratualPage() {
     }
   }
 
-  // "Contrato de Prestação de Serviços - Projeto X v2.pdf" (2026-11-05), o
-  // mesmo nome que o backend manda no download.
-  function nomeDoArquivo(versao: number, formato: "pdf" | "docx"): string {
-    if (!atual) return `documento_v${versao}.${formato}`;
-    return `${ROTULO_TIPO_DOCUMENTO[atual.tipo]} - ${atual.projeto_nome} v${versao}.${formato}`;
+  // O nome do arquivo baixado vem do backend, no link assinado (2026-11-17).
+  function handleBaixar(formato: "pdf" | "docx") {
+    if (atual?.arquivo) baixarArquivoDocumento(atual.arquivo, formato);
   }
 
-  async function handleBaixar(formato: "pdf" | "docx") {
-    if (!atual || !token) return;
-    setBaixando(formato);
-    setErro("");
-    try {
-      await baixarArquivoDocumento(atual.id, formato, nomeDoArquivo(atual.ultima_versao ?? 0, formato), token);
-    } catch (err) {
-      setErro(err instanceof Error ? err.message : "Erro ao baixar arquivo");
-    } finally {
-      setBaixando(null);
-    }
-  }
-
-  async function handleBaixarVersaoAntiga(versao: number, formato: "pdf" | "docx") {
-    if (!atual || !token) return;
-    setBaixandoAntigo({ versao, formato });
-    setErro("");
-    try {
-      await baixarArquivoDocumento(atual.id, formato, nomeDoArquivo(versao, formato), token, versao);
-    } catch (err) {
-      setErro(err instanceof Error ? err.message : "Erro ao baixar arquivo");
-    } finally {
-      setBaixandoAntigo(null);
-    }
+  function handleBaixarVersaoAntiga(versao: number, formato: "pdf" | "docx") {
+    const alvo = versoes.find((v) => v.versao === versao);
+    if (alvo) baixarArquivoDocumento(alvo, formato);
   }
 
   async function handleReanexar(arquivo: File) {
@@ -920,21 +849,19 @@ export function DocumentoContratualPage() {
                 <PageButtonSm type="button" $variant="outline" onClick={() => setPreviewAberta((a) => !a)}>
                   {previewAberta ? "Ocultar pré-visualização" : "Pré-visualizar"}
                 </PageButtonSm>
-                <PageButtonSm type="button" $variant="outline" disabled={baixando === "pdf"} onClick={() => handleBaixar("pdf")}>
-                  {baixando === "pdf" ? "Baixando..." : "Baixar PDF"}
+                <PageButtonSm type="button" $variant="outline" onClick={() => handleBaixar("pdf")}>
+                  Baixar PDF
                 </PageButtonSm>
-                <PageButtonSm type="button" $variant="outline" disabled={baixando === "docx"} onClick={() => handleBaixar("docx")}>
-                  {baixando === "docx" ? "Baixando..." : "Baixar .docx"}
+                <PageButtonSm type="button" $variant="outline" onClick={() => handleBaixar("docx")}>
+                  Baixar .docx
                 </PageButtonSm>
               </AcoesLinha>
             </VersaoLinha>
             {previewAberta &&
-              (erroPreview ? (
-                <ErrorText>{erroPreview}</ErrorText>
-              ) : previewUrl ? (
+              (previewUrl ? (
                 <VisualizadorPdf src={previewUrl} title="Pré-visualização do documento" />
               ) : (
-                <EmptyText>Carregando pré-visualização...</EmptyText>
+                <EmptyText>Nenhum arquivo gerado ainda.</EmptyText>
               ))}
             {podeEditarRascunho && (
               <AcoesLinha style={{ marginTop: "0.75rem" }}>
@@ -984,28 +911,24 @@ export function DocumentoContratualPage() {
                     <PageButtonSm
                       type="button"
                       $variant="outline"
-                      disabled={baixandoAntigo?.versao === v.versao && baixandoAntigo.formato === "pdf"}
                       onClick={() => handleBaixarVersaoAntiga(v.versao, "pdf")}
                     >
-                      {baixandoAntigo?.versao === v.versao && baixandoAntigo.formato === "pdf" ? "Baixando..." : "Baixar PDF"}
+                      Baixar PDF
                     </PageButtonSm>
                     <PageButtonSm
                       type="button"
                       $variant="outline"
-                      disabled={baixandoAntigo?.versao === v.versao && baixandoAntigo.formato === "docx"}
                       onClick={() => handleBaixarVersaoAntiga(v.versao, "docx")}
                     >
-                      {baixandoAntigo?.versao === v.versao && baixandoAntigo.formato === "docx" ? "Baixando..." : "Baixar .docx"}
+                      Baixar .docx
                     </PageButtonSm>
                   </AcoesLinha>
                 </VersaoLinha>
                 {versaoAntigaAberta === v.versao &&
-                  (erroPreviewAntigo ? (
-                    <ErrorText>{erroPreviewAntigo}</ErrorText>
-                  ) : previewAntigoUrl ? (
+                  (previewAntigoUrl ? (
                     <VisualizadorPdf src={previewAntigoUrl} title={`Pré-visualização da v${v.versao}`} />
                   ) : (
-                    <EmptyText>Carregando pré-visualização...</EmptyText>
+                    <EmptyText>Arquivo indisponível.</EmptyText>
                   ))}
               </div>
             ))}
