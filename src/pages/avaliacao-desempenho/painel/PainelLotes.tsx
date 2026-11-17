@@ -286,11 +286,19 @@ export function PainelLotes() {
     return rodadas ? coresPorRodada.get(rodadas) : undefined;
   }
 
+  // Só projeto com equipe entra num lote (2026-11-17, a pedido): o que nasceu
+  // na aba Contratos e ainda não foi vendido não tem quem avaliar nem quem
+  // ser avaliado, e aparecia aqui como se fosse um projeto em andamento.
+  const projetosComEquipe = useMemo(
+    () => projetos.filter((p) => p.coordenador_ids.length > 0 || p.consultor_ids.length > 0),
+    [projetos],
+  );
+
   const projetosVisiveis = useMemo(() => {
     const alvo = buscaProjeto.trim().toLowerCase();
-    if (!alvo) return projetos;
-    return projetos.filter((p) => `${p.nome} ${p.cliente}`.toLowerCase().includes(alvo));
-  }, [projetos, buscaProjeto]);
+    if (!alvo) return projetosComEquipe;
+    return projetosComEquipe.filter((p) => `${p.nome} ${p.cliente}`.toLowerCase().includes(alvo));
+  }, [projetosComEquipe, buscaProjeto]);
 
   // Mede contra os 11rem fixos da caixa colapsada (`ProjetoChipsRow`), não
   // contra `clientHeight`: expandido, o `clientHeight` cresce junto com o
@@ -587,7 +595,7 @@ export function PainelLotes() {
                   Limpar
                 </PageButtonSm>
                 <SeletorContagem>
-                  {projetoIds.length} de {projetos.length} escolhidos
+                  {projetoIds.length} de {projetosComEquipe.length} escolhidos
                 </SeletorContagem>
                 {/* ⭐ Só aparece quando há algo de fato escondido pelos
                     11rem da caixa (ou já expandida, pra sempre dar como
@@ -829,7 +837,7 @@ export function PainelLotes() {
                       <FieldGroup>
                         <FieldLabel>Projetos cobertos</FieldLabel>
                         <ProjetoChipsRow>
-                          {projetos.map((p) => (
+                          {projetosComEquipe.map((p) => (
                             <ProjetoChip
                               key={p.id}
                               type="button"
