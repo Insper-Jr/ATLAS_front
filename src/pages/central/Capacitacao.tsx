@@ -2,10 +2,10 @@ import { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import { Download, ExternalLink, Pencil, X } from "lucide-react";
 import {
-  abrirUrlProtegida,
-  blobUrlProtegida,
+  abrirArquivo,
+  baixarArquivo,
   getConteudo,
-  urlArquivoConteudo,
+  urlAbsoluta,
   type ArquivoConteudo,
   type CapacitacaoDados,
   type MetodoDados,
@@ -19,22 +19,8 @@ import { useConteudo } from "./useConteudo";
 
 /** A imagem ampliada por cima da página (2026-10-30, a pedido): sem rota
  *  nova, o site transparece atrás e o X (ou Esc, ou clicar fora) volta. */
-function Ampliada({ arquivo, token, onFechar }: { arquivo: ArquivoConteudo; token: string; onFechar: () => void }) {
-  const [url, setUrl] = useState<string | null>(null);
-  useEffect(() => {
-    let vivo = true;
-    let criado: string | null = null;
-    blobUrlProtegida(urlArquivoConteudo(arquivo.id), token)
-      .then((u) => {
-        criado = u;
-        if (vivo) setUrl(u);
-      })
-      .catch(() => {});
-    return () => {
-      vivo = false;
-      if (criado) URL.revokeObjectURL(criado);
-    };
-  }, [arquivo, token]);
+function Ampliada({ arquivo, onFechar }: { arquivo: ArquivoConteudo; onFechar: () => void }) {
+  const url = urlAbsoluta(arquivo.url);
   useEffect(() => {
     function aoTeclar(e: KeyboardEvent) {
       if (e.key === "Escape") onFechar();
@@ -55,47 +41,16 @@ function Ampliada({ arquivo, token, onFechar }: { arquivo: ArquivoConteudo; toke
   );
 }
 
-function Previa({ arquivo, token, onAmpliar }: { arquivo: ArquivoConteudo; token: string; onAmpliar: (a: ArquivoConteudo) => void }) {
-  const [url, setUrl] = useState<string | null>(null);
-  useEffect(() => {
-    if (!arquivo.imagem) return;
-    let vivo = true;
-    let criado: string | null = null;
-    blobUrlProtegida(urlArquivoConteudo(arquivo.id), token)
-      .then((u) => {
-        criado = u;
-        if (vivo) setUrl(u);
-      })
-      .catch(() => {});
-    return () => {
-      vivo = false;
-      if (criado) URL.revokeObjectURL(criado);
-    };
-  }, [arquivo, token]);
+function Previa({ arquivo, onAmpliar }: { arquivo: ArquivoConteudo; onAmpliar: (a: ArquivoConteudo) => void }) {
+  const url = arquivo.imagem ? urlAbsoluta(arquivo.url) : null;
   return (
     <figure>
-      <button
-        type="button"
-        className="abrir"
-        onClick={() => (arquivo.imagem ? onAmpliar(arquivo) : abrirUrlProtegida(urlArquivoConteudo(arquivo.id), token).catch(() => {}))}
-      >
+      <button type="button" className="abrir" onClick={() => (arquivo.imagem ? onAmpliar(arquivo) : abrirArquivo(arquivo.url))}>
         {arquivo.imagem ? url ? <img src={url} alt={arquivo.legenda ?? arquivo.nome} /> : <span>…</span> : <span>{arquivo.nome.split(".").pop()?.toUpperCase()}</span>}
       </button>
       <figcaption>{arquivo.legenda || arquivo.nome}</figcaption>
     </figure>
   );
-}
-
-/** Baixa um arquivo protegido pela API com o nome original. */
-async function baixarArquivo(arquivo: ArquivoConteudo, token: string) {
-  const resposta = await fetch(urlArquivoConteudo(arquivo.id), { headers: { Authorization: `Bearer ${token}` } });
-  if (!resposta.ok) throw new Error("Erro ao baixar o arquivo");
-  const url = URL.createObjectURL(await resposta.blob());
-  const a = document.createElement("a");
-  a.href = url;
-  a.download = arquivo.nome;
-  a.click();
-  window.setTimeout(() => URL.revokeObjectURL(url), 60_000);
 }
 
 /** Capacitação (fase 3): as aulas internas por escopo, no desenho do
@@ -104,7 +59,6 @@ async function baixarArquivo(arquivo: ArquivoConteudo, token: string) {
 export function Capacitacao() {
   const { token, conteudo, setConteudo, erro, editando, setEditando } = useConteudo<CapacitacaoDados>("capacitacao");
   const [escopo, setEscopo] = useState("");
-  const [erroBaixar, setErroBaixar] = useState("");
   const [ampliada, setAmpliada] = useState<ArquivoConteudo | null>(null);
   // Os escopos do Método, para o "Ver no Método" de cada aula.
   const [escoposDoMetodo, setEscoposDoMetodo] = useState<{ chave: string; nome: string }[]>([]);
@@ -152,7 +106,6 @@ export function Capacitacao() {
               </PageButtonSm>
             )}
           </Acoes>
-          {erroBaixar && <ErrorText style={{ marginTop: "0.75rem" }}>{erroBaixar}</ErrorText>}
         </PageCardContent>
       </PageCard>
 
@@ -177,7 +130,7 @@ export function Capacitacao() {
                 {previas.length > 0 && token ? (
                   <AulaPrevias>
                     {previas.slice(0, 3).map((p) => (
-                      <Previa key={p.id} arquivo={p} token={token} onAmpliar={setAmpliada} />
+                      <Previa key={p.id} arquivo={p} onAmpliar={setAmpliada} />
                     ))}
                   </AulaPrevias>
                 ) : (
@@ -218,7 +171,7 @@ export function Capacitacao() {
                     </PageButtonSm>
                   )}
                   {arquivo && token && (
-                    <PageButtonSm type="button" onClick={() => baixarArquivo(arquivo, token).catch((e) => setErroBaixar(e instanceof Error ? e.message : "Erro ao baixar"))}>
+                    <PageButtonSm type="button" onClick={() => baixarArquivo(arquivo.url_download)}>
                       <Download size={14} /> Baixar a aula
                     </PageButtonSm>
                   )}
@@ -239,7 +192,7 @@ export function Capacitacao() {
           }}
         />
       )}
-      {ampliada && token && <Ampliada arquivo={ampliada} token={token} onFechar={() => setAmpliada(null)} />}
+      {ampliada && <Ampliada arquivo={ampliada} onFechar={() => setAmpliada(null)} />}
     </>
   );
 }

@@ -3,11 +3,10 @@ import { Link } from "react-router-dom";
 import { Plus } from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
 import {
-  abrirUrlProtegida,
-  blobUrlProtegida,
+  abrirArquivo,
   getReferencias,
   marcarUsoReferencia,
-  urlAnexoReferencia,
+  urlAbsoluta,
   type AnexoFicha,
   type ProjetoReferencia,
 } from "@/lib/central";
@@ -37,26 +36,11 @@ import { useCentral } from "./contexto";
 /** A bolinha de cada escopo leva a cor da frente dele (plano, 1.7). */
 const CORES_FRENTE = ["var(--atlas-primary)", "var(--atlas-success)", "var(--atlas-warning)", "var(--atlas-foreground)"];
 
-function Previa({ anexo, token }: { anexo: AnexoFicha; token: string }) {
-  const [url, setUrl] = useState<string | null>(null);
-  useEffect(() => {
-    if (!anexo.imagem) return;
-    let vivo = true;
-    let criado: string | null = null;
-    blobUrlProtegida(urlAnexoReferencia(anexo.id), token)
-      .then((u) => {
-        criado = u;
-        if (vivo) setUrl(u);
-      })
-      .catch(() => {});
-    return () => {
-      vivo = false;
-      if (criado) URL.revokeObjectURL(criado);
-    };
-  }, [anexo, token]);
+function Previa({ anexo }: { anexo: AnexoFicha }) {
+  const url = anexo.imagem ? urlAbsoluta(anexo.url) : null;
   return (
     <figure>
-      <button type="button" className="abrir" onClick={() => abrirUrlProtegida(urlAnexoReferencia(anexo.id), token).catch(() => {})}>
+      <button type="button" className="abrir" onClick={() => abrirArquivo(anexo.url)}>
         {anexo.imagem ? url ? <img src={url} alt={anexo.legenda ?? anexo.nome} /> : <span>…</span> : <span>{anexo.nome.split(".").pop()?.toUpperCase()}</span>}
       </button>
       {anexo.legenda && <figcaption>{anexo.legenda}</figcaption>}
@@ -217,7 +201,7 @@ export function Referencias() {
                   {r.anexos.length > 0 && token ? (
                     <>
                       {r.anexos.slice(0, 3).map((a) => (
-                        <Previa key={a.id} anexo={a} token={token} />
+                        <Previa key={a.id} anexo={a} />
                       ))}
                       <small>Prévia · {r.anexos.length} {r.anexos.length === 1 ? "imagem" : "imagens"}</small>
                     </>

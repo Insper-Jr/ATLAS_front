@@ -85,6 +85,27 @@ export interface AnexoFicha {
   legenda: string | null;
   ordem: number;
   imagem: boolean;
+  /** Link assinado, relativo à API (ver `urlAbsoluta`); abre sem token no cabeçalho. */
+  url: string;
+  url_download: string;
+}
+
+/** Os links de arquivo vêm relativos à API ("/arquivos/12/conteudo?t=..."). */
+export function urlAbsoluta(url: string): string {
+  return url.startsWith("/") ? `${API_URL}${url}` : url;
+}
+
+/** Abre um arquivo numa aba. O link já traz a autorização, então não precisa de blob. */
+export function abrirArquivo(url: string, pagina?: number | null) {
+  window.open(`${urlAbsoluta(url)}${pagina ? `#page=${pagina}` : ""}`, "_blank", "noopener");
+}
+
+/** Baixa com o nome original: a resposta vem como anexo, a página fica onde está. */
+export function baixarArquivo(urlDownload: string) {
+  const a = document.createElement("a");
+  a.href = urlAbsoluta(urlDownload);
+  a.rel = "noopener";
+  a.click();
 }
 
 /** Um slide de "No projeto" (plano, 1.1): a imagem é um anexo da ficha. */
@@ -521,25 +542,13 @@ export function apagarAnexo(anexoId: number, token: string) {
   return apiFetch<void>(`/central/anexos/${anexoId}`, { aviso: "Anexo apagado", method: "DELETE", token });
 }
 
-/** A rota exige token, então o arquivo vai por blob. */
-export async function abrirAnexo(anexo: AnexoFicha, token: string) {
-  const response = await fetch(`${API_URL}/central/anexos/${anexo.id}/arquivo`, {
-    headers: { Authorization: `Bearer ${token}` },
-  });
-  if (!response.ok) throw new Error("Erro ao abrir o anexo");
-  const blob = await response.blob();
-  const url = URL.createObjectURL(blob);
-  window.open(url, "_blank", "noopener");
-  window.setTimeout(() => URL.revokeObjectURL(url), 60_000);
+export function abrirAnexo(anexo: AnexoFicha) {
+  abrirArquivo(anexo.url);
 }
 
-/** URL temporária de uma imagem anexada, pra miniatura. */
-export async function urlDoAnexo(anexo: AnexoFicha, token: string): Promise<string> {
-  const response = await fetch(`${API_URL}/central/anexos/${anexo.id}/arquivo`, {
-    headers: { Authorization: `Bearer ${token}` },
-  });
-  if (!response.ok) throw new Error("Erro ao carregar o anexo");
-  return URL.createObjectURL(await response.blob());
+/** A URL da imagem anexada, pra miniatura e pra ampliada. */
+export function urlDoAnexo(anexo: AnexoFicha): string {
+  return urlAbsoluta(anexo.url);
 }
 
 /** As etapas da linha do tempo de uma ficha e em qual ela está. */
@@ -787,10 +796,6 @@ export function apagarAnexoReferencia(anexoId: number, token: string) {
   return apiFetch<void>(`/central/referencias/anexos/${anexoId}`, { aviso: "Prévia apagada", method: "DELETE", token });
 }
 
-export function urlAnexoReferencia(anexoId: number) {
-  return `${API_URL}/central/referencias/anexos/${anexoId}/arquivo`;
-}
-
 export function getPainelCentral(token: string) {
   return apiFetch<Painel>("/central/painel", { token });
 }
@@ -809,6 +814,8 @@ export interface ArquivoConteudo {
   tamanho: number;
   legenda: string | null;
   imagem: boolean;
+  url: string;
+  url_download: string;
 }
 
 export interface Conteudo<T = Record<string, unknown>> {
@@ -926,23 +933,3 @@ export function apagarArquivoConteudo(arquivoId: number, token: string) {
   return apiFetch<void>(`/central/conteudo/arquivos/${arquivoId}`, { aviso: "Arquivo apagado", method: "DELETE", token });
 }
 
-export function urlArquivoConteudo(arquivoId: number) {
-  return `${API_URL}/central/conteudo/arquivos/${arquivoId}/arquivo`;
-}
-
-/** Abre um arquivo protegido numa aba: a rota exige token, então vai por blob. */
-export async function abrirUrlProtegida(url: string, token: string) {
-  const response = await fetch(url, { headers: { Authorization: `Bearer ${token}` } });
-  if (!response.ok) throw new Error("Erro ao abrir o arquivo");
-  const blob = await response.blob();
-  const objeto = URL.createObjectURL(blob);
-  window.open(objeto, "_blank", "noopener");
-  window.setTimeout(() => URL.revokeObjectURL(objeto), 60_000);
-}
-
-/** URL temporária de uma imagem protegida, para miniatura. */
-export async function blobUrlProtegida(url: string, token: string): Promise<string> {
-  const response = await fetch(url, { headers: { Authorization: `Bearer ${token}` } });
-  if (!response.ok) throw new Error("Erro ao carregar a imagem");
-  return URL.createObjectURL(await response.blob());
-}

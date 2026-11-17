@@ -419,8 +419,7 @@ function MiniaturaEditavel({
   onDescer?: () => void;
   onRemover: () => void;
 }) {
-  const { token } = useAuth();
-  const url = useMiniatura(arquivo, token);
+  const url = useMiniatura(arquivo);
   const [legenda, setLegenda] = useState(arquivo.legenda ?? "");
   return (
     <Miniatura>

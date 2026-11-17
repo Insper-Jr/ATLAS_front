@@ -218,30 +218,15 @@ function diferencas(form: Form, ficha: FichaCompleta): EditarFichaPayload {
   return d;
 }
 
-function Miniatura({ anexo, token }: { anexo: AnexoFicha; token: string }) {
-  const [url, setUrl] = useState<string | null>(null);
-  useEffect(() => {
-    if (!anexo.imagem) return;
-    let vivo = true;
-    let criado: string | null = null;
-    urlDoAnexo(anexo, token)
-      .then((u) => {
-        criado = u;
-        if (vivo) setUrl(u);
-      })
-      .catch(() => {});
-    return () => {
-      vivo = false;
-      if (criado) URL.revokeObjectURL(criado);
-    };
-  }, [anexo, token]);
+function Miniatura({ anexo }: { anexo: AnexoFicha }) {
+  const url = anexo.imagem ? urlDoAnexo(anexo) : null;
   if (!anexo.imagem) return <span>{anexo.nome.split(".").pop()?.toUpperCase() ?? "Arquivo"}</span>;
   if (!url) return <span>…</span>;
   return <img src={url} alt={anexo.legenda ?? anexo.nome} />;
 }
 
 /** Um bloco opcional em leitura (plano, 1.5). */
-function BlocoLeitura({ bloco, token, onAmpliar }: { bloco: Bloco; token: string; onAmpliar: (item: ItemGaleria) => void }) {
+function BlocoLeitura({ bloco, onAmpliar }: { bloco: Bloco; onAmpliar: (item: ItemGaleria) => void }) {
   if (bloco.tipo === "aviso") {
     return (
       <AvisoCaixa $tom="atencao">
@@ -298,7 +283,7 @@ function BlocoLeitura({ bloco, token, onAmpliar }: { bloco: Bloco; token: string
         {bloco.titulo && <h4>{bloco.titulo}</h4>}
         <figure>
           <button type="button" onClick={() => onAmpliar(item)} aria-label={`Ampliar ${bloco.titulo || anexo.nome}`}>
-            <Miniatura anexo={anexo} token={token} />
+            <Miniatura anexo={anexo} />
           </button>
           {bloco.legenda && <figcaption>{bloco.legenda}</figcaption>}
         </figure>
@@ -325,7 +310,6 @@ function moverItem<T>(lista: T[], i: number, delta: number): T[] {
 function BlocoEdicao({
   bloco,
   imagens,
-  token,
   onChange,
   onSubir,
   onDescer,
@@ -333,7 +317,6 @@ function BlocoEdicao({
 }: {
   bloco: Bloco;
   imagens: AnexoFicha[];
-  token: string;
   onChange: (b: Bloco) => void;
   onSubir?: () => void;
   onDescer?: () => void;
@@ -381,7 +364,7 @@ function BlocoEdicao({
           <div style={{ aspectRatio: "16 / 9", borderRadius: "0.5rem", overflow: "hidden", background: "var(--atlas-muted)" }}>
             {(() => {
               const anexo = imagens.find((a) => a.id === bloco.anexo_id);
-              return anexo ? <Miniatura anexo={anexo} token={token} /> : <span>Imagem apagada</span>;
+              return anexo ? <Miniatura anexo={anexo} /> : <span>Imagem apagada</span>;
             })()}
           </div>
           <div style={{ display: "flex", flexDirection: "column", gap: "0.5rem" }}>
@@ -402,22 +385,8 @@ function BlocoEdicao({
 
 /** A imagem da galeria ampliada por cima da página, como na Capacitação:
  *  Esc, o X ou clicar fora fecham. */
-function Ampliada({ item, token, onFechar }: { item: ItemGaleria; token: string; onFechar: () => void }) {
-  const [url, setUrl] = useState<string | null>(null);
-  useEffect(() => {
-    let vivo = true;
-    let criado: string | null = null;
-    urlDoAnexo(item.anexo, token)
-      .then((u) => {
-        criado = u;
-        if (vivo) setUrl(u);
-      })
-      .catch(() => {});
-    return () => {
-      vivo = false;
-      if (criado) URL.revokeObjectURL(criado);
-    };
-  }, [item, token]);
+function Ampliada({ item, onFechar }: { item: ItemGaleria; onFechar: () => void }) {
+  const url = urlDoAnexo(item.anexo);
   useEffect(() => {
     function aoTeclar(e: KeyboardEvent) {
       if (e.key === "Escape") onFechar();
@@ -1012,7 +981,7 @@ export function Ficha() {
               {!editando && token && ficha.blocos.some((b) => b.tipo === "aviso") && (
                 <Blocos>
                   {ficha.blocos.filter((b) => b.tipo === "aviso").map((b, i) => (
-                    <BlocoLeitura key={`aviso-${i}`} bloco={b} token={token} onAmpliar={setAmpliada} />
+                    <BlocoLeitura key={`aviso-${i}`} bloco={b} onAmpliar={setAmpliada} />
                   ))}
                 </Blocos>
               )}
@@ -1048,7 +1017,7 @@ export function Ficha() {
               {!editando && token && ficha.blocos.some((b) => b.tipo !== "aviso") && (
                 <Blocos>
                   {ficha.blocos.filter((b) => b.tipo !== "aviso").map((b, i) => (
-                    <BlocoLeitura key={`${b.tipo}-${i}`} bloco={b} token={token} onAmpliar={setAmpliada} />
+                    <BlocoLeitura key={`${b.tipo}-${i}`} bloco={b} onAmpliar={setAmpliada} />
                   ))}
                 </Blocos>
               )}
@@ -1059,7 +1028,6 @@ export function Ficha() {
                       key={i}
                       bloco={b}
                       imagens={ficha.anexos.filter((a) => a.imagem)}
-                      token={token}
                       onChange={(novo) => campo("blocos", form.blocos.map((x, j) => (j === i ? novo : x)))}
                       onSubir={i > 0 ? () => campo("blocos", moverItem(form.blocos, i, -1)) : undefined}
                       onDescer={i < form.blocos.length - 1 ? () => campo("blocos", moverItem(form.blocos, i, 1)) : undefined}
@@ -1163,7 +1131,7 @@ export function Ficha() {
                   {ficha.galeria.map((g) => (
                     <figure key={g.anexo_id}>
                       <button type="button" className="abrir" onClick={() => setAmpliada(g)} aria-label={`Ampliar ${g.titulo || g.anexo.nome}`}>
-                        <Miniatura anexo={g.anexo} token={token} />
+                        <Miniatura anexo={g.anexo} />
                       </button>
                       <figcaption>
                         {g.titulo && <b>{g.titulo}. </b>}
@@ -1181,7 +1149,7 @@ export function Ficha() {
                     const anexo = ficha.anexos.find((a) => a.id === g.anexo_id);
                     return (
                       <GaleriaItemEdicao key={g.anexo_id}>
-                        <div className="miniatura">{anexo ? <Miniatura anexo={anexo} token={token} /> : <span>Anexo apagado</span>}</div>
+                        <div className="miniatura">{anexo ? <Miniatura anexo={anexo} /> : <span>Anexo apagado</span>}</div>
                         <div className="campos">
                           <FieldInput aria-label="Título do slide" maxLength={120} value={g.titulo} onChange={(e) => itemGaleria(i, { titulo: e.target.value })} placeholder="Título (ex.: Mapa competitivo)" />
                           <FieldInput aria-label="Página ou slide" maxLength={40} value={g.pagina} onChange={(e) => itemGaleria(i, { pagina: e.target.value })} placeholder="slide 57" />
@@ -1209,8 +1177,8 @@ export function Ficha() {
                 <AnexosGrid>
                   {anexosForaDaGaleria.map((a) => (
                     <AnexoCard key={a.id}>
-                      <button type="button" className="abrir" onClick={() => abrirAnexo(a, token).catch(() => setErro("Não foi possível abrir o anexo"))}>
-                        <Miniatura anexo={a} token={token} />
+                      <button type="button" className="abrir" onClick={() => abrirAnexo(a)}>
+                        <Miniatura anexo={a} />
                       </button>
                       <figcaption>
                         {a.legenda || a.nome}
@@ -1449,7 +1417,7 @@ export function Ficha() {
         </Documento>
       </DocumentoGrid>
 
-      {ampliada && token && <Ampliada item={ampliada} token={token} onFechar={() => setAmpliada(null)} />}
+      {ampliada && token && <Ampliada item={ampliada} onFechar={() => setAmpliada(null)} />}
       {confirmandoUso && (
         <ConfirmarModal
           titulo="Registrar o uso"

@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
 import { Pencil } from "lucide-react";
-import { abrirUrlProtegida, urlArquivoConteudo, type MetodoDados } from "@/lib/central";
+import { abrirArquivo, type MetodoDados } from "@/lib/central";
 import { EstadoVazio } from "@/components/EstadoVazio";
 import { ErrorText, PageBadge, PageButtonSm, PageCard, PageCardContent, PageCardHeader, PageCardTitle, PageLoadingBlock } from "@/styles/page.styled";
 import { SegmentedButton, SegmentedGroup } from "@/styles/shared.styled";
@@ -13,7 +13,7 @@ import { useConteudo } from "./useConteudo";
  *  sequência da análise de cada escopo. Tudo editável por quem gere a
  *  Central; a página do PDF aparece quando o Playbook foi enviado. */
 export function Metodo() {
-  const { token, conteudo, setConteudo, erro, editando, setEditando } = useConteudo<MetodoDados>("metodo");
+  const { conteudo, setConteudo, erro, editando, setEditando } = useConteudo<MetodoDados>("metodo");
   const [escopoAtivo, setEscopoAtivo] = useState<string | null>(null);
 
   if (erro && !conteudo) return <ErrorText>{erro}</ErrorText>;
@@ -23,8 +23,8 @@ export function Metodo() {
   const temPdf = !!d.arquivo_id && conteudo.arquivos.some((a) => a.id === d.arquivo_id);
 
   function abrirPagina(pagina: number | null) {
-    if (!token || !d.arquivo_id) return;
-    abrirUrlProtegida(`${urlArquivoConteudo(d.arquivo_id)}${pagina ? `#page=${pagina}` : ""}`, token).catch(() => {});
+    const pdf = conteudo?.arquivos.find((a) => a.id === d.arquivo_id);
+    if (pdf) abrirArquivo(pdf.url, pagina);
   }
 
   return (

@@ -1,9 +1,8 @@
 import { useEffect, useState } from "react";
 import { useAuth } from "@/context/AuthContext";
 import {
-  blobUrlProtegida,
   getToolBox,
-  urlArquivoConteudo,
+  urlAbsoluta,
   type ArquivoConteudo,
   type Ficha,
 } from "@/lib/central";
@@ -37,23 +36,8 @@ export function useFichasPublicadas(): Ficha[] {
   return fichas;
 }
 
-/** URL temporária da miniatura de uma imagem protegida (nula até carregar). */
-export function useMiniatura(arquivo: ArquivoConteudo | null, token: string | null): string | null {
-  const [url, setUrl] = useState<string | null>(null);
-  useEffect(() => {
-    if (!arquivo || !arquivo.imagem || !token) return;
-    let vivo = true;
-    let criado: string | null = null;
-    blobUrlProtegida(urlArquivoConteudo(arquivo.id), token)
-      .then((u) => {
-        criado = u;
-        if (vivo) setUrl(u);
-      })
-      .catch(() => {});
-    return () => {
-      vivo = false;
-      if (criado) URL.revokeObjectURL(criado);
-    };
-  }, [arquivo, token]);
-  return url;
+/** A miniatura de uma imagem das vitrines (nula se não for imagem): o link já vem assinado. */
+export function useMiniatura(arquivo: ArquivoConteudo | null): string | null {
+  return arquivo && arquivo.imagem ? urlAbsoluta(arquivo.url) : null;
 }
+
