@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
-import { Download, X } from "lucide-react";
+import { Download, ExternalLink, X } from "lucide-react";
+import { urlParaAbrir } from "@/lib/arquivos";
 import styled from "styled-components";
 import { theme } from "@/styles/theme";
 import { ModalOverlay } from "@/styles/ModalOverlay";
@@ -349,6 +350,12 @@ export function PreviewArquivoModal({
           <PageButton type="button" $variant="outline" onClick={onFechar}>
             Fechar
           </PageButton>
+          {urlPronta && (tipo === "planilha" || tipo === "word") && (
+            <PageButton type="button" $variant="outline" onClick={() => window.open(urlParaAbrir(urlPronta, nomeArquivo), "_blank", "noopener")}>
+              <ExternalLink size={14} />
+              Abrir completo
+            </PageButton>
+          )}
           <PageButton type="button" onClick={onBaixar}>
             <Download size={14} />
             Baixar

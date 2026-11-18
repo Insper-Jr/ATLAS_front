@@ -61,7 +61,7 @@ function Previa({ anexo }: { anexo: AnexoFicha }) {
   const url = anexo.imagem ? urlAbsoluta(anexo.url) : null;
   return (
     <figure>
-      <button type="button" className="abrir" onClick={() => abrirArquivo(anexo.url)}>
+      <button type="button" className="abrir" onClick={() => abrirArquivo(anexo.url, null, anexo.nome)}>
         {anexo.imagem ? url ? <img src={url} alt={anexo.legenda ?? anexo.nome} /> : <span>…</span> : <span>{anexo.nome.split(".").pop()?.toUpperCase()}</span>}
       </button>
       {anexo.legenda && <figcaption>{anexo.legenda}</figcaption>}
@@ -282,7 +282,7 @@ export function Referencias() {
                       <ul>
                         {entregasDe(r).map((a) => (
                           <li key={a.id}>
-                            <button type="button" className="nome" title={a.nome} onClick={() => abrirArquivo(a.url)}>
+                            <button type="button" className="nome" title={a.nome} onClick={() => abrirArquivo(a.url, null, a.nome)}>
                               {a.legenda || a.nome}
                             </button>
                             <span className="tipo">{extensaoDe(a.nome)} · {tamanhoLegivel(a.tamanho)}</span>

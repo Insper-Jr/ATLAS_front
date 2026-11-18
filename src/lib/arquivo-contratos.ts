@@ -53,7 +53,7 @@ export function baixarItemArquivo(item: ItemArquivo) {
 }
 
 export function abrirItemArquivo(item: ItemArquivo) {
-  abrirArquivo(item.url);
+  abrirArquivo(item.url, null, item.nome);
 }
 
 export function renomearItemArquivo(itemId: number, nome: string, token: string) {

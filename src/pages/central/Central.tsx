@@ -80,11 +80,11 @@ export function Central() {
       <PageHeader>
         <PageHeaderText>
           <PageTitle style={{ fontSize: "1.75rem" }}>Central de Conhecimento</PageTitle>
-          <PageSubtitle style={{ maxWidth: "64ch" }}>
+          <PageSubtitle>
             O que os projetos da Insper Jr. aprenderam e vale reaproveitar: fichas da Tool Box, projetos de referência,
             método e capacitação.
           </PageSubtitle>
-          <PageSubtitle style={{ maxWidth: "64ch", marginTop: "0.5rem", fontSize: "0.8125rem" }}>
+          <PageSubtitle style={{ marginTop: "0.5rem", fontSize: "0.8125rem" }}>
             Ao acessar esta aba, você declara estar ciente dos termos assinados no Termo de Voluntariado e se compromete a
             não divulgar nenhum destes materiais a qualquer pessoa, organização ou entidade externa à Insper Jr.
           </PageSubtitle>

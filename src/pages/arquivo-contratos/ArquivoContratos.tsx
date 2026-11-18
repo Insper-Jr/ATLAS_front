@@ -66,6 +66,7 @@ import {
   Vazio,
   Veu,
 } from "./ArquivoContratos.styled";
+import { ehArquivoOffice } from "@/lib/arquivos";
 import { FUSO } from "@/lib/fuso";
 
 const PREFIXO_DELETADO = "[DELETADO] ";
@@ -217,7 +218,7 @@ export function ArquivoContratos() {
 
   /** Clique duplo num arquivo: PDF abre numa aba, o resto baixa. */
   function abrirArquivo(i: ItemArquivo) {
-    if (i.mime === "application/pdf") abrirItemArquivo(i);
+    if (i.mime === "application/pdf" || i.mime.startsWith("image/") || ehArquivoOffice(i.nome)) abrirItemArquivo(i);
     else baixarItemArquivo(i);
   }
 

@@ -527,7 +527,7 @@ export function apagarAnexo(anexoId: number, token: string) {
 }
 
 export function abrirAnexo(anexo: AnexoFicha) {
-  abrirArquivo(anexo.url);
+  abrirArquivo(anexo.url, null, anexo.nome);
 }
 
 /** A URL da imagem anexada, pra miniatura e pra ampliada. */
