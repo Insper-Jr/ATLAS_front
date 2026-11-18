@@ -152,7 +152,7 @@ export function Capacitacao() {
               <AulaRodape>
                 <span>
                   {previas.length > 0 ? `Prévia de ${Math.min(previas.length, 3)} slide${previas.length === 1 ? "" : "s"}. ` : ""}
-                  {arquivo ? "Baixe a aula completa ao lado." : aula.link ? "A aula completa abre no link ao lado." : "A aula completa ainda não foi disponibilizada."}
+                  {arquivo ? "A aula completa abre ou baixa ao lado." : aula.link ? "A aula completa abre no link ao lado." : "A aula completa ainda não foi disponibilizada."}
                 </span>
                 <Acoes>
                   {aula.ficha_ids.map((id) => (
@@ -167,6 +167,11 @@ export function Capacitacao() {
                   )}
                   {aula.link && (
                     <PageButtonSm as="a" href={aula.link} target="_blank" rel="noopener noreferrer" $variant={arquivo ? "outline" : "primary"}>
+                      <ExternalLink size={14} /> Abrir a aula
+                    </PageButtonSm>
+                  )}
+                  {arquivo && arquivo.mime === "application/pdf" && (
+                    <PageButtonSm type="button" $variant="outline" onClick={() => abrirArquivo(arquivo.url)}>
                       <ExternalLink size={14} /> Abrir a aula
                     </PageButtonSm>
                   )}
