@@ -17,10 +17,15 @@ export function ehArquivoOffice(nome: string | null | undefined): boolean {
   return EXTENSOES_OFFICE.includes(ext);
 }
 
-/** O endereço para ABRIR o arquivo: o próprio link, ou o visualizador do Office por cima dele. */
+/** O endereço para ABRIR o arquivo: o próprio link, ou o visualizador do
+ *  Office por cima dele. Para o visualizador, o link ganha o nome do arquivo
+ *  no caminho (ele quer ver a extensão) e `direto=1`, porque a Microsoft não
+ *  segue o redirecionamento para o bucket. */
 export function urlParaAbrir(url: string, nome?: string | null): string {
   const absoluta = urlAbsoluta(url);
-  return ehArquivoOffice(nome) ? `https://view.officeapps.live.com/op/view.aspx?src=${encodeURIComponent(absoluta)}` : absoluta;
+  if (!ehArquivoOffice(nome)) return absoluta;
+  const comNome = absoluta.replace("/conteudo?", `/conteudo/${encodeURIComponent(nome ?? "arquivo")}?`) + "&direto=1";
+  return `https://view.officeapps.live.com/op/view.aspx?src=${encodeURIComponent(comNome)}`;
 }
 
 /** Abre um arquivo numa aba. Com `nome`, planilha e documento vão pelo visualizador do Office. */
