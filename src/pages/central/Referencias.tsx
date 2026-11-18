@@ -273,7 +273,12 @@ export function Referencias() {
                   </PerguntaResposta>
                   {entregasDe(r).length > 0 && (
                     <EntregasLista>
-                      <dt>Entregas do projeto</dt>
+                      <summary>
+                        Entregas do projeto
+                        <span className="quantos">
+                          · {entregasDe(r).length} {entregasDe(r).length === 1 ? "arquivo" : "arquivos"}
+                        </span>
+                      </summary>
                       <ul>
                         {entregasDe(r).map((a) => (
                           <li key={a.id}>

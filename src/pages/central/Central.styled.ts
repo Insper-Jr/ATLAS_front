@@ -1382,24 +1382,51 @@ export const Mosaico = styled.div`
 `;
 
 /** As entregas do projeto de referência (2026-11-17): os arquivos que não
- *  são imagem, um por linha, com abrir e baixar. */
-export const EntregasLista = styled.div`
-  display: flex;
-  flex-direction: column;
-  gap: 0.375rem;
-
-  dt {
+ *  são imagem, um por linha, com abrir e baixar. Nasce fechada (a pedido):
+ *  o card mostra só "Entregas do projeto · N arquivos" até a pessoa abrir. */
+export const EntregasLista = styled.details`
+  summary {
+    list-style: none;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 0.375rem;
     font-size: ${theme.fontSize.xs};
     font-weight: ${theme.fontWeight.semibold};
     text-transform: uppercase;
     letter-spacing: 0.02em;
     color: ${theme.colors.mutedForeground};
-    margin-bottom: 0.25rem;
+    user-select: none;
+  }
+
+  summary::-webkit-details-marker {
+    display: none;
+  }
+
+  summary::before {
+    content: "";
+    width: 0.4rem;
+    height: 0.4rem;
+    border-right: 1.5px solid currentColor;
+    border-bottom: 1.5px solid currentColor;
+    transform: rotate(-45deg);
+    transition: transform 0.15s;
+    margin-right: 0.125rem;
+  }
+
+  &[open] summary::before {
+    transform: rotate(45deg);
+  }
+
+  summary .quantos {
+    font-weight: ${theme.fontWeight.normal};
+    text-transform: none;
+    letter-spacing: 0;
   }
 
   ul {
     list-style: none;
-    margin: 0;
+    margin: 0.5rem 0 0;
     padding: 0;
     display: flex;
     flex-direction: column;
