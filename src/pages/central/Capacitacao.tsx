@@ -170,14 +170,14 @@ export function Capacitacao() {
                       <ExternalLink size={14} /> Abrir a aula
                     </PageButtonSm>
                   )}
-                  {arquivo && arquivo.mime === "application/pdf" && (
-                    <PageButtonSm type="button" $variant="outline" onClick={() => abrirArquivo(arquivo.url)}>
-                      <ExternalLink size={14} /> Abrir a aula
+                  {arquivo && token && (
+                    <PageButtonSm type="button" $variant="ghost" onClick={() => baixarArquivo(arquivo.url_download)}>
+                      <Download size={14} /> Baixar
                     </PageButtonSm>
                   )}
-                  {arquivo && token && (
-                    <PageButtonSm type="button" onClick={() => baixarArquivo(arquivo.url_download)}>
-                      <Download size={14} /> Baixar a aula
+                  {arquivo && arquivo.mime === "application/pdf" && (
+                    <PageButtonSm type="button" onClick={() => abrirArquivo(arquivo.url)}>
+                      <ExternalLink size={14} /> Abrir a aula
                     </PageButtonSm>
                   )}
                 </Acoes>
