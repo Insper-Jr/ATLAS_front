@@ -1381,6 +1381,64 @@ export const Mosaico = styled.div`
   }
 `;
 
+/** As entregas do projeto de referência (2026-11-17): os arquivos que não
+ *  são imagem, um por linha, com abrir e baixar. */
+export const EntregasLista = styled.div`
+  display: flex;
+  flex-direction: column;
+  gap: 0.375rem;
+
+  dt {
+    font-size: ${theme.fontSize.xs};
+    font-weight: ${theme.fontWeight.semibold};
+    text-transform: uppercase;
+    letter-spacing: 0.02em;
+    color: ${theme.colors.mutedForeground};
+    margin-bottom: 0.25rem;
+  }
+
+  ul {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+  }
+
+  li {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: ${theme.fontSize.sm};
+  }
+
+  li .nome {
+    flex: 1;
+    min-width: 0;
+    text-align: left;
+    background: none;
+    border: 0;
+    padding: 0;
+    color: ${theme.colors.foreground};
+    cursor: pointer;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  li .nome:hover {
+    text-decoration: underline;
+  }
+
+  li .tipo {
+    flex: 0 0 auto;
+    font-size: 0.6875rem;
+    color: ${theme.colors.mutedForeground};
+    text-transform: uppercase;
+  }
+`;
+
 export const CardReferenciaCorpo = styled.div`
   padding: 1.625rem 1.75rem;
   display: flex;

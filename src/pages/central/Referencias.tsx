@@ -4,6 +4,7 @@ import { Plus } from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
 import {
   abrirArquivo,
+  baixarArquivo,
   getReferencias,
   marcarUsoReferencia,
   urlAbsoluta,
@@ -23,6 +24,7 @@ import {
   FichaRodape,
   FichasLista,
   Meta,
+  EntregasLista,
   Mosaico,
   Nota,
   PerguntaResposta,
@@ -35,6 +37,25 @@ import { useCentral } from "./contexto";
 
 /** A bolinha de cada escopo leva a cor da frente dele (plano, 1.7). */
 const CORES_FRENTE = ["var(--atlas-primary)", "var(--atlas-success)", "var(--atlas-warning)", "var(--atlas-foreground)"];
+
+/** Prévias são as imagens; o resto são as entregas (2026-11-17). */
+function imagensDe(r: { anexos: AnexoFicha[] }) {
+  return r.anexos.filter((a) => a.imagem);
+}
+
+function entregasDe(r: { anexos: AnexoFicha[] }) {
+  return r.anexos.filter((a) => !a.imagem);
+}
+
+function extensaoDe(nome: string) {
+  return nome.split(".").pop()?.toUpperCase() ?? "Arquivo";
+}
+
+function tamanhoLegivel(bytes: number) {
+  if (bytes >= 1e6) return `${(bytes / 1e6).toFixed(1).replace(".", ",")} MB`;
+  if (bytes >= 1e3) return `${Math.round(bytes / 1e3)} KB`;
+  return `${bytes} B`;
+}
 
 function Previa({ anexo }: { anexo: AnexoFicha }) {
   const url = anexo.imagem ? urlAbsoluta(anexo.url) : null;
@@ -198,12 +219,12 @@ export function Referencias() {
             {filtradas.map((r) => (
               <CardReferencia key={r.id} $inativa={!r.ativo}>
                 <Mosaico>
-                  {r.anexos.length > 0 && token ? (
+                  {imagensDe(r).length > 0 && token ? (
                     <>
-                      {r.anexos.slice(0, 3).map((a) => (
+                      {imagensDe(r).slice(0, 3).map((a) => (
                         <Previa key={a.id} anexo={a} />
                       ))}
-                      <small>Prévia · {r.anexos.length} {r.anexos.length === 1 ? "imagem" : "imagens"}</small>
+                      <small>Prévia · {imagensDe(r).length} {imagensDe(r).length === 1 ? "imagem" : "imagens"}</small>
                     </>
                   ) : (
                     <figure>
@@ -250,6 +271,24 @@ export function Referencias() {
                       </dd>
                     </div>
                   </PerguntaResposta>
+                  {entregasDe(r).length > 0 && (
+                    <EntregasLista>
+                      <dt>Entregas do projeto</dt>
+                      <ul>
+                        {entregasDe(r).map((a) => (
+                          <li key={a.id}>
+                            <button type="button" className="nome" title={a.nome} onClick={() => abrirArquivo(a.url)}>
+                              {a.legenda || a.nome}
+                            </button>
+                            <span className="tipo">{extensaoDe(a.nome)} · {tamanhoLegivel(a.tamanho)}</span>
+                            <PageButtonSm type="button" $variant="ghost" onClick={() => baixarArquivo(a.url_download)}>
+                              Baixar
+                            </PageButtonSm>
+                          </li>
+                        ))}
+                      </ul>
+                    </EntregasLista>
+                  )}
                   <Meta style={{ alignItems: "center" }}>
                     <span style={{ fontWeight: 600, color: "var(--atlas-foreground)" }}>
                       {r.fichas.length > 0 ? `Gerou ${r.fichas.length} ficha${r.fichas.length === 1 ? "" : "s"}:` : "Nenhuma ficha da Tool Box indicada ainda."}

@@ -7,7 +7,6 @@ import { ordenarPor } from "@/lib/menu-ordem";
 import { GRUPOS, navItems, type NavItemConfig } from "./sidebar-itens";
 import { getNotificacoes, marcarNotificacaoLida } from "@/lib/notificacoes";
 import { getMinhasEleicoes } from "@/lib/sabatina";
-import { getContadorPendenciasCentral } from "@/lib/central";
 import { getMinhaFila } from "@/lib/desempenho-avaliacoes";
 import type { Notificacao } from "@/types/notificacao";
 import { useLogoInsperJr } from "@/lib/logo-insper-jr";
@@ -31,7 +30,6 @@ import {
   NotificacoesWrap,
   SinoButton,
   SinoBadge,
-  MenuBadge,
   NotificacoesPainel,
   NotificacaoItem,
   NotificacaoVazia,
@@ -76,11 +74,8 @@ export function Sidebar({ aberta = false }: SidebarProps) {
   // Mesma ideia pra fila de avaliação de desempenho: quem não é coordenador
   // nem consultor de posição ainda pode ter o que responder.
   const [temFilaDesempenho, setTemFilaDesempenho] = useState(false);
-  // O que espera a pessoa na Central (plano, 2.1), na mesma varredura.
-  const [pendenciasCentral, setPendenciasCentral] = useState(0);
   const usuarioId = usuario?.id;
   const posicao = usuario?.posicao;
-  const veCentral = !!usuario?.permissoes?.pode_ver_central_conhecimento;
 
   useEffect(() => {
     if (!token) return;
@@ -104,15 +99,6 @@ export function Sidebar({ aberta = false }: SidebarProps) {
             /* idem */
           });
       }
-      if (veCentral) {
-        getContadorPendenciasCentral(token)
-          .then((r) => {
-            if (ativo) setPendenciasCentral(r.total);
-          })
-          .catch(() => {
-            /* idem */
-          });
-      }
     };
     void consultar();
     const timer = window.setInterval(consultar, 5 * 60_000);
@@ -120,7 +106,7 @@ export function Sidebar({ aberta = false }: SidebarProps) {
       ativo = false;
       window.clearInterval(timer);
     };
-  }, [token, usuarioId, posicao, veCentral]);
+  }, [token, usuarioId, posicao]);
 
   // Clicar em qualquer lugar fora fecha o painel. Antes só o próprio sino
   // fechava, e quem abria por engano tinha de achar o botão de novo para se
@@ -217,7 +203,6 @@ export function Sidebar({ aberta = false }: SidebarProps) {
                 <NavItem key={item.path} to={item.path} $isActive={item === itemAtivo}>
                   <item.icon size={20} />
                   <span>{item.path === "/projetos" ? rotuloProjetos(usuario) : item.label}</span>
-                  {item.contador === "central" && pendenciasCentral > 0 && <MenuBadge>{pendenciasCentral > 99 ? "99+" : pendenciasCentral}</MenuBadge>}
                 </NavItem>
               ))}
             </Fragment>

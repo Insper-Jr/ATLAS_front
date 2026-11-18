@@ -65,7 +65,6 @@ import { ToolBox } from "@/pages/central/ToolBox";
 import { MinhasIndicacoes } from "@/pages/central/MinhasIndicacoes";
 import { Pertinencia } from "@/pages/central/Pertinencia";
 import { RevisaoFinal } from "@/pages/central/RevisaoFinal";
-import { Assistente } from "@/pages/central/Assistente";
 import { Ficha } from "@/pages/central/Ficha";
 import { MeusProjetos } from "@/pages/central/MeusProjetos";
 import { ArquivarProjeto } from "@/pages/central/ArquivarProjeto";
@@ -340,7 +339,6 @@ export default function App() {
                     <Route path="metodo" element={<Metodo />} />
                     <Route path="capacitacao" element={<Capacitacao />} />
                     <Route path="recursos" element={<Recursos />} />
-                    <Route path="assistente" element={<Assistente />} />
                     <Route path="minhas" element={<MinhasIndicacoes />} />
                     <Route path="projetos" element={<MeusProjetos />} />
                     <Route path="pertinencia" element={<Pertinencia />} />

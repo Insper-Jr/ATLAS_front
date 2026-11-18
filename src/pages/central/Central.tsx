@@ -4,7 +4,7 @@ import { Plus } from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
 import { getPendenciasCentral, type Pendencias } from "@/lib/central";
 import { PageButton, PageHeader, PageHeaderText, PageStack, PageSubtitle, PageTitle } from "@/styles/page.styled";
-import { Beta as BetaChip, Contador, ContadorAlerta, FaixaPapel } from "./Central.styled";
+import { Contador, ContadorAlerta, FaixaPapel } from "./Central.styled";
 import { TabBar, TabLink } from "@/pages/avaliacao-desempenho/painel/Painel.styled";
 import { ModalIndicacao } from "./ModalIndicacao";
 import type { CentralContexto } from "./contexto";
@@ -84,6 +84,10 @@ export function Central() {
             O que os projetos da Insper Jr. aprenderam e vale reaproveitar: fichas da Tool Box, projetos de referência,
             método e capacitação.
           </PageSubtitle>
+          <PageSubtitle style={{ maxWidth: "64ch", marginTop: "0.5rem", fontSize: "0.8125rem" }}>
+            Ao acessar esta aba, você declara estar ciente dos termos assinados no Termo de Voluntariado e se compromete a
+            não divulgar nenhum destes materiais a qualquer pessoa, organização ou entidade externa à Insper Jr.
+          </PageSubtitle>
         </PageHeaderText>
         {naToolBox && usuario?.permissoes.pode_ver_central_conhecimento && (
           <PageButton type="button" onClick={() => setIndicando(true)}>
@@ -104,10 +108,6 @@ export function Central() {
         <TabLink to="/central/metodo">Método</TabLink>
         <TabLink to="/central/capacitacao">Capacitação</TabLink>
         <TabLink to="/central/recursos">Recursos externos</TabLink>
-        <TabLink to="/central/assistente">
-          Assistente
-          <BetaChip>beta</BetaChip>
-        </TabLink>
         <TabLink to="/central/minhas">Meu perfil</TabLink>
         {pendencias?.coordena_projetos && (
           <TabLink to="/central/projetos">
