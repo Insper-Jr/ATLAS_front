@@ -99,6 +99,9 @@ export function PainelAvaliacoes() {
   const [filtroTipo, setFiltroTipo] = useState<DesempenhoTipo | "todos">("todos");
   const [filtroFrente, setFiltroFrente] = useState<string>("todas");
   const [busca, setBusca] = useState("");
+  // Ordem da lista (2026-11-18, a pedido): por nome, ou pela média de quem foi
+  // avaliado, da maior ou da menor. Só faz sentido onde há média.
+  const [ordem, setOrdem] = useState<"nome" | "maior" | "menor">("nome");
   // "pessoas" = agrupa avaliação por avaliador/avaliado (o de sempre).
   // "escopo" = só as Avaliações do Escopo, agrupadas pelo ESCOPO avaliado
   // (2026-09-10) — "Análise Mercadológica · BLEND I (média 4)".
@@ -274,10 +277,18 @@ export function PainelAvaliacoes() {
     // ⭐ 2026-09-22 — a pedido: ordem alfabética (era por quantidade de
     // avaliações, decrescente) e busca por nome, mesmo padrão de
     // `PainelRelatorio.tsx`/`Membros.tsx`.
+    const mediaDe = (g: { lista: DesempenhoAvaliacao[] }) => g.lista.reduce((soma, a) => soma + a.nota_geral, 0) / g.lista.length;
+    const comMedia = visao === "escopo" || modo === "avaliado";
     return base
       .filter((g) => g.titulo.toLowerCase().includes(busca.trim().toLowerCase()))
-      .sort((a, b) => a.titulo.localeCompare(b.titulo));
-  }, [avaliacoesFiltradas, filtroFrente, frenteIdsPorUsuario, modo, visao, nomes, busca]);
+      .sort((a, b) => {
+        if (comMedia && ordem !== "nome") {
+          const diferenca = ordem === "maior" ? mediaDe(b) - mediaDe(a) : mediaDe(a) - mediaDe(b);
+          if (diferenca !== 0) return diferenca;
+        }
+        return a.titulo.localeCompare(b.titulo);
+      });
+  }, [avaliacoesFiltradas, filtroFrente, frenteIdsPorUsuario, modo, visao, nomes, busca, ordem]);
 
   async function toggleDetalhe(avaliacaoId: number) {
     if (!token) return;
@@ -375,6 +386,13 @@ export function PainelAvaliacoes() {
                   {f.nome}
                 </option>
               ))}
+            </FieldSelect>
+          )}
+          {(visao === "escopo" || modo === "avaliado") && (
+            <FieldSelect value={ordem} onChange={(e) => setOrdem(e.target.value as "nome" | "maior" | "menor")} aria-label="Ordenar">
+              <option value="nome">Ordem alfabética</option>
+              <option value="maior">Maior média primeiro</option>
+              <option value="menor">Menor média primeiro</option>
             </FieldSelect>
           )}
         </FiltrosRow>
