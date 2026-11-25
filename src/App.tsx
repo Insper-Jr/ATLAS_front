@@ -19,6 +19,7 @@ import { ArquivoContratos } from "@/pages/arquivo-contratos/ArquivoContratos";
 import { Institucional } from "@/pages/institucional/Institucional";
 import { Comunicados } from "@/pages/comunicados/Comunicados";
 import { DefinirSenha } from "@/pages/DefinirSenha";
+import { AutorizarClaude } from "@/pages/AutorizarClaude";
 import { Bancas } from "@/pages/Bancas";
 import { MeuPerfil } from "@/pages/MeuPerfil";
 import { Vagas } from "@/pages/Vagas";
@@ -100,6 +101,10 @@ export default function App() {
                 FORA do Layout, quem ainda não definiu a senha não deve ver o
                 menu de uma plataforma que o backend recusa a servir. */}
               <Route path="/definir-senha" element={<DefinirSenha />} />
+              {/* Conector MCP (2026-11-24): "Autorizar o Claude a ler o ATLAS?".
+                Exige sessão (é ela que diz quem autoriza) e fica fora do
+                Layout: é uma pergunta de sim ou não, não uma tela da plataforma. */}
+              <Route path="/autorizar-claude" element={<AutorizarClaude />} />
               {/* Arquivo de contratos (2026-10-07): layout próprio, sem a barra
                 lateral, por isso fora do Layout. Quem entra é quem tem a caixa. */}
               <Route
