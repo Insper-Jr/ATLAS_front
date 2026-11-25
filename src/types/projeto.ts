@@ -65,6 +65,9 @@ export interface ProjetoResumo {
   data_inicio_ambientacao: string | null;
   /** Arquivar não é excluir, só some das listagens normais. */
   arquivado_em: string | null;
+  /** Projeto de gestão passada importado do Diagnóstico do Acervo: só para a
+   *  Central e o assistente consultarem; não aparece no Kanban nem no histórico. */
+  acervo?: boolean;
   /** A banca ainda não realizada mais próxima, de qualquer escopo deste
    *  projeto. `null` se nenhuma estiver marcada ou todas já aconteceram. */
   proxima_banca: string | null;

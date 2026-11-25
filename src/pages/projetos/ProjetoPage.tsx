@@ -426,7 +426,8 @@ export function ProjetoPage() {
               <FrenteTag key={frenteId}>{nomeFrente(frenteId)}</FrenteTag>
             ))}
             {projeto.sinergico && <FrenteTag>sinérgico</FrenteTag>}
-            {projeto.arquivado_em && <FrenteTag>arquivado</FrenteTag>}
+            {projeto.acervo && <FrenteTag>acervo de gestão passada</FrenteTag>}
+            {!projeto.acervo && projeto.arquivado_em && <FrenteTag>arquivado</FrenteTag>}
 
             <MenuAcoesProjeto
               podeEditar={podeEditarProjeto}
