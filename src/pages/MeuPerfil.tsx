@@ -14,6 +14,7 @@ import type { Frente } from "@/types/banca";
 import type { FaixaDisponivel, FaixaGrade } from "@/types/grade";
 import { GradeEditor } from "@/components/grade/GradeEditor";
 import { NotificacoesNoAparelho } from "@/components/NotificacoesNoAparelho";
+import { ClaudeConectado } from "@/components/ClaudeConectado";
 import {
   PageStack,
   PageHeader,
@@ -471,6 +472,10 @@ export function MeuPerfil() {
           </PageCardContent>
         )}
       </PageCard>
+
+      {/* Conector MCP (2026-11-24): o Claude da pessoa lendo o ATLAS. Só aparece
+        quando o conector está ligado neste ambiente. */}
+      <ClaudeConectado />
     </PageStack>
   );
 }
