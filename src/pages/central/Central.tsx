@@ -4,7 +4,7 @@ import { Plus } from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
 import { getPendenciasCentral, type Pendencias } from "@/lib/central";
 import { PageButton, PageHeader, PageHeaderText, PageStack, PageSubtitle, PageTitle } from "@/styles/page.styled";
-import { Contador, ContadorAlerta, FaixaPapel } from "./Central.styled";
+import { Contador, ContadorAlerta } from "./Central.styled";
 import { TabBar, TabLink } from "@/pages/avaliacao-desempenho/painel/Painel.styled";
 import { ModalIndicacao } from "./ModalIndicacao";
 import type { CentralContexto } from "./contexto";
@@ -64,17 +64,6 @@ export function Central() {
 
   const pertinencia = pendencias?.pertinencia.length ?? 0;
   const revisao = (pendencias?.revisao.length ?? 0) + (pendencias?.revisao_periodica?.length ?? 0);
-  // O que a pessoa faz na Central, pelo papel dela (plano, 1.7).
-  const papel = !pendencias
-    ? null
-    : pendencias.gere
-      ? ["Como diretor de projetos, você", "revisa e publica as fichas, escolhe os projetos de referência e cuida do Método e da Capacitação. A pertinência de cada indicação é do gerente da frente."]
-      : pendencias.decide_pertinencia
-        ? ["Como gerente de frente, você", "decide se cada indicação da sua frente vale uma ficha, junta as repetidas e deixa perguntas para os autores. O texto é revisado depois pelo diretor."]
-        : pendencias.coordena_projetos
-          ? ["Como coordenador, você", "indica ativos no arquivamento dos projetos e garante que os autores escrevam. Você não aprova fichas."]
-          : ["Como consultor, você", "usa as fichas e os projetos de referência no seu projeto, marca o que usou e pode indicar um ativo a qualquer hora."];
-
   return (
     <PageStack>
       <PageHeader>
@@ -96,12 +85,6 @@ export function Central() {
           </PageButton>
         )}
       </PageHeader>
-      {papel && (
-        <FaixaPapel>
-          <strong>{papel[0]}</strong> {papel[1]}
-        </FaixaPapel>
-      )}
-
       <TabBar>
         <TabLink to="/central/toolbox">Tool Box</TabLink>
         <TabLink to="/central/referencias">Projetos de referência</TabLink>

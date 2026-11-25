@@ -252,7 +252,6 @@ export function Referencias() {
                     {r.projeto.escopos.map((e, i) => (
                       <Chip key={`${e.id}-${i}`}>{e.nome}</Chip>
                     ))}
-                    {r.nota && <Chip $tom="primario">{r.nota}</Chip>}
                   </Tags>
                   <PerguntaResposta>
                     <div>
